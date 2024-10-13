@@ -1,0 +1,9 @@
+{
+    "logos" : "https://assets.nhle.com/logos/nhl/svg/%s_light.svg",
+    "base" : "https://nhl.com/",
+    "gamecenter_api_base" : "https://api-web.nhle.com/v1/gamecenter/",
+    "gamecenter_api_slug" : "/landing",
+    "home_game_regex" : "/gamecenter/lak-vs-\\w{3}/.*?\"",
+    "away_game_regex" :  "/gamecenter/\\w{3}-vs-lak/.*?\"",
+    "load_sleep_timer" : 5000
+}
