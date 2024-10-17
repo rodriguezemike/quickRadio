@@ -72,7 +72,56 @@ func getGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 	return gameLandingLink, nil
 }
 func getRadioLink(resp *http.Response) (string, error) {
-	return "", nil
+	team := "LAK"
+	teamKeys := []string{"awayTeam", "homeTeam"}
+	abvrKey := "abbrev"
+	var landingMap map[string]interface{}
+	var teamMap map[string]interface{}
+	defer resp.Body.Close()
+	byteValue, err := io.ReadAll(resp.Body)
+	errorCheck(err)
+	json.Unmarshal([]byte(byteValue), &landingMap)
+	for _, key := range teamKeys {
+		//unmarshal the inner dictionary
+		if landingMap[key][abvrKey] == team {
+			return landingMap[key][radioLink].string, nil
+		}
+	}
+	return "", errors.New("Couldnt find a radio link in the landig json.")
+}
+
+// We should have a shared array here maybe? Depends on goRoutines
+func downloadAudioFiles(radioLink string) {
+	//Handler of downloading audio files to a temp file location for playback
+	return
+}
+func downloadAudioFile(audioFile string) bool {
+	return false
+}
+
+func playback(landingLink string, radioLink string) {
+	//This can be changed to gameState = 'Completed'
+	//cloudflareBase - https://d2igy0yla8zi0u.cloudfront.net/lak/20242025/
+	//Radio quality
+	//Example to Extract : lak-radio_192K.m3u8
+	//Then we extract that https://d2igy0yla8zi0u.cloudfront.net/lak/20242025/lak-radio_192K.m3u8
+	//Then we get our aac files
+	//lak-radio_192K/00021/lak-radio_192K_00118.aac
+	cloudflareBase := strings.Join(strings.Split(radioLink, "/")[:len(strings.Split(radioLink, "/"))-1], "/")
+	radioQualityLink := getQualityStreamSlug(radioLink)
+	streamLink := cloudflareBase + "/" + radioQualityLink
+	for true == true {
+		//While were running in the game loop
+		//We to sleep main thread, really this would update the UI
+		//Looking for updates in the game landing for game status, time, etc.
+		//check for new undownloaded radio files
+		//download those
+		//Play Any AAC file were missing.
+		//Delete old AAC files
+		//Update our data structs.
+		time.Sleep(1 * time.Second)
+		fmt.Println(streamLink)
+	}
 }
 
 func main() {
@@ -106,4 +155,6 @@ func main() {
 	radioLink, err := getRadioLink(resp)
 	errorCheck(err)
 	log.Println(radioLink)
+	//This is where we start to play the radio, could get a tad interesting.
+	playback(landingLink, radioLink)
 }
