@@ -19,7 +19,7 @@ type GameDataStruct struct {
 	PeriodDescriptor struct {
 		Number               int    `json:"number"`
 		PeriodType           string `json:"pertiodType"`
-		MaxRegulationPeriods int    `json:maxRegulationPeriods`
+		MaxRegulationPeriods int    `json:"maxRegulationPeriods"`
 	} `json:"periodDescriptor"`
 	TvBroadcasts []struct {
 		Id             int    `json:"id"`
@@ -34,14 +34,14 @@ type GameDataStruct struct {
 		Id   int `json:"id"`
 		Name struct {
 			Default string `json:"default"`
-		} `json:"name`
+		} `json:"name"`
 		Abbrev    string `json:"abbrev"`
 		PlaceName struct {
 			Default string `json:"default"`
 		} `json:"placeName"`
 		PlaceNameWithPreposition struct {
 			Default string `json:"default"`
-			Fr      string `json:"default"`
+			Fr      string `json:"fr"`
 		}
 		Score     int    `json:"score"`
 		Sog       int    `json:"sog"`
@@ -53,7 +53,7 @@ type GameDataStruct struct {
 		Id   int `json:"id"`
 		Name struct {
 			Default string `json:"default"`
-		} `json:"name`
+		} `json:"name"`
 		Abbrev    string `json:"abbrev"`
 		PlaceName struct {
 			Default string `json:"default"`
@@ -90,14 +90,14 @@ type GameDataStruct struct {
 		} `json:"IceSurface"`
 		Scoring []struct {
 			PeriodDescriptor struct {
-				Number               int    `json:number`
-				PeriodType           string `json:periodType`
-				MaxRegulationPeriods int    `json:maxRegulationPeriods`
+				Number               int    `json:"number"`
+				PeriodType           string `json:"periodType"`
+				MaxRegulationPeriods int    `json:"maxRegulationPeriods"`
 			} `json:"PeriodDescriptor"`
 			Goals []struct {
-				SituationCode int    `json:situationCode`
-				Strength      string `json:strength`
-				PlayerId      int    `json:playerId`
+				SituationCode int    `json:"situationCode"`
+				Strength      string `json:"strength"`
+				PlayerId      int    `json:"playerId"`
 				FirstName     struct {
 					Default string `json:"default"`
 				}
@@ -151,19 +151,19 @@ type GameDataStruct struct {
 	}
 	Clock struct {
 		TimeRemaining    string `json:"timeRemaining"`
-		SecondsRemaining int    `json:secondsRemaining`
+		SecondsRemaining int    `json:"secondsRemaining"`
 		Running          bool   `json:"running"`
 		InIntermission   bool   `json:"inIntermission"`
 	} `json:"clock"`
 	Situation struct {
 		HomeTeam struct {
 			Abbrev                string   `json:"abbrev"`
-			SituationDescriptions []string `json:situationDescriptions`
+			SituationDescriptions []string `json:"situationDescriptions"`
 			Strength              int      `json:"strength"`
 		}
 		AwayTeam struct {
 			Abbrev                string   `json:"abbrev"`
-			SituationDescriptions []string `json:situationDescriptions`
+			SituationDescriptions []string `json:"situationDescriptions"`
 			Strength              int      `json:"strength"`
 		}
 		SituationCode    string `json:"situationCode"`

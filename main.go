@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"quickRadio/internals"
 	"time"
 
@@ -45,9 +44,8 @@ func main() {
 	html := GetGameHtml(linksMap)
 	landingLink, err := internals.GetGameLandingLink(html, gamecenterBase, gamecenterLanding, gameRegexs)
 	internals.ErrorCheck(err)
-	resp, err := http.Get(landingLink)
-	internals.ErrorCheck(err)
-	radioLink, err := internals.GetRadioLink(resp, team)
+	gameDataObject := internals.GetGameDataObjectFromResponse(landingLink)
+	radioLink, err := internals.GetRadioLink(gameDataObject, team)
 	internals.ErrorCheck(err)
 	log.Println(radioLink)
 	//This is where we start to play the radio, could get a tad interesting.

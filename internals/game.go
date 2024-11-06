@@ -61,13 +61,20 @@ func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 	return gameLandingLink, nil
 }
 
-func GetRadioLink(resp *http.Response, teamAbbrev string) (string, error) {
+func GetGameDataObjectFromResponse(gameLandingLink string) models.GameDataStruct {
 	var gameData = &models.GameDataStruct{}
+	resp, err := http.Get(gameLandingLink)
+	ErrorCheck(err)
 	defer resp.Body.Close()
 	byteValue, err := io.ReadAll(resp.Body)
 	ErrorCheck(err)
 	err = json.Unmarshal(byteValue, gameData)
 	ErrorCheck(err)
+	return *gameData
+}
+
+func GetRadioLink(gameData models.GameDataStruct, teamAbbrev string) (string, error) {
+
 	if gameData.AwayTeam.Abbrev == teamAbbrev {
 		return gameData.AwayTeam.RadioLink, nil
 	} else if gameData.HomeTeam.Abbrev == teamAbbrev {
