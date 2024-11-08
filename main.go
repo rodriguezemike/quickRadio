@@ -3,14 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"quickRadio/internals"
-	"runtime"
 	"time"
 
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/chromedp"
-	ffmpeg_go "github.com/u2takey/ffmpeg-go"
 )
 
 func GetGameHtml(linksMap map[string]interface{}) string {
@@ -52,11 +49,4 @@ func main() {
 		internals.ErrorCheck(err)
 		log.Println(radioLink)
 	*/
-	_, filename, _, _ := runtime.Caller(0)
-
-	dir := filepath.Dir(filename)
-	testFilePath := filepath.Join(dir, "assets", "tests", "game_192k_00001.aac")
-	testOutPath := filepath.Join(dir, "assets", "tests", "game_192k_00001.wav")
-	err := ffmpeg_go.Input(testFilePath).Output(testOutPath).OverWriteOutput().ErrorToStdOut().Run()
-	internals.ErrorCheck(err)
 }
