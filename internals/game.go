@@ -18,7 +18,7 @@ import (
 func GetLinksJson() map[string]interface{} {
 	var linksMap map[string]interface{}
 	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filename)
+	dir := filepath.Dir(filepath.Dir(filename))
 	jsonPath := filepath.Join(dir, "assets", "links", "links.json")
 
 	jsonFileObject, err := os.Open(jsonPath)
@@ -74,13 +74,12 @@ func GetGameDataObjectFromResponse(gameLandingLink string) models.GameDataStruct
 }
 
 func GetRadioLink(gameData models.GameDataStruct, teamAbbrev string) (string, error) {
-
 	if gameData.AwayTeam.Abbrev == teamAbbrev {
 		return gameData.AwayTeam.RadioLink, nil
 	} else if gameData.HomeTeam.Abbrev == teamAbbrev {
 		return gameData.HomeTeam.RadioLink, nil
 	} else {
-		return "", errors.New("Couldnt find a radio link in the landig json.")
+		return "", errors.New("Couldnt find a radio link in the landing json.")
 	}
 }
 

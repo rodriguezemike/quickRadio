@@ -12,7 +12,7 @@ import (
 func TestGameDataStruct(t *testing.T) {
 	var gameData = &GameDataStruct{}
 	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filename)
+	dir := filepath.Dir(filepath.Dir(filename))
 	testFilePath := filepath.Join(dir, "assets", "tests", "gamelanding.json")
 	jsonFileObject, err := os.Open(testFilePath)
 	if err != nil {

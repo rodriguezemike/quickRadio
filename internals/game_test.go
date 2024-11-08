@@ -15,7 +15,7 @@ import (
 func GetGameDataObject() models.GameDataStruct {
 	var gameData = &models.GameDataStruct{}
 	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filename)
+	dir := filepath.Dir(filepath.Dir(filepath.Dir(filename)))
 	testFilePath := filepath.Join(dir, "assets", "tests", "gamelanding.json")
 	jsonFileObject, _ := os.Open(testFilePath)
 	byteValue, _ := io.ReadAll(jsonFileObject)

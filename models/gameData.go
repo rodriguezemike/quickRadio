@@ -69,7 +69,7 @@ type GameDataStruct struct {
 		RadioLink string `json:"radioLink"`
 	} `json:"homeTeam"`
 	ShootoutInuse bool `json:"shootoutInuse"`
-	MaxPeriods    int  `json:"shootoutInUse"`
+	MaxPeriods    int  `json:"MaxPeriods"`
 	RegPeriods    int  `json:"regPeriods"`
 	OtInUse       bool `json:"otInUse"`
 	TiesInUse     bool `json:"tiesInUse"`
@@ -95,7 +95,7 @@ type GameDataStruct struct {
 				MaxRegulationPeriods int    `json:"maxRegulationPeriods"`
 			} `json:"PeriodDescriptor"`
 			Goals []struct {
-				SituationCode int    `json:"situationCode"`
+				SituationCode string `json:"situationCode"`
 				Strength      string `json:"strength"`
 				PlayerId      int    `json:"playerId"`
 				FirstName     struct {
@@ -112,11 +112,11 @@ type GameDataStruct struct {
 				}
 				Headshot                string `json:"headshot"`
 				HIghlightClipSharingUrl string `json:"highlightClipSharingUrl"`
-				HighlightClip           string `json:"highlightClip"`
-				DiscreteClip            string `json:"discreteClip"`
+				HighlightClip           int    `json:"highlightClip"`
+				DiscreteClip            int    `json:"discreteClip"`
 				GoalsToDate             int    `json:"goalsToDate"`
-				AwayScore               string `json:"awayScore"`
-				HomeScore               string `json:"homeScore"`
+				AwayScore               int    `json:"awayScore"`
+				HomeScore               int    `json:"homeScore"`
 				LeadingTeamAbbrev       struct {
 					Default string `json:"default"`
 				}

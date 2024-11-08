@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"path/filepath"
 	"quickRadio/internals"
+	"runtime"
 	"time"
 
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/chromedp"
+	ffmpeg_go "github.com/u2takey/ffmpeg-go"
 )
 
 func GetGameHtml(linksMap map[string]interface{}) string {
@@ -36,18 +38,25 @@ func GetGameHtml(linksMap map[string]interface{}) string {
 }
 
 func main() {
-	linksMap := internals.GetLinksJson()
-	gamecenterBase := fmt.Sprintf("%v", linksMap["gamecenter_api_base"])
-	gamecenterLanding := fmt.Sprintf("%v", linksMap["gamecenter_api_slug"])
-	team := fmt.Sprintf("%v", linksMap["team_abbrev"])
-	gameRegexs := []string{fmt.Sprintf("%v", linksMap["home_game_regex"]), fmt.Sprintf("%v", linksMap["away_game_regex"])}
-	html := GetGameHtml(linksMap)
-	landingLink, err := internals.GetGameLandingLink(html, gamecenterBase, gamecenterLanding, gameRegexs)
+	/*
+		linksMap := internals.GetLinksJson()
+		gamecenterBase := fmt.Sprintf("%v", linksMap["gamecenter_api_base"])
+		gamecenterLanding := fmt.Sprintf("%v", linksMap["gamecenter_api_slug"])
+		team := fmt.Sprintf("%v", linksMap["team_abbrev"])
+		gameRegexs := []string{fmt.Sprintf("%v", linksMap["home_game_regex"]), fmt.Sprintf("%v", linksMap["away_game_regex"])}
+		html := GetGameHtml(linksMap)
+		landingLink, err := internals.GetGameLandingLink(html, gamecenterBase, gamecenterLanding, gameRegexs)
+		internals.ErrorCheck(err)
+		gameDataObject := internals.GetGameDataObjectFromResponse(landingLink)
+		radioLink, err := internals.GetRadioLink(gameDataObject, team)
+		internals.ErrorCheck(err)
+		log.Println(radioLink)
+	*/
+	_, filename, _, _ := runtime.Caller(0)
+
+	dir := filepath.Dir(filename)
+	testFilePath := filepath.Join(dir, "assets", "tests", "game_192k_00001.aac")
+	testOutPath := filepath.Join(dir, "assets", "tests", "game_192k_00001.wav")
+	err := ffmpeg_go.Input(testFilePath).Output(testOutPath).OverWriteOutput().ErrorToStdOut().Run()
 	internals.ErrorCheck(err)
-	gameDataObject := internals.GetGameDataObjectFromResponse(landingLink)
-	radioLink, err := internals.GetRadioLink(gameDataObject, team)
-	internals.ErrorCheck(err)
-	log.Println(radioLink)
-	//This is where we start to play the radio, could get a tad interesting.
-	//playback(landingLink, radioLink)
 }
