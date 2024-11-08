@@ -1,10 +1,13 @@
 package internals
 
 import (
-	"fmt"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/gopxl/beep"
+	"github.com/gopxl/beep/speaker"
+	"github.com/gopxl/beep/wav"
 	ffmpeg_go "github.com/u2takey/ffmpeg-go"
 )
 
@@ -24,40 +27,30 @@ Focus on aac to wav transcode and audio playback
 
 // We should have a shared array here maybe? Depends on goRoutines
 
-//This will become one of the go rountines
-
+// This will become one of the go rountines
 func TranscodeToWave(aacFilepath string) string {
 	wavFilepath := strings.Replace(aacFilepath, ".aac", ".wav", 1)
 	err := ffmpeg_go.Input(aacFilepath).Output(wavFilepath).OverWriteOutput().ErrorToStdOut().Run()
 	ErrorCheck(err)
 	return wavFilepath
 }
-func playWaveFile(wavFilePath string) string {
-	return ""
-}
 
-func playback(landingLink string, radioLink string) {
-	//This can be changed to gameState = 'Completed'
-	//cloudflareBase - https://d2igy0yla8zi0u.cloudfront.net/lak/20242025/
-	//Radio quality
-	//Example to Extract : lak-radio_192K.m3u8
-	//Then we extract that https://d2igy0yla8zi0u.cloudfront.net/lak/20242025/lak-radio_192K.m3u8
-	//Then we get our aac files
-	//lak-radio_192K/00021/lak-radio_192K_00118.aac
-	cloudflareBase := strings.Join(strings.Split(radioLink, "/")[:len(strings.Split(radioLink, "/"))-1], "/")
-	radioQualityLink, err := GetQualityStreamSlug(radioLink)
+// This is a seq func, that will be broken up in its parallel go routines
+// I think were going to want to keep a timer to transode as many as possible
+// That is if len of our beep sequence is 5 then we have 50 seconds
+// At the end of that 50 we need to play a new sequence, with a done.
+// We can have multiple speakers, but I'd prefer to have multiple sequences or have a callback
+// that pulls in the next sequence of streamers/callback
+func playWaveFile(wavFilePath string) {
+	done := make(chan bool)
+	f, err := os.Open(wavFilePath)
 	ErrorCheck(err)
-	streamLink := cloudflareBase + "/" + radioQualityLink
-	for true == true {
-		//While were running in the game loop
-		//We to sleep main thread, really this would update the UI
-		//Looking for updates in the game landing for game status, time, etc.
-		//check for new undownloaded radio files
-		//download those
-		//Play Any AAC file were missing.
-		//Delete old AAC files
-		//Update our data structs.
-		time.Sleep(1 * time.Second)
-		fmt.Println(streamLink)
-	}
+	streamer, format, err := wav.Decode(f)
+	ErrorCheck(err)
+	defer streamer.Close()
+	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
+		done <- true
+	})))
+	<-done
 }
