@@ -1,4 +1,4 @@
-package internals
+package game
 
 import (
 	"encoding/json"
@@ -32,7 +32,7 @@ func TestGetLinksJson(t *testing.T) {
 	}
 }
 
-func TestGetGetRadioLink(t *testing.T) {
+func TestGetRadioLink(t *testing.T) {
 	testAbbrev := "LAK"
 	want := regexp.MustCompile("Some Regex here for the radio link")
 	gdo := GetGameDataObject()
@@ -40,4 +40,11 @@ func TestGetGetRadioLink(t *testing.T) {
 	if !want.MatchString(radioLink) || err != nil {
 		t.Fatalf(`GetRadioLink(GameDataObject, testAbbrev) = %q, %v, want match for %#q, nil`, radioLink, err, want)
 	}
+}
+
+func TestGetQualityStreamSlug(t *testing T){
+}
+
+func TestGetAudioFiles(t *testing T){
+	
 }

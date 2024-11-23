@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"quickRadio/internals"
+	"quickRadio/radioErrors"
 	"time"
 
 	"github.com/chromedp/cdproto/dom"
@@ -30,7 +30,7 @@ func GetGameHtml(linksMap map[string]interface{}) string {
 			return err
 		}),
 	)
-	internals.ErrorCheck(err)
+	radioErrors.ErrorCheck(err)
 	return html
 }
 

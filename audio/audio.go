@@ -1,7 +1,8 @@
-package internals
+package audio
 
 import (
 	"os"
+	"quickRadio/radioErrors"
 	"strings"
 	"time"
 
@@ -31,7 +32,7 @@ Focus on aac to wav transcode and audio playback
 func TranscodeToWave(aacFilepath string) string {
 	wavFilepath := strings.Replace(aacFilepath, ".aac", ".wav", 1)
 	err := ffmpeg_go.Input(aacFilepath).Output(wavFilepath).OverWriteOutput().ErrorToStdOut().Run()
-	ErrorCheck(err)
+	radioErrors.ErrorCheck(err)
 	return wavFilepath
 }
 
@@ -44,9 +45,9 @@ func TranscodeToWave(aacFilepath string) string {
 func playWaveFile(wavFilePath string) {
 	done := make(chan bool)
 	f, err := os.Open(wavFilePath)
-	ErrorCheck(err)
+	radioErrors.ErrorCheck(err)
 	streamer, format, err := wav.Decode(f)
-	ErrorCheck(err)
+	radioErrors.ErrorCheck(err)
 	defer streamer.Close()
 	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
 	speaker.Play(beep.Seq(streamer, beep.Callback(func() {

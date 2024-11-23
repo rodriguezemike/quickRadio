@@ -1,4 +1,4 @@
-package internals
+package radioErrors
 
 import "log"
 

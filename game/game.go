@@ -1,4 +1,4 @@
-package internals
+package game
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"quickRadio/models"
+	"quickRadio/radioErrors"
 	"regexp"
 	"runtime"
 	"strings"
@@ -22,7 +23,7 @@ func GetLinksJson() map[string]interface{} {
 	jsonPath := filepath.Join(dir, "assets", "links", "links.json")
 
 	jsonFileObject, err := os.Open(jsonPath)
-	ErrorCheck(err)
+	radioErrors.ErrorCheck(err)
 	defer jsonFileObject.Close()
 	byteValue, _ := io.ReadAll(jsonFileObject)
 
@@ -64,12 +65,12 @@ func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 func GetGameDataObjectFromResponse(gameLandingLink string) models.GameDataStruct {
 	var gameData = &models.GameDataStruct{}
 	resp, err := http.Get(gameLandingLink)
-	ErrorCheck(err)
+	radioErrors.ErrorCheck(err)
 	defer resp.Body.Close()
 	byteValue, err := io.ReadAll(resp.Body)
-	ErrorCheck(err)
+	radioErrors.ErrorCheck(err)
 	err = json.Unmarshal(byteValue, gameData)
-	ErrorCheck(err)
+	radioErrors.ErrorCheck(err)
 	return *gameData
 }
 
@@ -79,12 +80,42 @@ func GetRadioLink(gameData models.GameDataStruct, teamAbbrev string) (string, er
 	} else if gameData.HomeTeam.Abbrev == teamAbbrev {
 		return gameData.HomeTeam.RadioLink, nil
 	} else {
-		return "", errors.New("Couldnt find a radio link in the landing json.")
+		return "", errors.New("Couldnt find a radio link in the landing json")
 	}
 }
 
-func GetQualityStreamSlug(radioLink string) (string, error) {
-	return "", nil
+func GetQualityStreamSlugFromResponse(radioLink string, audioQuality string) string {
+	resp, err := http.Get(radioLink)
+	radioErrors.ErrorCheck(err)
+	defer resp.Body.Close()
+	//This will just get the file from download so this is a placeholder for now.
+	byteValue, err := io.ReadAll(resp.Body)
+	radioErrors.ErrorCheck(err)
+	audioQualitySlug, err := GetQualityStreamSlug(string(byteValue), audioQuality)
+	radioErrors.ErrorCheck(err)
+	return audioQualitySlug
+}
+
+func GetQualityStreamSlug(m3uContents string, audioQuality string) (string, error) {
+	for _, line := range strings.Split(m3uContents, "\n") {
+		if strings.Contains(line, audioQuality) && strings.Contains(line, ".m3u8") {
+			return line, nil
+		}
+	}
+	return "", errors.New("Couldnt find Audio Quality String")
+}
+
+func GetAudioFiles(m3uContents string) ([]string, error) {
+	var audioFiles []string
+	for _, line := range strings.Split(m3uContents, "\n") {
+		if !strings.Contains(line, "#") && strings.Contains(line, ".aac") {
+			audioFiles = append(audioFiles, line)
+		}
+	}
+	if len(audioFiles) == 0 {
+		return nil, errors.New("Couldnt find Audio Files")
+	}
+	return audioFiles, nil
 }
 
 func DownloadAudioFiles(radioLink string) {
