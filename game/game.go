@@ -80,7 +80,7 @@ func GetRadioLink(gameData models.GameDataStruct, teamAbbrev string) (string, er
 	} else if gameData.HomeTeam.Abbrev == teamAbbrev {
 		return gameData.HomeTeam.RadioLink, nil
 	} else {
-		return "", errors.New("Couldnt find a radio link in the landing json")
+		return "", errors.New("couldnt find a radio link in the landing json")
 	}
 }
 
@@ -102,7 +102,7 @@ func GetQualityStreamSlug(m3uContents string, audioQuality string) (string, erro
 			return line, nil
 		}
 	}
-	return "", errors.New("Couldnt find Audio Quality String")
+	return "", errors.New("couldnt find audio quality string")
 }
 
 func GetAudioFiles(m3uContents string) ([]string, error) {
@@ -113,7 +113,7 @@ func GetAudioFiles(m3uContents string) ([]string, error) {
 		}
 	}
 	if len(audioFiles) == 0 {
-		return nil, errors.New("Couldnt find Audio Files")
+		return nil, errors.New("couldnt find audio files")
 	}
 	return audioFiles, nil
 }
