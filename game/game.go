@@ -120,7 +120,6 @@ func GetAudioFiles(m3uContents string) ([]string, error) {
 
 func DownloadAudioFiles(radioLink string) {
 	//Handler of downloading audio files to a temp file location for playback
-	return
 }
 func DownloadAudioFile(audioFile string) bool {
 	return false
