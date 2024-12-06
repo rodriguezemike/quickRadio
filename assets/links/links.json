@@ -3,8 +3,8 @@
     "base" : "https://nhl.com/",
     "gamecenter_api_base" : "https://api-web.nhle.com/v1/gamecenter/",
     "gamecenter_api_slug" : "/landing",
-    "home_game_regex" : "/gamecenter/lak-vs-\\w{3}/.*?\"",
-    "away_game_regex" :  "/gamecenter/\\w{3}-vs-lak/.*?\"",
+    "home_game_regex" : "/gamecenter/TEAMABBREV-vs-\\w{3}/.*?\"",
+    "away_game_regex" :  "/gamecenter/\\w{3}-vs-TEAMABBREV/.*?\"",
     "load_sleep_timer" : 5000,
-    "team_abbrev" : "LAK"
+    "default_team_abbrev" : "LAK"
 }

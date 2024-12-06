@@ -1,8 +1,10 @@
 package game
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -14,7 +16,34 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/chromedp/cdproto/dom"
+	"github.com/chromedp/chromedp"
 )
+
+func GetGameHtml(linksMap map[string]interface{}) string {
+	var html string
+	sleepTimer := linksMap["load_sleep_timer"].(float64)
+	baseUrl := fmt.Sprintf("%v", linksMap["base"])
+
+	ctx, cancel := chromedp.NewContext(context.Background())
+	defer cancel()
+
+	err := chromedp.Run(ctx,
+		chromedp.Navigate(baseUrl),
+		chromedp.Sleep(time.Duration(sleepTimer)*time.Millisecond),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			rootNode, err := dom.GetDocument().Do(ctx)
+			if err != nil {
+				return err
+			}
+			html, err = dom.GetOuterHTML().WithNodeID(rootNode.NodeID).Do(ctx)
+			return err
+		}),
+	)
+	radioErrors.ErrorCheck(err)
+	return html
+}
 
 func GetLinksJson() map[string]interface{} {
 	var linksMap map[string]interface{}
@@ -31,12 +60,16 @@ func GetLinksJson() map[string]interface{} {
 	return linksMap
 }
 
-func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding string, gameRegexs []string) (string, error) {
+func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding string, gameRegexs []string, teamAbbrev string) (string, error) {
 	log.Println()
 	log.Println("func getGameLandingLink START")
 	var gamecenterLink string
 	for _, game := range gameRegexs {
-		gameRegex, _ := regexp.Compile(game)
+		newGame := strings.Replace(game, "TEAMABBREV", strings.ToLower(teamAbbrev), -1)
+		log.Println(teamAbbrev)
+		log.Println("game: ", game)
+		log.Println("New Game :", newGame)
+		gameRegex, _ := regexp.Compile(newGame)
 		allGames := gameRegex.FindAllString(html, -1)
 		log.Println("allGames : ", allGames)
 		currentDate := strings.ReplaceAll(time.Now().Format(time.DateOnly), "-", "/")
@@ -47,9 +80,6 @@ func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 				log.Println("gamecenterLink : ", gamecenterLink)
 				break
 			}
-		}
-		if gamecenterLink != "" {
-			break
 		}
 	}
 	if gamecenterLink == "" {
@@ -120,6 +150,14 @@ func GetAudioFiles(m3uContents string) ([]string, error) {
 
 func DownloadAudioFiles(radioLink string) {
 	//Handler of downloading audio files to a temp file location for playback
+	//Should cross platform, we want to find the tmp location for each of the following
+	//windows, linux, default will be unix
+	//https://pkg.go.dev/runtime#GOOS is what will be used
+	//C:\Users\AppData\Local\Temp is for windows
+	// /tmp/ for linux
+	// Assume /tmp/ for everything else.
+	//Subdir will be quickRadio
+	//We can store em by game and build that string from the gamedata object.
 }
 func DownloadAudioFile(audioFile string) bool {
 	return false

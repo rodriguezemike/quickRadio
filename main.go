@@ -1,38 +1,11 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"quickRadio/radioErrors"
-	"time"
+	"os"
+	"quickRadio/ui"
 
-	"github.com/chromedp/cdproto/dom"
-	"github.com/chromedp/chromedp"
+	"github.com/therecipe/qt/widgets"
 )
-
-func GetGameHtml(linksMap map[string]interface{}) string {
-	var html string
-	sleepTimer := linksMap["load_sleep_timer"].(float64)
-	baseUrl := fmt.Sprintf("%v", linksMap["base"])
-
-	ctx, cancel := chromedp.NewContext(context.Background())
-	defer cancel()
-
-	err := chromedp.Run(ctx,
-		chromedp.Navigate(baseUrl),
-		chromedp.Sleep(time.Duration(sleepTimer)*time.Millisecond),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			rootNode, err := dom.GetDocument().Do(ctx)
-			if err != nil {
-				return err
-			}
-			html, err = dom.GetOuterHTML().WithNodeID(rootNode.NodeID).Do(ctx)
-			return err
-		}),
-	)
-	radioErrors.ErrorCheck(err)
-	return html
-}
 
 func main() {
 	/*
@@ -49,4 +22,12 @@ func main() {
 		internals.ErrorCheck(err)
 		log.Println(radioLink)
 	*/
+	//awayTeam := "LAK"
+	app := widgets.NewQApplication(len(os.Args), os.Args)
+
+	window := widgets.NewQMainWindow(nil, 0)
+	gameWidget := ui.CreateGameWidget()
+	window.SetCentralWidget(gameWidget)
+	window.Show()
+	app.Exec()
 }
