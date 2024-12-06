@@ -94,8 +94,8 @@ func CreateIceRinklabel() *widgets.QLabel {
 }
 
 func CreateGameWidget() *widgets.QGroupBox {
-	homeTeam := "LAK"
-	awayTeam := "LAK"
+	homeTeam := "NHL"
+	awayTeam := "NHL"
 	layout := widgets.NewQGridLayout(nil)
 	gameWidget := widgets.NewQGroupBox(nil)
 	gameLandingButton := CreateGamelandingButton()
