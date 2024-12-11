@@ -60,6 +60,36 @@ func GetLinksJson() map[string]interface{} {
 	return linksMap
 }
 
+func UIGetGameLandingLinks() []string {
+	linksMap := GetLinksJson()
+	html := GetGameHtml(linksMap)
+	gamecenterBase := fmt.Sprintf("%v", linksMap["gamecenter_api_base"])
+	gamecenterLanding := fmt.Sprintf("%v", linksMap["gamecenter_api_slug"])
+	gameRegex := fmt.Sprintf("%v", linksMap["game_regex"])
+	landingLinks, err := GetGameLandingLinks(html, gamecenterBase, gamecenterLanding, gameRegex)
+	radioErrors.ErrorCheck(err)
+	return landingLinks
+}
+
+func GetGameLandingLinks(html string, gamecenterBase string, gamecenterLanding string, gameRegex string) ([]string, error) {
+	var gameLandingLinks []string
+	gameRegexObject, _ := regexp.Compile(gameRegex)
+	allGames := gameRegexObject.FindAllString(html, -1)
+	currentDate := strings.ReplaceAll(time.Now().Format(time.DateOnly), "-", "/")
+	log.Println("allGames : ", allGames)
+	for _, possibleGame := range allGames {
+		if strings.Contains(possibleGame, currentDate) {
+			gamecenterLink := strings.Trim(possibleGame, "\"")
+			gameLandingLinks = append(gameLandingLinks, gamecenterBase+strings.Split(gamecenterLink, "/")[len(strings.Split(gamecenterLink, "/"))-1]+gamecenterLanding)
+			log.Println(gamecenterLink)
+		}
+	}
+	if len(gameLandingLinks) == 0 {
+		return nil, errors.New("couldnt find any game for today.")
+	}
+	return gameLandingLinks, nil
+}
+
 func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding string, gameRegexs []string, teamAbbrev string) (string, error) {
 	log.Println()
 	log.Println("func getGameLandingLink START")

@@ -5,6 +5,7 @@
     "gamecenter_api_slug" : "/landing",
     "home_game_regex" : "/gamecenter/TEAMABBREV-vs-\\w{3}/.*?\"",
     "away_game_regex" :  "/gamecenter/\\w{3}-vs-TEAMABBREV/.*?\"",
+    "game_regex" : "/gamecenter/\\w{3}-vs-\\w{3}/.*?\"",
     "load_sleep_timer" : 5000,
     "default_team_abbrev" : "LAK"
 }
