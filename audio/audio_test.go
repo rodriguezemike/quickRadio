@@ -34,3 +34,9 @@ func TestPlayWaveFile(t *testing.T) {
 	playWaveFile(testInput)
 	os.Remove(testInput)
 }
+
+func TestDownloadAACs(t *testing.T) {
+	//This is a bit difficule to test as we'd need some random live game to test downloading and transcoding AACS to wavs
+	// Ready for play.
+	//This might be the only way to do it and if so we'd need to handle that gracefully, minimizing the amount of errors.
+}
