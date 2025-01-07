@@ -166,7 +166,7 @@ func CreateGameManagerWidget(landingLinks []string) *widgets.QGroupBox {
 }
 
 func CreateLoadingScreen() *widgets.QSplashScreen {
-	pixmap := GetTeamPixmap("LAK")
+	pixmap := GetTeamPixmap("NHL")
 	splash := widgets.NewQSplashScreen(pixmap, core.Qt__Widget)
 	return splash
 }
