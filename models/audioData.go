@@ -24,7 +24,7 @@ func (streamQueue *AudioStreamQueue) PopStream() {
 	streamQueue.streamers = streamQueue.streamers[1:]
 }
 
-func (streamQueue *AudioStreamQueue) stream(samples [][2]float64) (n int, ok bool) {
+func (streamQueue *AudioStreamQueue) Stream(samples [][2]float64) (n int, ok bool) {
 	streamed := 0
 	for streamed < len(samples) {
 		if len(streamQueue.streamers) == 0 {
@@ -39,6 +39,7 @@ func (streamQueue *AudioStreamQueue) stream(samples [][2]float64) (n int, ok boo
 			streamQueue.PopStream()
 		}
 		streamed += n
-		return len(samples), true
+
 	}
+	return len(samples), true
 }

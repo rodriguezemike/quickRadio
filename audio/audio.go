@@ -108,19 +108,10 @@ func TranscodeToWave(aacFilepath string) string {
 	return wavFilepath
 }
 
-// This is a seq func, that will be broken up in its parallel go routines
-// I think were going to want to keep a timer to transode as many as possible
-// That is if len of our beep sequence is 5 then we have 50 seconds
-// At the end of that 50 we need to play a new sequence, with a done.
-// We can have multiple speakers, but I'd prefer to have multiple sequences or have a callback
-// that pulls in the next sequence of streamers/callback
-
-//We may lose speaker in some sort of scope issue. Keep an eye for out that./
-
 // For Testing
 func playWaveFile(wavFilePath string) {
 	streamer := InitializeRadio(wavFilePath)
-	PlayRadio(streamer)
+	PlayWave(streamer)
 }
 
 func DecodeWaveFile(wavFilePath string) (beep.StreamSeekCloser, beep.Format) {
@@ -136,27 +127,29 @@ func InitalizeRadioSpeaker(format beep.Format) {
 }
 
 func InitializeRadio(wavFilePath string) beep.StreamSeekCloser {
-	//This func should hold a bunch of other options if desired.
 	streamer, format := DecodeWaveFile(wavFilePath)
 	InitalizeRadioSpeaker(format)
 	return streamer
 }
 
-// For this we are going to follow Queue Example On, adding streamers to the list in order
-// This should work. Adding files as long as we have em or until the user presses a button.
-// Reason for this is the Streamers need to be dynamic.
-// https://github.com/gopxl/beep/wiki/Making-own-streamers
-func PlayRadio(streamer beep.StreamSeekCloser) {
+func PlayWave(streamer beep.StreamSeekCloser) {
 	done := make(chan bool)
 	defer streamer.Close()
 	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
-		//In this callback, we want to either add to the current beep sequence by
-		//Checking if we have more files to decode and decoding them adding the sequence
-		//To the play. We want to decode in parallel and add in serial. So this just
-		//wants pull the next streamer and play
-		//If we hit a 'done' state from the game landing then we are done
-		//And we can set our done bool to True.
 		done <- true
 	})))
 	<-done
+}
+
+func PlayRadio() {
+	//Built from the TestFunc TestStream in audio data queue
+	//We're Initalizing it
+	//Then checking to see if we have files to play in the tmp dir
+	//Decoding them
+	//Adding them to the queue
+	//And playing them for the total time we have in a sleep for this go routine
+	//Or half the sleep then decode and wait in a infinite loop checking to see
+	//The position of the streamer, when iti s done, lock the speaker and add the streamers
+	//Then do it again.
+	//Then adding more streamers
 }

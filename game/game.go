@@ -189,6 +189,3 @@ func DownloadAudioFiles(radioLink string) {
 	//Subdir will be quickRadio
 	//We can store em by game and build that string from the gamedata object.
 }
-func DownloadAudioFile(audioFile string) bool {
-	return false
-}
