@@ -131,37 +131,42 @@ func CreateGameWidgetFromLandinglink(landingLink string) *widgets.QGroupBox {
 	return gameWidget
 }
 
-func CreateGamesWidget(landingLinks []string) *widgets.QStackedLayout {
-	gameStackLayout := widgets.NewQStackedLayout()
+func CreateGamesWidget(landingLinks []string) *widgets.QStackedWidget {
+	gameStackWidget := widgets.NewQStackedWidget(nil)
 	for _, landingLink := range landingLinks {
 		gameWidget := CreateGameWidgetFromLandinglink(landingLink)
-		gameStackLayout.AddWidget(gameWidget)
+		gameStackWidget.AddWidget(gameWidget)
 	}
-	gameStackLayout.SetCurrentIndex(0)
-	return gameStackLayout
+	gameStackWidget.SetCurrentIndex(0)
+	return gameStackWidget
 }
 
 func CreateGameDetailsWidget() *widgets.QGroupBox {
 	return nil
 }
 
-func CreateGameDropdowns(landingLinks []string) *widgets.QVBoxLayout {
+func CreateGameDropdownsWidget(landingLinks []string) *widgets.QComboBox {
 	dropdown := widgets.NewQComboBox(nil)
+	dropdown.SetFixedWidth(600)
 	dropdown.AddItems(landingLinks)
-	vboxLayout := widgets.NewQVBoxLayout()
-	vboxLayout.AddWidget(dropdown, 0, core.Qt__AlignCenter)
 	//Here we Need to set the dropbox to switch the stacked widgets and call an update for fresh game data
-	return vboxLayout
+	return dropdown
 }
 
 func CreateGameManagerWidget(landingLinks []string) *widgets.QGroupBox {
-	gameDropdown := CreateGameDropdowns(landingLinks)
-	games := CreateGamesWidget(landingLinks)
 	gameManager := widgets.NewQGroupBox(nil)
-	gameManagerLayout := widgets.NewQVBoxLayout()
-	gameManagerLayout.AddChildLayout(gameDropdown)
-	gameManagerLayout.AddChildLayout(games)
-	gameManager.SetLayout(gameManagerLayout)
+	topbarLayout := widgets.NewQVBoxLayout()
+	gameStackLayout := widgets.NewQStackedLayout()
+	gameManagerLayout := widgets.NewQVBoxLayout2(gameManager)
+
+	gameManagerLayout.AddLayout(topbarLayout, 1)
+	gameManagerLayout.AddLayout(gameStackLayout, 1)
+	gameDropdown := CreateGameDropdownsWidget(landingLinks)
+	gamesStack := CreateGameWidget()
+
+	topbarLayout.AddWidget(gameDropdown, 1, core.Qt__AlignAbsolute)
+	gameStackLayout.AddWidget(gamesStack)
+
 	return gameManager
 }
 
