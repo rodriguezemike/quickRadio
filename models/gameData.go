@@ -1,6 +1,26 @@
 package models
 
-type GameDataStruct struct {
+type TeamData struct {
+	Id   int `json:"id"`
+	Name struct {
+		Default string `json:"default"`
+	} `json:"name"`
+	Abbrev    string `json:"abbrev"`
+	PlaceName struct {
+		Default string `json:"default"`
+	} `json:"placeName"`
+	PlaceNameWithPreposition struct {
+		Default string `json:"default"`
+		Fr      string `json:"fr"`
+	}
+	Score     int    `json:"score"`
+	Sog       int    `json:"sog"`
+	Logo      string `json:"logo"`
+	DarkLogo  string `json:"darkLogo"`
+	RadioLink string `json:"radioLink"`
+}
+
+type GameData struct {
 	Id             int    `json:"id"`
 	Season         int    `json:"season"`
 	GameType       int    `json:"gameType"`
@@ -28,52 +48,16 @@ type GameDataStruct struct {
 		Network        string `json:"network"`
 		SequenceNumber int    `json:"sequenceNumber"`
 	} `json:"tvBroadcasts"`
-	GameState         string `json:"gameState"`
-	GameScheduleState string `json:"gameScheduleState"`
-	AwayTeam          struct {
-		Id   int `json:"id"`
-		Name struct {
-			Default string `json:"default"`
-		} `json:"name"`
-		Abbrev    string `json:"abbrev"`
-		PlaceName struct {
-			Default string `json:"default"`
-		} `json:"placeName"`
-		PlaceNameWithPreposition struct {
-			Default string `json:"default"`
-			Fr      string `json:"fr"`
-		}
-		Score     int    `json:"score"`
-		Sog       int    `json:"sog"`
-		Logo      string `json:"logo"`
-		DarkLogo  string `json:"darkLogo"`
-		RadioLink string `json:"radioLink"`
-	} `json:"awayTeam"`
-	HomeTeam struct {
-		Id   int `json:"id"`
-		Name struct {
-			Default string `json:"default"`
-		} `json:"name"`
-		Abbrev    string `json:"abbrev"`
-		PlaceName struct {
-			Default string `json:"default"`
-		} `json:"placeName"`
-		PlaceNameWithPreposition struct {
-			Default string `json:"default"`
-			Fr      string `json:"fr"`
-		}
-		Score     int    `json:"score"`
-		Sog       int    `json:"sog"`
-		Logo      string `json:"logo"`
-		DarkLogo  string `json:"darkLogo"`
-		RadioLink string `json:"radioLink"`
-	} `json:"homeTeam"`
-	ShootoutInuse bool `json:"shootoutInuse"`
-	MaxPeriods    int  `json:"MaxPeriods"`
-	RegPeriods    int  `json:"regPeriods"`
-	OtInUse       bool `json:"otInUse"`
-	TiesInUse     bool `json:"tiesInUse"`
-	Summary       struct {
+	GameState         string   `json:"gameState"`
+	GameScheduleState string   `json:"gameScheduleState"`
+	AwayTeam          TeamData `json:"awayTeam"`
+	HomeTeam          TeamData `json:"homeTeam"`
+	ShootoutInuse     bool     `json:"shootoutInuse"`
+	MaxPeriods        int      `json:"MaxPeriods"`
+	RegPeriods        int      `json:"regPeriods"`
+	OtInUse           bool     `json:"otInUse"`
+	TiesInUse         bool     `json:"tiesInUse"`
+	Summary           struct {
 		IceSurface struct {
 			AwayTeam struct {
 				Forwards []struct {
@@ -213,27 +197,7 @@ type GameDataStruct struct {
 				HomeTeamDefendingSide string `json:"homeTeamDefendingSide"`
 			} `json:"goals"`
 		} `json:"scoring"`
-		Shootout []string `json:"shootout"`
-		/*
-			[{"star":1,"playerId":8475852,
-				"teamAbbrev":"CHI","headshot":"https://assets.nhle.com/mugs/nhl/20242025/CHI/8475852.png",
-				"name":{"default":"P. Mrazek","cs":"P. Mrázek","sk":"P. Mrázek"},
-				"sweaterNo":34,
-				"position":"G",
-				"goalsAgainstAverage":1.0,
-				"savePctg":0.972},
-			 {"star":2,"playerId":8484144,
-			 	"teamAbbrev":"CHI",
-				"headshot":"https://assets.nhle.com/mugs/nhl/20242025/CHI/8484144.png",
-				"name":{"default":"C. Bedard"},
-				"sweaterNo":98,"position":"C","goals":1,"assists":1,"points":2},
-			{"star":3,"playerId":8483493,
-				"teamAbbrev":"CHI",
-				"headshot":"https://assets.nhle.com/mugs/nhl/20242025/CHI/8483493.png",
-				"name":{"default":"F. Nazar"},
-				"sweaterNo":91,"position":"C","goals":1,"assists":0,"points":1
-			}]
-		*/
+		Shootout   []string `json:"shootout"`
 		ThreeStars []struct {
 			Star     int `json:"star"`
 			PlayerId int `json:"playerId"`

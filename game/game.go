@@ -71,8 +71,8 @@ func UIGetGameLandingLinks() []string {
 	return landingLinks
 }
 
-func UIGetGameDataObjects() []models.GameDataStruct {
-	var gameDataObjects []models.GameDataStruct
+func UIGetGameDataObjects() []models.GameData {
+	var gameDataObjects []models.GameData
 	landingLinks := UIGetGameLandingLinks()
 	for _, landingLink := range landingLinks {
 		gameDataObjects = append(gameDataObjects, GetGameDataObjectFromResponse(landingLink))
@@ -80,8 +80,8 @@ func UIGetGameDataObjects() []models.GameDataStruct {
 	return gameDataObjects
 }
 
-func UIGetGameDataObjectMap() map[string]models.GameDataStruct {
-	var gameDataMap = make(map[string]models.GameDataStruct)
+func UIGetGameDataObjectMap() map[string]models.GameData {
+	var gameDataMap = make(map[string]models.GameData)
 	landingLinks := UIGetGameLandingLinks()
 	for _, landingLink := range landingLinks {
 		gameDataMap[landingLink] = GetGameDataObjectFromResponse(landingLink)
@@ -94,15 +94,11 @@ func GetGameLandingLinks(html string, gamecenterBase string, gamecenterLanding s
 	gameRegexObject, _ := regexp.Compile(gameRegex)
 	allGames := gameRegexObject.FindAllString(html, -1)
 	currentDate := strings.ReplaceAll(time.Now().Format(time.DateOnly), "-", "/")
-	log.Println("allGames : ", allGames)
 	for _, possibleGame := range allGames {
 		if strings.Contains(possibleGame, currentDate) {
 			gamecenterLink := strings.Trim(possibleGame, "\"")
-			log.Println(strings.Split(gamecenterLink, "/"))
-			log.Println(gamecenterLanding)
 			landingLink := gamecenterBase + strings.Split(gamecenterLink, "/")[len(strings.Split(gamecenterLink, "/"))-1] + gamecenterLanding
 			gameLandingLinks = append(gameLandingLinks, landingLink)
-			log.Println(landingLink)
 		}
 	}
 	if len(gameLandingLinks) == 0 {
@@ -118,13 +114,9 @@ func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 	for _, game := range gameRegexs {
 		newGame := strings.Replace(game, "TEAMABBREV", strings.ToLower(teamAbbrev), -1)
 		log.Println(teamAbbrev)
-		log.Println("game: ", game)
-		log.Println("New Game :", newGame)
 		gameRegex, _ := regexp.Compile(newGame)
 		allGames := gameRegex.FindAllString(html, -1)
-		log.Println("allGames : ", allGames)
 		currentDate := strings.ReplaceAll(time.Now().Format(time.DateOnly), "-", "/")
-		log.Println("currentDate : ", currentDate)
 		for _, possibleGame := range allGames {
 			if strings.Contains(possibleGame, currentDate) {
 				gamecenterLink = strings.Trim(possibleGame, "\"")
@@ -137,14 +129,11 @@ func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 		return "", errors.New("couldnt find game center link")
 	}
 	gameLandingLink := gamecenterBase + strings.Split(gamecenterLink, "/")[len(strings.Split(gamecenterLink, "/"))-1] + gamecenterLanding
-	log.Println("gameLandingLink : ", gameLandingLink)
-	log.Println("func getGameLandingLink END")
-	log.Println("")
 	return gameLandingLink, nil
 }
 
-func GetGameDataObjectFromResponse(gameLandingLink string) models.GameDataStruct {
-	var gameData = &models.GameDataStruct{}
+func GetGameDataObjectFromResponse(gameLandingLink string) models.GameData {
+	var gameData = &models.GameData{}
 	resp, err := http.Get(gameLandingLink)
 	radioErrors.ErrorCheck(err)
 	defer resp.Body.Close()
@@ -155,7 +144,7 @@ func GetGameDataObjectFromResponse(gameLandingLink string) models.GameDataStruct
 	return *gameData
 }
 
-func GetRadioLink(gameData models.GameDataStruct, teamAbbrev string) (string, error) {
+func GetRadioLink(gameData models.GameData, teamAbbrev string) (string, error) {
 	if gameData.AwayTeam.Abbrev == teamAbbrev {
 		return gameData.AwayTeam.RadioLink, nil
 	} else if gameData.HomeTeam.Abbrev == teamAbbrev {

@@ -31,8 +31,8 @@ func GetTestFileObject(desiredFilename string) *os.File {
 	return fileObject
 }
 
-func GetGameDataObject() models.GameDataStruct {
-	var gameData = &models.GameDataStruct{}
+func GetGameDataObject() models.GameData {
+	var gameData = &models.GameData{}
 	_, filename, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(filepath.Dir(filename))
 	testFilePath := filepath.Join(dir, "assets", "tests", "gamelanding.json")

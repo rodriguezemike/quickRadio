@@ -54,9 +54,22 @@ func CreateTeamRadioStreamButton(teamAbbrev string, radioLink string) *widgets.Q
 	button.SetFixedHeight(320)
 	button.SetFixedWidth(320)
 	button.SetIconSize(button.FrameSize())
+	//button.SetCheckable(true)
 	if radioLink == "" {
 		radioLink = "Game Over/No Link"
 	}
+	/*
+		button.ConnectToggled(func(checked bool) {
+			//Here When it is not checked, check it, change the color
+			//Then loop through all the buttons disabling em
+			//Finally start the radio
+
+			//If it is checked
+			//Kill radio, uncheck, change color,
+			//Then loop through all the buttons enabling em
+
+		})
+	*/
 	button.ConnectClicked(func(bool) {
 		widgets.QMessageBox_Information(nil, "Radio Link for Streaming", radioLink, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 	})
@@ -93,30 +106,32 @@ func CreateDataLabel(data string) *widgets.QLabel {
 	return label
 }
 
-func CreateTeamWidgets(teamData struct{}) []*widgets.QWidget {
-	return nil
+func CreateTeamObjects(team models.TeamData) []widgets.QWidget_ITF {
+	return []widgets.QWidget_ITF{
+		CreateTeamRadioStreamButton(team.Abbrev, team.RadioLink),
+		CreateDataLabel(team.Abbrev),
+		CreateDataLabel(strconv.Itoa(team.Score)),
+	}
 }
 
-func CreateGameWidgetFromGameDataObject(gameDataObject models.GameDataStruct) *widgets.QGroupBox {
+func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData) *widgets.QGroupBox {
+	//We have the colors now, we want to set the background as a gradient using all four colors
+	//From the vs teams as the bg. From L TO R 0 -.49 Home team .51 -  Away Team .50 white
 	layout := widgets.NewQGridLayout(nil)
 	gameWidget := widgets.NewQGroupBox(nil)
-	homeTeamButton := CreateTeamRadioStreamButton(gameDataObject.HomeTeam.Abbrev, gameDataObject.HomeTeam.RadioLink)
-	homeTeamLabel := CreateDataLabel(gameDataObject.HomeTeam.Abbrev)
-	homeTeamScore := CreateDataLabel(strconv.Itoa(gameDataObject.HomeTeam.Score))
-	awayTeamButton := CreateTeamRadioStreamButton(gameDataObject.AwayTeam.Abbrev, gameDataObject.AwayTeam.RadioLink)
-	awayTeamLabel := CreateDataLabel(gameDataObject.AwayTeam.Abbrev)
-	awayTeamScore := CreateDataLabel(strconv.Itoa(gameDataObject.AwayTeam.Score))
-	gameStateLabel := CreateDataLabel(gameDataObject.GameState)
-	iceRinkLabel := CreateIceRinklabel()
-	layout.AddWidget2(homeTeamButton, 0, 0, core.Qt__AlignLeft)
-	layout.AddWidget2(homeTeamLabel, 1, 0, core.Qt__AlignCenter)
-	layout.AddWidget2(homeTeamScore, 2, 0, core.Qt__AlignCenter)
-	layout.AddWidget2(iceRinkLabel, 0, 1, core.Qt__AlignCenter)
-	layout.AddWidget2(gameStateLabel, 1, 1, core.Qt__AlignCenter)
-	layout.AddWidget2(awayTeamButton, 0, 2, core.Qt__AlignRight)
-	layout.AddWidget2(awayTeamLabel, 1, 2, core.Qt__AlignCenter)
-	layout.AddWidget2(awayTeamScore, 2, 2, core.Qt__AlignCenter)
+	homeTeamObjects := CreateTeamObjects(gameDataObject.HomeTeam)
+	awayTeamObjects := CreateTeamObjects(gameDataObject.AwayTeam)
+	for position, obj := range homeTeamObjects {
+		layout.AddWidget2(obj, position, 0, core.Qt__AlignCenter)
+	}
+	layout.AddWidget2(CreateIceRinklabel(), 0, 1, core.Qt__AlignCenter)
+	layout.AddWidget2(CreateDataLabel(gameDataObject.GameState), 1, 1, core.Qt__AlignCenter)
+	layout.AddWidget2(CreateDataLabel(strconv.Itoa(gameDataObject.PeriodDescriptor.Number)+" "+gameDataObject.Clock.TimeRemaining),
+		2, 1, core.Qt__AlignCenter)
 
+	for position, obj := range awayTeamObjects {
+		layout.AddWidget2(obj, position, 2, core.Qt__AlignCenter)
+	}
 	gameWidget.SetLayout(layout)
 	//Here we wnt to create the GameDetails widget which will be updated every so often
 	//Lastly we want to make sure our audio player 1. works and that the buttons are set up.
@@ -139,7 +154,7 @@ func CreateGameWidgetFromLandinglink(landingLink string) *widgets.QGroupBox {
 	return gameWidget
 }
 
-func CreateGamesWidget(gameDataObjects []models.GameDataStruct) *widgets.QStackedWidget {
+func CreateGamesWidget(gameDataObjects []models.GameData) *widgets.QStackedWidget {
 	gameStackWidget := widgets.NewQStackedWidget(nil)
 	for _, gameDataObject := range gameDataObjects {
 		gameWidget := CreateGameWidgetFromGameDataObject(gameDataObject)
@@ -153,7 +168,7 @@ func CreateGameDetailsWidget() *widgets.QGroupBox {
 	return nil
 }
 
-func CreateGameDropdownsWidget(gameDataObjects []models.GameDataStruct, gamesStack *widgets.QStackedWidget) *widgets.QComboBox {
+func CreateGameDropdownsWidget(gameDataObjects []models.GameData, gamesStack *widgets.QStackedWidget) *widgets.QComboBox {
 	var gameNames []string
 	for _, gameDataObject := range gameDataObjects {
 		gameNames = append(gameNames, gameDataObject.HomeTeam.Abbrev+" vs "+gameDataObject.AwayTeam.Abbrev)
@@ -167,7 +182,7 @@ func CreateGameDropdownsWidget(gameDataObjects []models.GameDataStruct, gamesSta
 	return dropdown
 }
 
-func CreateGameManagerWidget(gameDataObjects []models.GameDataStruct) *widgets.QGroupBox {
+func CreateGameManagerWidget(gameDataObjects []models.GameData) *widgets.QGroupBox {
 	gameManager := widgets.NewQGroupBox(nil)
 	topbarLayout := widgets.NewQVBoxLayout()
 	gameStackLayout := widgets.NewQStackedLayout()
