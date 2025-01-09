@@ -106,7 +106,7 @@ func GetGameLandingLinks(html string, gamecenterBase string, gamecenterLanding s
 		}
 	}
 	if len(gameLandingLinks) == 0 {
-		return nil, errors.New("couldnt find any game for today.")
+		return nil, errors.New("couldnt find any game for today")
 	}
 	return gameLandingLinks, nil
 }
@@ -197,16 +197,4 @@ func GetAudioFiles(m3uContents string) ([]string, error) {
 		return nil, errors.New("couldnt find audio files")
 	}
 	return audioFiles, nil
-}
-
-func DownloadAudioFiles(radioLink string) {
-	//Handler of downloading audio files to a temp file location for playback
-	//Should cross platform, we want to find the tmp location for each of the following
-	//windows, linux, default will be unix
-	//https://pkg.go.dev/runtime#GOOS is what will be used
-	//C:\Users\AppData\Local\Temp is for windows
-	// /tmp/ for linux
-	// Assume /tmp/ for everything else.
-	//Subdir will be quickRadio
-	//We can store em by game and build that string from the gamedata object.
 }
