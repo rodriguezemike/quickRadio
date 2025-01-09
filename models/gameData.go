@@ -76,16 +76,88 @@ type GameDataStruct struct {
 	Summary       struct {
 		IceSurface struct {
 			AwayTeam struct {
-				Forwards   []string `json:"forwards"`
-				Defensemen []string `json:"defensemen"`
-				Goalies    []string `json:"goalies"`
-				PenaltyBox []string `json:"penaltyBox"`
+				Forwards []struct {
+					PlayerId int `json:"playerId"`
+					Name     struct {
+						Default string `json:"default"`
+					}
+					SweaterNumber int    `json:"sweaterNumber"`
+					PositionCode  string `json:"positionCode"`
+					Headshot      string `json:"headShot"`
+					TotalSOI      int    `json:"totalSOI"`
+				} `json:"forwards"`
+				Defensemen []struct {
+					PlayerId int `json:"playerId"`
+					Name     struct {
+						Default string `json:"default"`
+					}
+					SweaterNumber int    `json:"sweaterNumber"`
+					PositionCode  string `json:"positionCode"`
+					Headshot      string `json:"headShot"`
+					TotalSOI      int    `json:"totalSOI"`
+				} `json:"defensemen"`
+				Goalies []struct {
+					PlayerId int `json:"playerId"`
+					Name     struct {
+						Default string `json:"default"`
+					}
+					SweaterNumber int    `json:"sweaterNumber"`
+					PositionCode  string `json:"positionCode"`
+					Headshot      string `json:"headShot"`
+					TotalSOI      int    `json:"totalSOI"`
+				} `json:"goalies"`
+				PenaltyBox []struct {
+					PlayerId int `json:"playerId"`
+					Name     struct {
+						Default string `json:"default"`
+					}
+					SweaterNumber int    `json:"sweaterNumber"`
+					PositionCode  string `json:"positionCode"`
+					Headshot      string `json:"headShot"`
+					TotalSOI      int    `json:"totalSOI"`
+				} `json:"penaltyBox"`
 			} `json:"awayTeam"`
 			HomeTeam struct {
-				Forwards   []string `json:"forwards"`
-				Defensemen []string `json:"defensemen"`
-				Goalies    []string `json:"goalies"`
-				PenaltyBox []string `json:"penaltyBox"`
+				Forwards []struct {
+					PlayerId int `json:"playerId"`
+					Name     struct {
+						Default string `json:"default"`
+					}
+					SweaterNumber int    `json:"sweaterNumber"`
+					PositionCode  string `json:"positionCode"`
+					Headshot      string `json:"headShot"`
+					TotalSOI      int    `json:"totalSOI"`
+				} `json:"forwards"`
+				Defensemen []struct {
+					PlayerId int `json:"playerId"`
+					Name     struct {
+						Default string `json:"default"`
+					}
+					SweaterNumber int    `json:"sweaterNumber"`
+					PositionCode  string `json:"positionCode"`
+					Headshot      string `json:"headShot"`
+					TotalSOI      int    `json:"totalSOI"`
+				} `json:"defensemen"`
+				Goalies []struct {
+					PlayerId int `json:"playerId"`
+					Name     struct {
+						Default string `json:"default"`
+					}
+					SweaterNumber int    `json:"sweaterNumber"`
+					PositionCode  string `json:"positionCode"`
+					Headshot      string `json:"headShot"`
+					TotalSOI      int    `json:"totalSOI"`
+				} `json:"goalies"`
+				PenaltyBox []struct {
+					PlayerId int `json:"playerId"`
+					Name     struct {
+						Default string `json:"default"`
+					}
+					SweaterNumber int    `json:"sweaterNumber"`
+					PositionCode  string `json:"positionCode"`
+					Headshot      string `json:"headShot"`
+					TotalSOI      int    `json:"totalSOI"`
+				} `json:"penaltyBox"`
 			} `json:"homeTeam"`
 		} `json:"IceSurface"`
 		Scoring []struct {
@@ -120,17 +192,65 @@ type GameDataStruct struct {
 				LeadingTeamAbbrev       struct {
 					Default string `json:"default"`
 				}
-				TimeInPeriod          string   `json:"timeInPeriod"`
-				ShotType              string   `json:"snap"`
-				GoalModifier          string   `json:"goalModifier"`
-				Assists               []string `json:"assists"`
-				PPTReplayUrl          string   `json:"pptReplayUrl"`
-				HomeTeamDefendingSide string   `json:"homeTeamDefendingSide"`
+				TimeInPeriod string `json:"timeInPeriod"`
+				ShotType     string `json:"snap"`
+				GoalModifier string `json:"goalModifier"`
+				Assists      []struct {
+					PlayerId  int `json:"playerId"`
+					FirstName struct {
+						Default string `json:"default"`
+					} `json:"firstName"`
+					LastName struct {
+						Default string `json:"default"`
+					} `json:"lastName"`
+					Name struct {
+						Default string `json:"default"`
+					} `json:"name"`
+					SweaterNumber int `json:"sweaterNumber"`
+					AssistsToDate int `json:"assistsToDate"`
+				} `json:"assists"`
+				PPTReplayUrl          string `json:"pptReplayUrl"`
+				HomeTeamDefendingSide string `json:"homeTeamDefendingSide"`
 			} `json:"goals"`
 		} `json:"scoring"`
-		Shootout   []string `json:"shootout"`
-		ThreeStars []string `json:"threeStars"`
-		Penalties  []struct {
+		Shootout []string `json:"shootout"`
+		/*
+			[{"star":1,"playerId":8475852,
+				"teamAbbrev":"CHI","headshot":"https://assets.nhle.com/mugs/nhl/20242025/CHI/8475852.png",
+				"name":{"default":"P. Mrazek","cs":"P. Mrázek","sk":"P. Mrázek"},
+				"sweaterNo":34,
+				"position":"G",
+				"goalsAgainstAverage":1.0,
+				"savePctg":0.972},
+			 {"star":2,"playerId":8484144,
+			 	"teamAbbrev":"CHI",
+				"headshot":"https://assets.nhle.com/mugs/nhl/20242025/CHI/8484144.png",
+				"name":{"default":"C. Bedard"},
+				"sweaterNo":98,"position":"C","goals":1,"assists":1,"points":2},
+			{"star":3,"playerId":8483493,
+				"teamAbbrev":"CHI",
+				"headshot":"https://assets.nhle.com/mugs/nhl/20242025/CHI/8483493.png",
+				"name":{"default":"F. Nazar"},
+				"sweaterNo":91,"position":"C","goals":1,"assists":0,"points":1
+			}]
+		*/
+		ThreeStars []struct {
+			Star     int `json:"star"`
+			PlayerId int `json:"playerId"`
+			Name     struct {
+				Default string `json:"default"`
+			}
+			SweaterNumber       int     `json:"sweaterNumber"`
+			HeadShot            string  `json:"headShot"`
+			Position            string  `json:"position"`
+			Goals               int     `json:"goals"`
+			Assists             int     `json:"assists"`
+			Points              int     `json:"points"`
+			TeamAbbrev          string  `json:"teamAbbrev"`
+			GoalsAgainstAverage float32 `json:"goalsAgainstAverage"`
+			SavePctg            float32 `json:"savePctg"`
+		} `json:"threeStars"`
+		Penalties []struct {
 			PeriodDescriptor struct {
 				Number               int    `json:"number"`
 				PeriodType           string `json:"periodType"`

@@ -71,6 +71,24 @@ func UIGetGameLandingLinks() []string {
 	return landingLinks
 }
 
+func UIGetGameDataObjects() []models.GameDataStruct {
+	var gameDataObjects []models.GameDataStruct
+	landingLinks := UIGetGameLandingLinks()
+	for _, landingLink := range landingLinks {
+		gameDataObjects = append(gameDataObjects, GetGameDataObjectFromResponse(landingLink))
+	}
+	return gameDataObjects
+}
+
+func UIGetGameDataObjectMap() map[string]models.GameDataStruct {
+	var gameDataMap = make(map[string]models.GameDataStruct)
+	landingLinks := UIGetGameLandingLinks()
+	for _, landingLink := range landingLinks {
+		gameDataMap[landingLink] = GetGameDataObjectFromResponse(landingLink)
+	}
+	return gameDataMap
+}
+
 func GetGameLandingLinks(html string, gamecenterBase string, gamecenterLanding string, gameRegex string) ([]string, error) {
 	var gameLandingLinks []string
 	gameRegexObject, _ := regexp.Compile(gameRegex)
@@ -80,8 +98,11 @@ func GetGameLandingLinks(html string, gamecenterBase string, gamecenterLanding s
 	for _, possibleGame := range allGames {
 		if strings.Contains(possibleGame, currentDate) {
 			gamecenterLink := strings.Trim(possibleGame, "\"")
-			gameLandingLinks = append(gameLandingLinks, gamecenterBase+strings.Split(gamecenterLink, "/")[len(strings.Split(gamecenterLink, "/"))-1]+gamecenterLanding)
-			log.Println(gamecenterLink)
+			log.Println(strings.Split(gamecenterLink, "/"))
+			log.Println(gamecenterLanding)
+			landingLink := gamecenterBase + strings.Split(gamecenterLink, "/")[len(strings.Split(gamecenterLink, "/"))-1] + gamecenterLanding
+			gameLandingLinks = append(gameLandingLinks, landingLink)
+			log.Println(landingLink)
 		}
 	}
 	if len(gameLandingLinks) == 0 {
