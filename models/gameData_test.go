@@ -9,8 +9,8 @@ import (
 	"testing"
 )
 
-func TestGameDataStruct(t *testing.T) {
-	var gameData = &GameDataStruct{}
+func TestGameData(t *testing.T) {
+	var gameData = &GameData{}
 	_, filename, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(filepath.Dir(filename))
 	testFilePath := filepath.Join(dir, "assets", "tests", "gamelanding.json")

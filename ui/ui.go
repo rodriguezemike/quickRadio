@@ -114,11 +114,35 @@ func CreateTeamObjects(team models.TeamData) []widgets.QWidget_ITF {
 	}
 }
 
-func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData) *widgets.QGroupBox {
-	//We have the colors now, we want to set the background as a gradient using all four colors
-	//From the vs teams as the bg. From L TO R 0 -.49 Home team .51 -  Away Team .50 white
+func CreateGamePalette(homeTeam string, awayTeam string, sweaterColors map[string][]string) *gui.QPalette {
+	//Aspecr Ratio and need to figure out window heights
+	homeTeamColors := sweaterColors[homeTeam]
+	awayTeamColors := sweaterColors[awayTeam]
+	//gradient := gui.NewQLinearGradient3(0.0, 0.0, float64(window.Width())*1.77, float64(window.Width())*1.77)
+	gradient := gui.NewQLinearGradient3(0.0, 0.0, float64(1920)*1.77, float64(1080)*1.77) //Holds the idea
+	gradient.SetColorAt(0.0, gui.NewQColor6(strings.TrimSpace(homeTeamColors[0])))
+	gradient.SetColorAt(0.13, gui.NewQColor6(strings.TrimSpace(homeTeamColors[0])))
+	gradient.SetColorAt(0.24, gui.NewQColor6(strings.TrimSpace(homeTeamColors[1])))
+	gradient.SetColorAt(0.39, gui.NewQColor6(strings.TrimSpace(homeTeamColors[1])))
+	gradient.SetColorAt(0.40, gui.NewQColor2(core.Qt__white))
+	gradient.SetColorAt(0.5, gui.NewQColor2(core.Qt__white))
+	gradient.SetColorAt(0.55, gui.NewQColor2(core.Qt__white))
+	gradient.SetColorAt(0.56, gui.NewQColor6(strings.TrimSpace(awayTeamColors[1])))
+	gradient.SetColorAt(0.60, gui.NewQColor6(strings.TrimSpace(awayTeamColors[1])))
+	gradient.SetColorAt(0.71, gui.NewQColor6(strings.TrimSpace(awayTeamColors[0])))
+	gradient.SetColorAt(1.0, gui.NewQColor6(strings.TrimSpace(awayTeamColors[0])))
+	gamePalette := gui.NewQPalette()
+	gamePalette.SetBrush(gui.QPalette__Window, gui.NewQBrush10(gradient))
+	return gamePalette
+}
+
+func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData, sweaterColors map[string][]string) *widgets.QGroupBox {
+	//Need to Set parent and child heirarchy to attempt to get proper palette working for this widget
+	//Might need to figure it out for stacked widget
 	layout := widgets.NewQGridLayout(nil)
 	gameWidget := widgets.NewQGroupBox(nil)
+	gamePalette := CreateGamePalette(gameDataObject.HomeTeam.Abbrev, gameDataObject.AwayTeam.Abbrev, sweaterColors)
+	gameWidget.SetPalette(gamePalette)
 	homeTeamObjects := CreateTeamObjects(gameDataObject.HomeTeam)
 	awayTeamObjects := CreateTeamObjects(gameDataObject.AwayTeam)
 	for position, obj := range homeTeamObjects {
@@ -154,10 +178,10 @@ func CreateGameWidgetFromLandinglink(landingLink string) *widgets.QGroupBox {
 	return gameWidget
 }
 
-func CreateGamesWidget(gameDataObjects []models.GameData) *widgets.QStackedWidget {
+func CreateGamesWidget(gameDataObjects []models.GameData, sweaterColors map[string][]string) *widgets.QStackedWidget {
 	gameStackWidget := widgets.NewQStackedWidget(nil)
 	for _, gameDataObject := range gameDataObjects {
-		gameWidget := CreateGameWidgetFromGameDataObject(gameDataObject)
+		gameWidget := CreateGameWidgetFromGameDataObject(gameDataObject, sweaterColors)
 		gameStackWidget.AddWidget(gameWidget)
 	}
 	gameStackWidget.SetCurrentIndex(0)
@@ -182,7 +206,7 @@ func CreateGameDropdownsWidget(gameDataObjects []models.GameData, gamesStack *wi
 	return dropdown
 }
 
-func CreateGameManagerWidget(gameDataObjects []models.GameData) *widgets.QGroupBox {
+func CreateGameManagerWidget(gameDataObjects []models.GameData, sweaterColors map[string][]string) *widgets.QGroupBox {
 	gameManager := widgets.NewQGroupBox(nil)
 	topbarLayout := widgets.NewQVBoxLayout()
 	gameStackLayout := widgets.NewQStackedLayout()
@@ -190,7 +214,7 @@ func CreateGameManagerWidget(gameDataObjects []models.GameData) *widgets.QGroupB
 
 	gameManagerLayout.AddLayout(topbarLayout, 1)
 	gameManagerLayout.AddLayout(gameStackLayout, 1)
-	gamesStack := CreateGamesWidget(gameDataObjects)
+	gamesStack := CreateGamesWidget(gameDataObjects, sweaterColors)
 	gameDropdown := CreateGameDropdownsWidget(gameDataObjects, gamesStack)
 
 	topbarLayout.AddWidget(gameDropdown, 1, core.Qt__AlignAbsolute)
@@ -209,11 +233,13 @@ func CreateAndRunUI() {
 	app := widgets.NewQApplication(len(os.Args), os.Args)
 	loadingScreen := CreateLoadingScreen()
 	loadingScreen.Show()
-	gameDataObjects := game.UIGetGameDataObjects()
-	gameManager := CreateGameManagerWidget(gameDataObjects)
-	loadingScreen.Finish(nil)
 	window := widgets.NewQMainWindow(nil, 0)
+	gameDataObjects := game.UIGetGameDataObjects()
+	sweaterColors := game.GetSweaterColors()
+	//ToDo : Pass in Window to all the things
+	gameManager := CreateGameManagerWidget(gameDataObjects, sweaterColors)
 	window.SetCentralWidget(gameManager)
+	loadingScreen.Finish(nil)
 	window.Show()
 	app.Exec()
 }

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -43,6 +44,25 @@ func GetGameHtml(linksMap map[string]interface{}) string {
 	)
 	radioErrors.ErrorCheck(err)
 	return html
+}
+
+func GetSweaterColors() map[string][]string {
+	sweaterColors := make(map[string][]string)
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filepath.Dir(filename))
+	path := filepath.Join(dir, "assets", "teams", "sweater_colors.txt")
+
+	fileObject, err := os.Open(path)
+	radioErrors.ErrorCheck(err)
+	defer fileObject.Close()
+	scanner := bufio.NewScanner(fileObject)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		lineColors := strings.Split(scanner.Text(), ";")
+		sweaterColors[lineColors[0]] = lineColors[1:]
+	}
+
+	return sweaterColors
 }
 
 func GetLinksJson() map[string]interface{} {
