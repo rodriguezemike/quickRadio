@@ -189,6 +189,8 @@ func CreateLoadingScreen() *widgets.QSplashScreen {
 
 func CreateAndRunUI() {
 	app := widgets.NewQApplication(len(os.Args), os.Args)
+	app.SetApplicationDisplayName("QuickRadio")
+	app.SetWindowIcon(GetTeamIcon("NHLF"))
 	loadingScreen := CreateLoadingScreen()
 	loadingScreen.Show()
 	window := widgets.NewQMainWindow(nil, 0)
