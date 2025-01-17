@@ -60,35 +60,3 @@ func TestGetRadioLink(t *testing.T) {
 		t.Fatalf(`GetRadioLink(GameDataObject, testAbbrev) = %q, %v, want match for %#q, nil`, radioLink, err, want)
 	}
 }
-
-func TestGetQualityStreamSlug(t *testing.T) {
-	want := "lak-radio_192K.m3u8"
-	wantedAudioQuality := "192K"
-	testFile := GetTestFileObject("lak-radio.m3u8")
-	byteValue, _ := io.ReadAll(testFile)
-	contents := string(byteValue)
-	qualityString, err := GetQualityStreamSlug(contents, wantedAudioQuality)
-	if want != qualityString {
-		t.Fatalf(`GetQualityStreamSlug(contents, wantedAudioQuality) = %q, %v, want match for %#q, nil`, qualityString, err, want)
-	}
-}
-
-func TestGetAudioFiles(t *testing.T) {
-	want := []string{"lak-radio_192K/00021/lak-radio_192K_00105.aac",
-		"lak-radio_192K/00021/lak-radio_192K_00106.aac",
-		"lak-radio_192K/00021/lak-radio_192K_00107.aac",
-		"lak-radio_192K/00021/lak-radio_192K_00108.aac",
-		"lak-radio_192K/00021/lak-radio_192K_00109.aac",
-		"lak-radio_192K/00021/lak-radio_192K_00110.aac",
-		"lak-radio_192K/00021/lak-radio_192K_00111.aac",
-		"lak-radio_192K/00021/lak-radio_192K_00112.aac",
-		"lak-radio_192K/00021/lak-radio_192K_00113.aac",
-		"lak-radio_192K/00021/lak-radio_192K_00114.aac"}
-	testFile := GetTestFileObject("lak-radio_192k.m3u8")
-	byteValue, _ := io.ReadAll(testFile)
-	contents := string(byteValue)
-	audioFiles, err := GetAudioFiles(contents)
-	if sliceCompare(audioFiles, want) == false {
-		t.Fatalf(`GetQualityStreamSlug(contents, wantedAudioQuality) = %q, %v, want match for %#q, nil`, audioFiles, err, want)
-	}
-}
