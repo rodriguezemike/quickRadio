@@ -1,11 +1,12 @@
 package ui
 
 import (
-	"log"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"quickRadio/game"
 	"quickRadio/models"
+	"quickRadio/radioErrors"
 	"runtime"
 	"strconv"
 	"strings"
@@ -87,10 +88,18 @@ func CreateTeamRadioStreamButton(teamAbbrev string, radioLink string, sweaterCol
 	return button
 }
 
-func CreateIceRinklabel(gameWidget *widgets.QGroupBox) *widgets.QLabel {
+func CreateIceRinklabel(gameWidget *widgets.QGroupBox, homeTeamAbbrev models.TeamData) *widgets.QLabel {
 	iceRinkPixmap := GetIceRinkPixmap()
+	homeTeamPixmap := GetTeamPixmap(homeTeamAbbrev.Abbrev)
+	compositePixmap := gui.NewQPixmap2(iceRinkPixmap.Size())
+	compositePixmap.Fill(gui.QColor_FromRgba(0))
+	painter := gui.NewQPainter2(compositePixmap)
+	painter.DrawPixmap9(0, 0, iceRinkPixmap)
+	painter.DrawPixmap11((iceRinkPixmap.Size().Width()/2)-30, (iceRinkPixmap.Size().Height()/2)-35, 64, 64, homeTeamPixmap)
+	painter.SetOpacity(.7)
+	painter.DrawPixmap9(0, 0, iceRinkPixmap)
 	iceRinkLabel := widgets.NewQLabel2("", gameWidget, core.Qt__Widget)
-	iceRinkLabel.SetPixmap(iceRinkPixmap)
+	iceRinkLabel.SetPixmap(compositePixmap)
 	return iceRinkLabel
 }
 
@@ -119,7 +128,7 @@ func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData, sweaterC
 	for position, obj := range homeTeamObjects {
 		layout.AddWidget2(obj, position, 0, core.Qt__AlignCenter)
 	}
-	layout.AddWidget2(CreateIceRinklabel(gameWidget), 0, 1, core.Qt__AlignCenter)
+	layout.AddWidget2(CreateIceRinklabel(gameWidget, gameDataObject.HomeTeam), 0, 1, core.Qt__AlignCenter)
 	layout.AddWidget2(CreateDataLabel(gameDataObject.GameState, gameWidget), 1, 1, core.Qt__AlignCenter)
 	layout.AddWidget2(CreateDataLabel(strconv.Itoa(gameDataObject.PeriodDescriptor.Number)+" "+gameDataObject.Clock.TimeRemaining, gameWidget),
 		2, 1, core.Qt__AlignCenter)
@@ -127,10 +136,9 @@ func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData, sweaterC
 	for position, obj := range awayTeamObjects {
 		layout.AddWidget2(obj, position, 2, core.Qt__AlignCenter)
 	}
+	layout.AddWidget2(CreateGameDetailsWidgetFromGameDataObject(gameDataObject, gameWidget), 3, 1, core.Qt__AlignCenter)
 	gameWidget.SetLayout(layout)
 	gameWidget.SetStyleSheet(CreateGameStylesheet(gameDataObject.HomeTeam.Abbrev, gameDataObject.AwayTeam.Abbrev, sweaterColors))
-	log.Println(gameWidget.StyleSheet())
-	//Here we wnt to create the GameDetails widget which will be updated every so often
 	//Lastly we want to make sure our audio player 1. works and that the buttons are set up.
 	return gameWidget
 }
@@ -145,8 +153,22 @@ func CreateGamesWidget(gameDataObjects []models.GameData, sweaterColors map[stri
 	return gameStackWidget
 }
 
-func CreateGameDetailsWidget() *widgets.QGroupBox {
-	return nil
+func CreateGameDetailsWidgetFromGameDataObject(gamedataObject models.GameData, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
+	//For this use MarshalIndent just to see the data
+	//This will also become part of the Update
+	gameDetailsJson, err := json.MarshalIndent(gamedataObject, "", "\t")
+	radioErrors.ErrorCheck(err)
+	gameDetailsLayout := widgets.NewQGridLayout(nil)
+	gameDetailsWidget := widgets.NewQGroupBox(gameWidget)
+	scrollableArea := widgets.NewQScrollArea(gameDetailsWidget)
+	jsonDumpLabel := widgets.NewQLabel2("Test", scrollableArea, core.Qt__Window)
+	jsonDumpLabel.SetWordWrap(true)
+	jsonDumpLabel.SetText(string(gameDetailsJson))
+	scrollableArea.SetWidgetResizable(true)
+	scrollableArea.SetWidget(jsonDumpLabel)
+	gameDetailsLayout.AddWidget(scrollableArea)
+	gameDetailsWidget.SetLayout(gameDetailsLayout)
+	return gameDetailsWidget
 }
 
 func CreateGameDropdownsWidget(gameDataObjects []models.GameData, gamesStack *widgets.QStackedWidget, gameManager *widgets.QGroupBox) *widgets.QComboBox {
@@ -185,6 +207,13 @@ func CreateLoadingScreen() *widgets.QSplashScreen {
 	pixmap := GetTeamPixmap("NHL")
 	splash := widgets.NewQSplashScreen(pixmap, core.Qt__Widget)
 	return splash
+}
+
+func UpdateUI(gameManager *widgets.QGroupBox) {
+	//Update ALl UI elements. Or figure out how to add a Slot to update them every so often.
+	//Do this per widget. Its better. use concuurency and all that jazz.
+	gameDataObjects := game.UIGetGameDataObjects()
+	println(gameDataObjects)
 }
 
 func CreateAndRunUI() {
