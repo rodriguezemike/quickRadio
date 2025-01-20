@@ -2,10 +2,14 @@ package audio
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"os/user"
+	"quickRadio/models"
 	"quickRadio/radioErrors"
 	"runtime"
 	"strings"
@@ -28,6 +32,7 @@ import (
 //We can sort this out this in testing and retieration.
 
 func DownloadAndTranscodeAACs(paths []string) []string {
+	log.Println(paths)
 	wavpaths := make([]string, len(paths))
 	var workGroup sync.WaitGroup
 	for i := 0; i < len(paths); i++ {
@@ -37,7 +42,8 @@ func DownloadAndTranscodeAACs(paths []string) []string {
 			defer workGroup.Done()
 			localpath, err := DownloadAAC(path)
 			radioErrors.ErrorCheck(err)
-			wavpaths = append(wavpaths, TranscodeToWave(localpath))
+			wavPath := TranscodeToWave(localpath)
+			wavpaths = append(wavpaths, wavPath)
 		}(paths[i])
 		workGroup.Wait()
 	}
@@ -71,11 +77,19 @@ func DoesFileExist(filepath string) error {
 
 func DownloadAAC(aacRequestPath string) (string, error) {
 	//We want to Move the base os tmp directories into the links.json (Program config.)
+	log.Println("Downloading ", aacRequestPath)
+	log.Println(runtime.GOOS)
+	user, err := user.Current()
+	radioErrors.ErrorCheck(err)
 	filename := strings.Split(aacRequestPath, "/")[len(strings.Split(aacRequestPath, "/"))-1]
 	if runtime.GOOS == "windows" {
-		directory := strings.Join(strings.Split(aacRequestPath, "/")[4:], "\\")
-		filepath := "C:\\Users\\AppData\\Local\\Temp" + "\\" + "QuickRadio" + "\\" + directory + "\\" + filename
-		cmd := exec.Command("wget", aacRequestPath, "-OutFile", filepath)
+		profile := strings.Split(user.Username, "\\")[1]
+		directory := strings.Join(strings.Split(aacRequestPath, "/")[4:len(strings.Split(aacRequestPath, "/"))-1], "\\")
+		tempDirectory := fmt.Sprintf("C:\\Users\\%s\\AppData\\Local\\Temp"+"\\"+"QuickRadio", profile) + "\\" + directory
+		CreateTmpDirectory(tempDirectory)
+		filepath := tempDirectory + "\\" + filename
+		log.Println("Filepath ", filepath)
+		cmd := exec.Command("curl", "-o", filepath, aacRequestPath)
 		_, err := cmd.CombinedOutput()
 		radioErrors.ErrorCheck(err)
 		err = DoesFileExist(filepath)
@@ -83,7 +97,9 @@ func DownloadAAC(aacRequestPath string) (string, error) {
 		return filepath, nil
 	} else if runtime.GOOS == "linux" {
 		directory := strings.Join(strings.Split(aacRequestPath, "/")[4:], "/")
-		filepath := "/tmp/" + "QuickRadio" + "/" + directory + "/" + filename
+		tempDirectory := "/tmp/" + "QuickRadio" + "/" + directory + "/"
+		filepath := tempDirectory + "/" + filename
+		log.Println("Filepath ", filepath)
 		cmd := exec.Command("wget", aacRequestPath, filepath)
 		_, err := cmd.CombinedOutput()
 		radioErrors.ErrorCheck(err)
@@ -92,7 +108,9 @@ func DownloadAAC(aacRequestPath string) (string, error) {
 		return filepath, nil
 	} else {
 		directory := strings.Join(strings.Split(aacRequestPath, "/")[4:], "/")
-		filepath := "/tmp/" + "QuickRadio" + "/" + directory + "/" + filename
+		tempDirectory := "/tmp/" + "QuickRadio" + "/" + directory + "/"
+		filepath := tempDirectory + "/" + filename
+		log.Println("Filepath ", filepath)
 		cmd := exec.Command("wget", aacRequestPath, filepath)
 		_, err := cmd.CombinedOutput()
 		radioErrors.ErrorCheck(err)
@@ -114,8 +132,10 @@ func playWaveFile(wavFilePath string) {
 	PlayWave(streamer)
 }
 
-func DecodeWaveFile(wavFilePath string) (beep.StreamSeekCloser, beep.Format) {
-	f, err := os.Open(wavFilePath)
+func DecodeWaveFile(wavFilepath string) (beep.StreamSeekCloser, beep.Format) {
+	wavFilepath = strings.TrimSpace(wavFilepath)
+	log.Println("Decoding ", wavFilepath)
+	f, err := os.Open(wavFilepath)
 	radioErrors.ErrorCheck(err)
 	streamer, format, err := wav.Decode(f)
 	radioErrors.ErrorCheck(err)
@@ -144,7 +164,6 @@ func GetQualityStreamSlugFromResponse(radioLink string, audioQuality string) str
 	resp, err := http.Get(radioLink)
 	radioErrors.ErrorCheck(err)
 	defer resp.Body.Close()
-	//This will just get the file from download so this is a placeholder for now.
 	byteValue, err := io.ReadAll(resp.Body)
 	radioErrors.ErrorCheck(err)
 	audioQualitySlug, err := GetQualityStreamSlug(string(byteValue), audioQuality)
@@ -161,7 +180,7 @@ func GetQualityStreamSlug(m3uContents string, audioQuality string) (string, erro
 	return "", errors.New("couldnt find audio quality string")
 }
 
-func GetAudioFiles(m3uContents string) ([]string, error) {
+func GetAACSlugsFromQualityFile(m3uContents string) ([]string, error) {
 	var audioFiles []string
 	for _, line := range strings.Split(m3uContents, "\n") {
 		if !strings.Contains(line, "#") && strings.Contains(line, ".aac") {
@@ -191,6 +210,29 @@ func PlayRadio(wavPaths []string) {
 	//The position of the streamer, when iti s done, lock the speaker and add the streamers
 	//Then do it again.
 	//Then adding more streamers
+	//Here we should hook into our underlying concurency looking for new wav files
+	var audioDataQueue models.AudioStreamQueue
+	var streamers []beep.StreamSeekCloser
+	initalized := false
+	for _, wavPath := range wavPaths {
+		if strings.HasSuffix(wavPath, ".wav") {
+			streamer, format := DecodeWaveFile(wavPath)
+			if !initalized {
+				InitalizeRadioSpeaker(format)
+				speaker.Play(&audioDataQueue)
+				initalized = true
+			}
+			streamers = append(streamers, streamer)
+		}
+	}
+	for _, streamer := range streamers {
+		defer streamer.Close()
+		speaker.Lock()
+		audioDataQueue.Add(streamer)
+		speaker.Unlock()
+		time.Sleep(10 * time.Second)
+		streamer.Close()
+	}
 }
 
 func StopRadio() {
@@ -207,20 +249,39 @@ func KillFun() {
 	//EmptyTmpFolder?
 }
 
-func buildQualityRadioPath(radioLink string, qualitySlug string) string {
-	return ""
+func BuildQualityRadioPath(radioLink string, qualitySlug string) string {
+	return strings.Join(append(strings.Split(radioLink, "/")[:len(strings.Split(radioLink, "/"))-1], qualitySlug), "/")
 }
 
+func BuildAACRadioPath(radioQualityLink string, aacFile string) string {
+	return strings.Join(append(strings.Split(radioQualityLink, "/")[:len(strings.Split(radioQualityLink, "/"))-1], aacFile), "/")
+}
 func GetAACPaths(qualityRadioPath string) []string {
-	return []string{"TODO", "TODO"}
+	audioFilepaths := []string{}
+	resp, err := http.Get(qualityRadioPath)
+	radioErrors.ErrorCheck(err)
+	defer resp.Body.Close()
+	byteValue, err := io.ReadAll(resp.Body)
+	radioErrors.ErrorCheck(err)
+	audioSlugs, err := GetAACSlugsFromQualityFile(string(byteValue))
+	for _, audioSlug := range audioSlugs {
+		audioFilepaths = append(audioFilepaths, BuildAACRadioPath(qualityRadioPath, audioSlug))
+	}
+	radioErrors.ErrorCheck(err)
+	return audioFilepaths
 }
 
 func StartFun(radioLink string) {
 	//Check where we're at as we may want to resume fun instead of starting over
+	log.Println("In Start Fun Func, radioLink ", radioLink)
 	qualitySlug := GetQualityStreamSlugFromResponse(radioLink, "192K")
+	log.Println("Retrieved Quality Slug ", qualitySlug)
 	//ToDo: Once we have the Slug we want to build the name of the link we need to grap
-	qualityRadioPath := buildQualityRadioPath(radioLink, qualitySlug)
+	qualityRadioPath := BuildQualityRadioPath(radioLink, qualitySlug)
+	log.Println("Quality Radio Path ", qualityRadioPath)
 	aacPaths := GetAACPaths(qualityRadioPath)
+	log.Println("AAC Paths ", aacPaths)
 	wavPaths := DownloadAndTranscodeAACs(aacPaths)
+	log.Println("Wav Paths ", wavPaths)
 	PlayRadio(wavPaths)
 }

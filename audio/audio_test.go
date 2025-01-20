@@ -5,9 +5,36 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"quickRadio/models"
 	"runtime"
 	"testing"
+	"time"
+
+	"github.com/gopxl/beep/speaker"
 )
+
+func TestStream(t *testing.T) {
+	var audioDataQueue models.AudioStreamQueue
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filepath.Dir(filename))
+	testInput := filepath.Join(dir, "assets", "tests", "game_192k_00001.wav")
+	if _, err := os.Stat(testInput); errors.Is(err, os.ErrNotExist) {
+		testAAC := filepath.Join(dir, "assets", "tests", "game_192k_00001.aac")
+		testInput = TranscodeToWave(testAAC)
+	}
+	streamer := InitializeRadio(testInput)
+	defer streamer.Close()
+	speaker.Play(&audioDataQueue)
+	for i := 0; i <= 1; i++ {
+		speaker.Lock()
+		audioDataQueue.Add(streamer)
+		speaker.Unlock()
+		time.Sleep(10 * time.Second)
+		streamer.Seek(0)
+	}
+	streamer.Close()
+	os.Remove(testInput)
+}
 
 func GetTestFileObject(desiredFilename string) *os.File {
 	_, filename, _, _ := runtime.Caller(0)
@@ -87,7 +114,7 @@ func TestGetAudioFiles(t *testing.T) {
 	testFile := GetTestFileObject("lak-radio_192k.m3u8")
 	byteValue, _ := io.ReadAll(testFile)
 	contents := string(byteValue)
-	audioFiles, err := GetAudioFiles(contents)
+	audioFiles, err := GetAACSlugsFromQualityFile(contents)
 	if sliceCompare(audioFiles, want) == false {
 		t.Fatalf(`GetQualityStreamSlug(contents, wantedAudioQuality) = %q, %v, want match for %#q, nil`, audioFiles, err, want)
 	}

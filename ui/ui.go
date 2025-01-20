@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"quickRadio/audio"
 	"quickRadio/game"
 	"quickRadio/models"
 	"quickRadio/radioErrors"
@@ -59,32 +60,13 @@ func CreateTeamRadioStreamButton(teamAbbrev string, radioLink string, sweaterCol
 	button.SetFixedWidth(320)
 	button.SetIconSize(button.FrameSize())
 	button.SetCheckable(true)
-	if radioLink == "" {
-		radioLink = "Game Over/No Link"
-	}
-	button.ConnectClicked(func(bool) {
-		widgets.QMessageBox_Information(nil, "Radio Link for Streaming", radioLink, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+	button.ConnectToggled(func(onCheck bool) {
+		if onCheck {
+			go audio.StartFun(radioLink)
+		} else {
+			audio.KillFun()
+		}
 	})
-	/*
-				button.ConnectToggled(func(checked bool) {
-		 			if checked == true {
-						audio.KillFun()
-						//Find A Way to get all buttons of qpush button type in order to disable em all
-							for _, someObject := range window.CentralWidget().Children(){
-								if strings.Contains(someObject.ObjectName(), "radio") && !strings.Contains(someObject.ObjectName(), teamAbbrev){
-
-								}
-							}
-					} else {
-						audio.StartFun(radioLink)
-							for _, someButton := range window.CentralWidget().FindChildren(widgets.QPushButton) {
-								if someButton != button && strings.Contains(someButton.AccessibleName(), "radio") {
-									someButton.SetEnabled(false)
-								}
-							}
-					}
-				})
-	*/
 	return button
 }
 
@@ -112,30 +94,32 @@ func CreateDataLabel(data string, gameWidget *widgets.QGroupBox) *widgets.QLabel
 	return label
 }
 
-func CreateTeamObjects(team models.TeamData, sweaterColors map[string][]string, gameWidget *widgets.QGroupBox) []widgets.QWidget_ITF {
-	return []widgets.QWidget_ITF{
-		CreateTeamRadioStreamButton(team.Abbrev, team.RadioLink, sweaterColors, gameWidget),
-		CreateDataLabel(team.Abbrev, gameWidget),
-		CreateDataLabel(strconv.Itoa(team.Score), gameWidget),
-	}
+func CreateTeamWidget(team models.TeamData, sweaterColors map[string][]string, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
+	teamLayout := widgets.NewQVBoxLayout2(nil)
+	teamWidget := widgets.NewQGroupBox(gameWidget)
+	teamLayout.AddWidget(CreateTeamRadioStreamButton(team.Abbrev, team.RadioLink, sweaterColors, gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(CreateDataLabel(team.Abbrev, gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(CreateDataLabel(strconv.Itoa(team.Score), gameWidget), 0, core.Qt__AlignCenter)
+	teamWidget.SetLayout(teamLayout)
+	return teamWidget
+}
+
+func CreateIceCenterWidget(gameDataObject models.GameData, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
+	layout := widgets.NewQVBoxLayout2(nil)
+	centerIceWidget := widgets.NewQGroupBox(gameWidget)
+	layout.AddWidget(CreateIceRinklabel(gameWidget, gameDataObject.HomeTeam), 0, core.Qt__AlignCenter)
+	layout.AddWidget(CreateDataLabel(gameDataObject.GameState+" - "+"P"+strconv.Itoa(gameDataObject.PeriodDescriptor.Number)+" "+gameDataObject.Clock.TimeRemaining, gameWidget),
+		0, core.Qt__AlignCenter)
+	centerIceWidget.SetLayout(layout)
+	return centerIceWidget
 }
 
 func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData, sweaterColors map[string][]string, gameStackWidget *widgets.QStackedWidget) *widgets.QGroupBox {
 	layout := widgets.NewQGridLayout(nil)
 	gameWidget := widgets.NewQGroupBox(gameStackWidget)
-	homeTeamObjects := CreateTeamObjects(gameDataObject.HomeTeam, sweaterColors, gameWidget)
-	awayTeamObjects := CreateTeamObjects(gameDataObject.AwayTeam, sweaterColors, gameWidget)
-	for position, obj := range homeTeamObjects {
-		layout.AddWidget2(obj, position, 0, core.Qt__AlignCenter)
-	}
-	layout.AddWidget2(CreateIceRinklabel(gameWidget, gameDataObject.HomeTeam), 0, 1, core.Qt__AlignCenter)
-	layout.AddWidget2(CreateDataLabel(gameDataObject.GameState, gameWidget), 1, 1, core.Qt__AlignCenter)
-	layout.AddWidget2(CreateDataLabel(strconv.Itoa(gameDataObject.PeriodDescriptor.Number)+" "+gameDataObject.Clock.TimeRemaining, gameWidget),
-		2, 1, core.Qt__AlignCenter)
-
-	for position, obj := range awayTeamObjects {
-		layout.AddWidget2(obj, position, 2, core.Qt__AlignCenter)
-	}
+	layout.AddWidget2(CreateTeamWidget(gameDataObject.HomeTeam, sweaterColors, gameWidget), 0, 0, core.Qt__AlignCenter)
+	layout.AddWidget2(CreateIceCenterWidget(gameDataObject, gameWidget), 0, 1, core.Qt__AlignCenter)
+	layout.AddWidget2(CreateTeamWidget(gameDataObject.AwayTeam, sweaterColors, gameWidget), 0, 2, core.Qt__AlignCenter)
 	layout.AddWidget2(CreateGameDetailsWidgetFromGameDataObject(gameDataObject, gameWidget), 3, 1, core.Qt__AlignCenter)
 	gameWidget.SetLayout(layout)
 	gameWidget.SetStyleSheet(CreateGameStylesheet(gameDataObject.HomeTeam.Abbrev, gameDataObject.AwayTeam.Abbrev, sweaterColors))

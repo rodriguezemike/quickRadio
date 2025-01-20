@@ -1,36 +1,10 @@
 package models
 
-import (
-	"errors"
-	"os"
-	"path/filepath"
-	"quickRadio/audio"
-	"runtime"
-	"testing"
-	"time"
+import "testing"
 
-	"github.com/gopxl/beep/speaker"
-)
-
-func TestStream(t *testing.T) {
-	var audioDataQueue AudioStreamQueue
-	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filepath.Dir(filename))
-	testInput := filepath.Join(dir, "assets", "tests", "game_192k_00001.wav")
-	if _, err := os.Stat(testInput); errors.Is(err, os.ErrNotExist) {
-		testAAC := filepath.Join(dir, "assets", "tests", "game_192k_00001.aac")
-		testInput = audio.TranscodeToWave(testAAC)
+func TestAudioData(t *testing.T) {
+	var audioQueue = &AudioStreamQueue{}
+	if audioQueue == nil {
+		t.Fatalf(`Error creating struct AudioStreamQueue.`)
 	}
-	streamer := audio.InitializeRadio(testInput)
-	defer streamer.Close()
-	speaker.Play(&audioDataQueue)
-	for i := 0; i <= 1; i++ {
-		speaker.Lock()
-		audioDataQueue.Add(streamer)
-		speaker.Unlock()
-		time.Sleep(10 * time.Second)
-		streamer.Seek(0)
-	}
-	streamer.Close()
-	os.Remove(testInput)
 }
