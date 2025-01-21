@@ -23,15 +23,6 @@ import (
 	ffmpeg_go "github.com/u2takey/ffmpeg-go"
 )
 
-//For now, work with the sync group, this may not work
-//As they may not be a delay in all of this and so we may get breaks
-//Unless we want to add in a buffer where we download first and then
-//wait and then always be 1 whole file behind in playback.
-//This does happen in mobile vs desktop apps.
-//When we return this, we may want to wait until the whole manifest is done
-//Looking at the polling pattern it looks like it cracks open the file every time.
-//We can sort this out this in testing and retieration.
-
 func DownloadAndTranscodeAACs(paths []string) []string {
 	wavpaths := make([]string, len(paths))
 	var workGroup sync.WaitGroup
@@ -223,7 +214,9 @@ func GetAACSlugsFromQualityFile(m3uContents string) ([]string, error) {
 }
 
 func PlayRadio(wavPaths []string, qualityLink string) {
-	//Make lists efficient yo.
+	//After so many files, a new folder is made
+	//Look for the new one on update. Or make a different folder based on Game Name
+	//Then subdir it to team name.
 	var audioDataQueue models.AudioStreamQueue
 	var streamers []beep.StreamSeekCloser
 	var radioDirectory string

@@ -64,7 +64,7 @@ func CreateTeamRadioStreamButton(teamAbbrev string, radioLink string, sweaterCol
 		if onCheck {
 			go audio.StartFun(radioLink)
 		} else {
-			go audio.StopRadio()
+			go audio.KillFun()
 		}
 	})
 	return button
@@ -82,6 +82,15 @@ func CreateIceRinklabel(gameWidget *widgets.QGroupBox, homeTeamAbbrev models.Tea
 	painter.DrawPixmap9(0, 0, iceRinkPixmap)
 	iceRinkLabel := widgets.NewQLabel2("", gameWidget, core.Qt__Widget)
 	iceRinkLabel.SetPixmap(compositePixmap)
+	//We want new ice pixmap. Find a good one.
+	//Here we need to Draw the little circles with hovers on the Ice.
+	//Take the total of players then divide by the area on the ice
+	//Place approp
+	//Do this for each level on the ice.
+	//Look into edge data to draw circles. May not be avail.
+	//Finish drawing the Abbrevs on the Sides of the ICe. Lets take it to the between the dots instead of the Brodeur Zone.
+	//Do we want all mugs and call em from disc?
+	//It would be kinda cool to actually Draw on the ice. Maybe for later?
 	return iceRinkLabel
 }
 
@@ -123,7 +132,12 @@ func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData, sweaterC
 	layout.AddWidget2(CreateGameDetailsWidgetFromGameDataObject(gameDataObject, gameWidget), 3, 1, core.Qt__AlignCenter)
 	gameWidget.SetLayout(layout)
 	gameWidget.SetStyleSheet(CreateGameStylesheet(gameDataObject.HomeTeam.Abbrev, gameDataObject.AwayTeam.Abbrev, sweaterColors))
-	//Lastly we want to make sure our audio player 1. works and that the buttons are set up.
+	//This is where we want to set up out timer event, Basically update the whole Game every Second. We're going to do this over the stack.
+	//We can do more than a second updates. But this is weird, we might be late on goals and other things. The whole point of this is to be quick.
+	//Feed the UI. We may want to do this for what is showing on the stack only. This would make it an event on the drop down.
+	//We want landinglink for the updates.
+	//Or we want iterate over the the stacked wigets updating the UI.
+	//Ideally, we want to update one youre looking at every second and update on switch. Minimizing the amount of API calls.
 	return gameWidget
 }
 
