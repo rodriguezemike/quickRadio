@@ -64,7 +64,7 @@ func CreateTeamRadioStreamButton(teamAbbrev string, radioLink string, sweaterCol
 		if onCheck {
 			go audio.StartFun(radioLink)
 		} else {
-			audio.KillFun()
+			go audio.StopRadio()
 		}
 	})
 	return button
@@ -200,9 +200,19 @@ func UpdateUI(gameManager *widgets.QGroupBox) {
 	println(gameDataObjects)
 }
 
+func KillFun() {
+	audio.KillFun()
+}
+
 func CreateAndRunUI() {
 	app := widgets.NewQApplication(len(os.Args), os.Args)
 	app.SetApplicationDisplayName("QuickRadio")
+	app.ConnectAboutToQuit(func() {
+		KillFun()
+	})
+	app.ConnectDestroyQApplication(func() {
+		KillFun()
+	})
 	app.SetWindowIcon(GetTeamIcon("NHLF"))
 	loadingScreen := CreateLoadingScreen()
 	loadingScreen.Show()

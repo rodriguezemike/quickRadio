@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"quickRadio/models"
 	"quickRadio/radioErrors"
 	"runtime"
@@ -31,8 +32,9 @@ import (
 //Looking at the polling pattern it looks like it cracks open the file every time.
 //We can sort this out this in testing and retieration.
 
-func DownloadAndTranscodeAACs(paths []string) []string {
+func DownloadAndTranscodeAACs(paths []string) ([]string, string) {
 	log.Println(paths)
+	var radioDirectory string
 	wavpaths := make([]string, len(paths))
 	var workGroup sync.WaitGroup
 	for i := 0; i < len(paths); i++ {
@@ -47,7 +49,14 @@ func DownloadAndTranscodeAACs(paths []string) []string {
 		}(paths[i])
 		workGroup.Wait()
 	}
-	return wavpaths
+	if runtime.GOOS == "windows" {
+		radioDirectory = strings.Join(strings.Split(wavpaths[0], "\\")[:len(strings.Split(wavpaths[0], "\\"))-1], "\\")
+	} else if runtime.GOOS == "Linux" {
+		radioDirectory = strings.Join(strings.Split(wavpaths[0], "/")[:len(strings.Split(wavpaths[0], "/"))-1], "/")
+	} else {
+		radioDirectory = strings.Join(strings.Split(wavpaths[0], "/")[:len(strings.Split(wavpaths[0], "/"))-1], "/")
+	}
+	return wavpaths, radioDirectory
 }
 
 // Only call this once when setting up the radio
@@ -64,7 +73,7 @@ func CreateTmpDirectory(tmpDirectory string) {
 	}
 }
 
-func DoesFileExist(filepath string) error {
+func DoesFileExistErr(filepath string) error {
 	if _, err := os.Stat(filepath); err == nil {
 		return nil
 	} else if os.IsNotExist(err) {
@@ -73,6 +82,33 @@ func DoesFileExist(filepath string) error {
 		radioErrors.ErrorCheck(err)
 		return err
 	}
+}
+
+func DoesFileExist(filepath string) bool {
+	if _, err := os.Stat(filepath); err == nil {
+		return true
+	} else if os.IsNotExist(err) {
+		return false
+	} else {
+		radioErrors.ErrorCheck(err)
+		return false
+	}
+}
+
+func EmptyTmpFolder() {
+	user, err := user.Current()
+	var tempDirectory string
+	radioErrors.ErrorCheck(err)
+	if runtime.GOOS == "windows" {
+		profile := strings.Split(user.Username, "\\")[1]
+		tempDirectory = fmt.Sprintf("C:\\Users\\%s\\AppData\\Local\\Temp"+"\\"+"QuickRadio", profile)
+	} else if runtime.GOOS == "linux" {
+		tempDirectory = "/tmp/" + "QuickRadio"
+	} else {
+		tempDirectory = "/tmp/" + "QuickRadio"
+	}
+	log.Println("Removing Temp Directory ", tempDirectory)
+	os.RemoveAll(tempDirectory)
 }
 
 func DownloadAAC(aacRequestPath string) (string, error) {
@@ -89,41 +125,49 @@ func DownloadAAC(aacRequestPath string) (string, error) {
 		CreateTmpDirectory(tempDirectory)
 		filepath := tempDirectory + "\\" + filename
 		log.Println("Filepath ", filepath)
-		cmd := exec.Command("curl", "-o", filepath, aacRequestPath)
-		_, err := cmd.CombinedOutput()
-		radioErrors.ErrorCheck(err)
-		err = DoesFileExist(filepath)
-		radioErrors.ErrorCheck(err)
+		if !DoesFileExist(filepath) {
+			cmd := exec.Command("curl", "-o", filepath, aacRequestPath)
+			_, err := cmd.CombinedOutput()
+			radioErrors.ErrorCheck(err)
+			err = DoesFileExistErr(filepath)
+			radioErrors.ErrorCheck(err)
+		}
 		return filepath, nil
 	} else if runtime.GOOS == "linux" {
 		directory := strings.Join(strings.Split(aacRequestPath, "/")[4:], "/")
 		tempDirectory := "/tmp/" + "QuickRadio" + "/" + directory + "/"
 		filepath := tempDirectory + "/" + filename
 		log.Println("Filepath ", filepath)
-		cmd := exec.Command("wget", aacRequestPath, filepath)
-		_, err := cmd.CombinedOutput()
-		radioErrors.ErrorCheck(err)
-		err = DoesFileExist(filepath)
-		radioErrors.ErrorCheck(err)
+		if !DoesFileExist(filepath) {
+			cmd := exec.Command("wget", aacRequestPath, filepath)
+			_, err := cmd.CombinedOutput()
+			radioErrors.ErrorCheck(err)
+			err = DoesFileExistErr(filepath)
+			radioErrors.ErrorCheck(err)
+		}
 		return filepath, nil
 	} else {
 		directory := strings.Join(strings.Split(aacRequestPath, "/")[4:], "/")
 		tempDirectory := "/tmp/" + "QuickRadio" + "/" + directory + "/"
 		filepath := tempDirectory + "/" + filename
 		log.Println("Filepath ", filepath)
-		cmd := exec.Command("wget", aacRequestPath, filepath)
-		_, err := cmd.CombinedOutput()
-		radioErrors.ErrorCheck(err)
-		err = DoesFileExist(filepath)
-		radioErrors.ErrorCheck(err)
+		if !DoesFileExist(filepath) {
+			cmd := exec.Command("wget", aacRequestPath, filepath)
+			_, err := cmd.CombinedOutput()
+			radioErrors.ErrorCheck(err)
+			err = DoesFileExistErr(filepath)
+			radioErrors.ErrorCheck(err)
+		}
 		return filepath, nil
 	}
 }
 
 func TranscodeToWave(aacFilepath string) string {
 	wavFilepath := strings.Replace(aacFilepath, ".aac", ".wav", 1)
-	err := ffmpeg_go.Input(aacFilepath).Output(wavFilepath).OverWriteOutput().ErrorToStdOut().Run()
-	radioErrors.ErrorCheck(err)
+	if !DoesFileExist(wavFilepath) {
+		err := ffmpeg_go.Input(aacFilepath).Output(wavFilepath).OverWriteOutput().ErrorToStdOut().Run()
+		radioErrors.ErrorCheck(err)
+	}
 	return wavFilepath
 }
 
@@ -193,24 +237,8 @@ func GetAACSlugsFromQualityFile(m3uContents string) ([]string, error) {
 	return audioFiles, nil
 }
 
-// This may change to always be downloading any games that are currently playing
-// By our Sync group.
-
-//This may need to become a Radio object to keep a centeralized audioQueue to
-//Pass Around through the GUI.
-
-func PlayRadio(wavPaths []string) {
-	//Built from the TestFunc TestStream in audio data queue
-	//We're Initalizing it
-	//Then checking to see if we have files to play in the tmp dir
-	//Decoding them
-	//Adding them to the queue
-	//And playing them for the total time we have in a sleep for this go routine
-	//Or half the sleep then decode and wait in a infinite loop checking to see
-	//The position of the streamer, when iti s done, lock the speaker and add the streamers
-	//Then do it again.
-	//Then adding more streamers
-	//Here we should hook into our underlying concurency looking for new wav files
+func PlayRadio(wavPaths []string, qualityLink string, radioDirectory string) {
+	//Make lists efficient yo.
 	var audioDataQueue models.AudioStreamQueue
 	var streamers []beep.StreamSeekCloser
 	initalized := false
@@ -230,23 +258,44 @@ func PlayRadio(wavPaths []string) {
 		speaker.Lock()
 		audioDataQueue.Add(streamer)
 		speaker.Unlock()
-		time.Sleep(10 * time.Second)
+		go UpdateWavs(qualityLink)
+		time.Sleep(5 * time.Second)
+		streamers, wavPaths = UpdateSharedData(radioDirectory, wavPaths, streamers)
+		time.Sleep(5 * time.Second)
 		streamer.Close()
 	}
 }
 
+func UpdateWavs(qualityLink string) {
+	aacPaths := GetAACPaths(qualityLink)
+	DownloadAndTranscodeAACs(aacPaths)
+}
+
+func UpdateSharedData(radioDirectory string, wavPaths []string, streamers []beep.StreamSeekCloser) ([]beep.StreamSeekCloser, []string) {
+	latestFileInfo, err := os.Stat(wavPaths[len(wavPaths)-1])
+	radioErrors.ErrorCheck(err)
+	files, err := os.ReadDir(radioDirectory)
+	radioErrors.ErrorCheck(err)
+	for _, f := range files {
+		info, err := f.Info()
+		radioErrors.ErrorCheck(err)
+		if info.ModTime().After(latestFileInfo.ModTime()) {
+			streamer, _ := DecodeWaveFile(filepath.Join(radioDirectory, f.Name()))
+			streamers = append(streamers, streamer)
+			wavPaths = append(wavPaths, filepath.Join(radioDirectory, f.Name()))
+		}
+	}
+	return streamers, wavPaths
+}
+
 func StopRadio() {
-	//This interrupts our radio and removes all files in the tmp filder - Improper
-	//Alternatively, we can empty the queue, and leave it slient
-	//That way we dont need to restart everything we can just add the new audio files to the queue.
-	//The above seems proper
-	//this.AudioDataObject.EmptyQueue()
+	speaker.Clear()
 }
 
 func KillFun() {
-	//Kill The Fun, Do any cleanup we need toDo
 	StopRadio()
-	//EmptyTmpFolder?
+	speaker.Close()
+	EmptyTmpFolder()
 }
 
 func BuildQualityRadioPath(radioLink string, qualitySlug string) string {
@@ -281,7 +330,7 @@ func StartFun(radioLink string) {
 	log.Println("Quality Radio Path ", qualityRadioPath)
 	aacPaths := GetAACPaths(qualityRadioPath)
 	log.Println("AAC Paths ", aacPaths)
-	wavPaths := DownloadAndTranscodeAACs(aacPaths)
+	wavPaths, radioDirectory := DownloadAndTranscodeAACs(aacPaths)
 	log.Println("Wav Paths ", wavPaths)
-	PlayRadio(wavPaths)
+	PlayRadio(wavPaths, qualityRadioPath, radioDirectory)
 }

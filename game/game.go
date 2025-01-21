@@ -155,6 +155,7 @@ func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 func GetGameDataObjectFromResponse(gameLandingLink string) models.GameData {
 	var gameData = &models.GameData{}
 	resp, err := http.Get(gameLandingLink)
+	log.Println(gameLandingLink)
 	radioErrors.ErrorCheck(err)
 	defer resp.Body.Close()
 	byteValue, err := io.ReadAll(resp.Body)
