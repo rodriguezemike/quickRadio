@@ -197,7 +197,16 @@ type GameData struct {
 				HomeTeamDefendingSide string `json:"homeTeamDefendingSide"`
 			} `json:"goals"`
 		} `json:"scoring"`
-		Shootout   []string `json:"shootout"`
+		Shootout []struct {
+			Sequence   int    `json:"sequence"`
+			PlayerId   int    `json:"playerId"`
+			TeamAbbrev string `json:"teamAbbrev"`
+			FirstName  string `json:"firstName"`
+			ShotType   string `json:"shotType"`
+			Result     string `json:"result"`
+			Headshot   string `json:"headshot"`
+			GameWinner bool   `json:"gameWinner"`
+		} `json:"shootout"`
 		ThreeStars []struct {
 			Star     int `json:"star"`
 			PlayerId int `json:"playerId"`
