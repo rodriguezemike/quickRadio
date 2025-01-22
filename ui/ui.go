@@ -174,13 +174,6 @@ func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData, gamecent
 	layout.AddWidget2(CreateGameDetailsWidgetFromGameDataObject(gameDataObject, gamecenterLink, gameWidget), 3, 1, core.Qt__AlignCenter)
 	gameWidget.SetLayout(layout)
 	gameWidget.SetStyleSheet(CreateGameStylesheet(gameDataObject.HomeTeam.Abbrev, gameDataObject.AwayTeam.Abbrev, sweaterColors))
-	//This is where we want to set up out timer event, Basically update the whole Game every Second. We're going to do this over the stack.
-	//We can do more than a second updates. But this is weird, we might be late on goals and other things. The whole point of this is to be quick.
-	//Feed the UI. We may want to do this for what is showing on the stack only. This would make it an event on the drop down.
-	//We want landinglink for the updates.
-	//Or we want iterate over the the stacked wigets updating the UI.
-	//Ideally, we want to update one youre looking at every second and update on switch. Minimizing the amount of API calls.
-
 	return gameWidget
 }
 
