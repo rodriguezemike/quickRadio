@@ -119,15 +119,20 @@ func (controller *RadioController) PlayRadio() {
 	}
 }
 
-func StopRadioController() {
+func StartRadioFun(radioLink string) {
+	controller := NewRadioController(radioLink)
+	controller.PlayRadio()
+}
+
+func StopRadioFun() {
 	quickio.DeleteRadioLock()
 }
 
-func NewRadioController(radioLink string, normalSleepInterval int, emergencySleepInterval int) RadioController {
+func NewRadioController(radioLink string) RadioController {
 	var controller RadioController
 	controller.RadioFormatLink, controller.RadioDirectory, controller.WavPaths = quickio.GetRadioFormatLinkAndDirectory(radioLink)
-	controller.NormalSleepInterval = normalSleepInterval
-	controller.EmergencySleepInterval = emergencySleepInterval
+	controller.NormalSleepInterval = 3
+	controller.EmergencySleepInterval = 1
 	controller.ctx = context.Background()
 	controller.speakerInitialized = false
 	return controller

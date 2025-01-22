@@ -11,7 +11,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
@@ -66,9 +65,9 @@ func CreateTeamRadioStreamButton(teamAbbrev string, radioLink string, sweaterCol
 	button.SetCheckable(true)
 	button.ConnectToggled(func(onCheck bool) {
 		if onCheck {
-			go audio.StartFun(radioLink)
+			go audio.StartRadioFun(radioLink)
 		} else {
-			go audio.KillFun()
+			go audio.StopRadioFun()
 		}
 	})
 	return button
@@ -253,11 +252,7 @@ func CreateLoadingScreen() *widgets.QSplashScreen {
 }
 
 func KillAllTheFun() {
-	audio.KillFun()
-	for range 3 {
-		time.Sleep(3 * time.Second)
-		audio.KillFun()
-	}
+	audio.RadioKillFun()
 }
 
 func CreateAndRunUI() {
