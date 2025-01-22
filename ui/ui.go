@@ -136,6 +136,8 @@ func CreateDataLabel(name string, data string, genercenterLink string, gameWidge
 					} else {
 						label.SetText(gdo.GameState + "INT" + strconv.Itoa(gdo.PeriodDescriptor.Number) + " " + gdo.Clock.TimeRemaining)
 					}
+				} else {
+					label.SetText(gdo.GameState)
 				}
 				label.Repaint()
 			}
@@ -257,9 +259,6 @@ func UpdateUI(gameManager *widgets.QGroupBox) {
 	println(gameDataObjects)
 }
 
-func KillFun() {
-	audio.KillFun()
-}
 func KillAllTheFun() {
 	audio.KillFun()
 	for range 3 {
