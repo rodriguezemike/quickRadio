@@ -1,6 +1,7 @@
 package audio
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"quickRadio/models"
@@ -33,55 +34,66 @@ func InitializeRadio(wavFilePath string) beep.StreamSeekCloser {
 	return streamer
 }
 
-func AddStreamerToPlaybackQueue(audioPlaybackQueue models.AudioStreamQueue, streamer beep.StreamSeekCloser, qualityLink string) models.AudioStreamQueue {
+func AddStreamerToPlaybackQueue(audioPlaybackQueue *models.AudioStreamQueue, streamer beep.StreamSeekCloser, qualityLink string) {
 	speaker.Lock()
 	audioPlaybackQueue.Add(streamer)
 	speaker.Unlock()
 	go quickio.UpdateRadioWavs(qualityLink)
-	return audioPlaybackQueue
+	time.Sleep(3 * time.Second)
+
 }
 
-func InitalPlayback(wavPaths []string, audioPlaybackQueue models.AudioStreamQueue, qualityLink string) (models.AudioStreamQueue, string) {
+func InitalPlayback(wavPaths []string, audioPlaybackQueue *models.AudioStreamQueue, qualityLink string) string {
 	var radioDirectory string
 	speakerInitalized := false
-	for _, wavPath := range wavPaths {
+	for _, wavPath := range wavPaths[len(wavPaths)-2:] {
+		if !quickio.IsRadioLocked() {
+			//Call Funcs to clean up any gorountines
+			return ""
+		}
 		if strings.HasSuffix(wavPath, ".wav") {
 			streamer, format := DecodeWaveFile(wavPath)
 			if !speakerInitalized {
 				InitalizeRadioSpeaker(format)
-				speaker.Play(&audioPlaybackQueue)
+				speaker.Play(audioPlaybackQueue)
 				speakerInitalized = true
 				radioDirectory = filepath.Dir(wavPath)
 			}
-			audioPlaybackQueue = AddStreamerToPlaybackQueue(audioPlaybackQueue, streamer, qualityLink)
-			time.Sleep(3 * time.Second)
+			AddStreamerToPlaybackQueue(audioPlaybackQueue, streamer, qualityLink)
 		}
 	}
-	return audioPlaybackQueue, radioDirectory
+	return radioDirectory
 
 }
 
-func UpdatePlayback(audioPlaybackQueue models.AudioStreamQueue, wavPaths []string, radioDirectory string, qualityLink string) (models.AudioStreamQueue, []string, string) {
-	var audioStreamers []beep.StreamSeekCloser
-	audioStreamers, wavPaths = UpdateSharedData(radioDirectory, wavPaths)
-	if len(audioStreamers) == 0 {
-		go quickio.UpdateRadioWavs(qualityLink)
-		time.Sleep(10 * time.Second)
-	} else {
-		for _, streamer := range audioStreamers {
-			AddStreamerToPlaybackQueue(audioPlaybackQueue, streamer, qualityLink)
-			time.Sleep(3 * time.Second)
-		}
+func UpdatePlayback(audioPlaybackQueue *models.AudioStreamQueue, audioStreamers []beep.StreamSeekCloser, qualityLink string) {
+	log.Println("FUNC - UPDATE PLAYBACK")
+	for _, streamer := range audioStreamers {
+		log.Println("Playing Streamer ", streamer)
+		AddStreamerToPlaybackQueue(audioPlaybackQueue, streamer, qualityLink)
 	}
-	return audioPlaybackQueue, wavPaths, radioDirectory
 }
 
 func PlayRadio(wavPaths []string, qualityLink string) {
 	var audioPlaybackQueue models.AudioStreamQueue
-
-	audioPlaybackQueue, radioDirectory := InitalPlayback(wavPaths, audioPlaybackQueue, qualityLink)
-	for {
-		audioPlaybackQueue, wavPaths, radioDirectory = UpdatePlayback(audioPlaybackQueue, wavPaths, radioDirectory, qualityLink)
+	var audioStreamers []beep.StreamSeekCloser
+	if !quickio.IsRadioLocked() {
+		quickio.CreateRadioLock()
+		radioDirectory := InitalPlayback(wavPaths, &audioPlaybackQueue, qualityLink)
+		for {
+			if !quickio.IsRadioLocked() {
+				//Here we sohould gather up the gorountines and end them gracefully.
+				return
+			}
+			audioStreamers, wavPaths = UpdateSharedData(radioDirectory, wavPaths)
+			log.Println("Audio Streamers After Update ", audioStreamers)
+			if len(audioStreamers) == 0 {
+				go quickio.UpdateRadioWavs(qualityLink)
+				time.Sleep(1 * time.Second)
+				continue
+			}
+			UpdatePlayback(&audioPlaybackQueue, audioStreamers, qualityLink)
+		}
 	}
 }
 
@@ -104,6 +116,7 @@ func UpdateSharedData(radioDirectory string, wavPaths []string) ([]beep.StreamSe
 }
 
 func StopRadio() {
+	quickio.DeleteRadioLock()
 	speaker.Clear()
 }
 

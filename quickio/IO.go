@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"quickRadio/radioErrors"
 	"regexp"
@@ -128,7 +129,6 @@ func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 func GetDataFromResponse(url string) []byte {
 	//Seperate this into two funcs one to store in IO and the other to that is used here.
 	resp, err := http.Get(url)
-	log.Println(url)
 	radioErrors.ErrorCheck(err)
 	defer resp.Body.Close()
 	byteValue, err := io.ReadAll(resp.Body)
@@ -190,7 +190,7 @@ func GetAACPaths(qualityRadioPath string) []string {
 }
 
 func DownloadAndTranscodeAACs(paths []string) []string {
-	log.Println("FUNC - DownloadAndTranscodeAACs")
+	log.Println("FILE IO - FUNC - DownloadAndTranscodeAACs")
 	wavpaths := make([]string, len(paths))
 	var workGroup sync.WaitGroup
 	for i := 0; i < len(paths); i++ {
@@ -212,12 +212,14 @@ func DownloadAAC(aacRequestPath string) (string, error) {
 	log.Println("FUNC - DownloadAAC")
 	quickRadioTempDirectory := GetQuickTmpFolder()
 	filename := strings.Split(aacRequestPath, "/")[len(strings.Split(aacRequestPath, "/"))-1]
-	gameSubDirectory := filepath.Join(strings.Split(aacRequestPath, "/")[4 : len(strings.Split(aacRequestPath, "/"))-3]...)
+	gameSubDirectory := filepath.Join(strings.Split(aacRequestPath, "/")[4 : len(strings.Split(aacRequestPath, "/"))-2]...)
+	CreateTmpDirectory(filepath.Join(quickRadioTempDirectory, gameSubDirectory))
 	filepath := filepath.Join(quickRadioTempDirectory, gameSubDirectory, filename)
 	log.Println("VAR - quickRadioTempDirectory", quickRadioTempDirectory)
 	log.Println("VAR - filename", filename)
 	log.Println("VAR - gameSubDirectory", gameSubDirectory)
 	log.Println("VAR - filepath", filepath)
+	log.Println("VAR - aacRequestPath", aacRequestPath)
 	if runtime.GOOS == "windows" {
 		if !DoesFileExist(filepath) {
 			cmd := exec.Command("curl", "-o", filepath, aacRequestPath)
@@ -314,4 +316,20 @@ func EmptyTmpFolder() {
 	tempDirectory := GetQuickTmpFolder()
 	log.Println("Removing Temp Directory ", tempDirectory)
 	os.RemoveAll(tempDirectory)
+}
+
+func CreateRadioLock() {
+	lockPath := path.Join(GetQuickTmpFolder(), "LOCK.RADIO")
+	os.Create(lockPath)
+}
+
+func IsRadioLocked() bool {
+	lockPath := path.Join(GetQuickTmpFolder(), "LOCK.RADIO")
+	return DoesFileExist(lockPath)
+}
+
+func DeleteRadioLock() {
+	lockPath := path.Join(GetQuickTmpFolder(), "LOCK.RADIO")
+	DoesFileExistErr(lockPath)
+	os.Remove(lockPath)
 }

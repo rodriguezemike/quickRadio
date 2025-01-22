@@ -11,11 +11,15 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/widgets"
 )
+
+//Once were Happy with this, we should refactor into a proper singleton UI
+//This would make it easier to update as we move towards AI Things in later phasees of the UI.
 
 func GetProjectDir() string {
 	_, filename, _, _ := runtime.Caller(0)
@@ -94,42 +98,80 @@ func CreateIceRinklabel(gameWidget *widgets.QGroupBox, homeTeamAbbrev models.Tea
 	return iceRinkLabel
 }
 
-func CreateDataLabel(data string, gameWidget *widgets.QGroupBox) *widgets.QLabel {
+func CreateDataLabel(name string, data string, genercenterLink string, gameWidget *widgets.QGroupBox) *widgets.QLabel {
+	//Here too we want to move away from pulling for every label and move to a cache, checking it with goroutines
+	//Only updating that one, once every 10 seconds per visible game. Reducing our API calls to 1 per 10 seconds Rather than 3.
+	//Also Note, we wiill want Store a whole bunch of game info in here, we may want to pass in some modified GDO.
+	//This is a stop gap for now so that we dont continue to hit the API a bunch of unneccesary times.
 	label := widgets.NewQLabel2(data, gameWidget, core.Qt__Widget)
+	label.SetObjectName(name)
+	label.SetAccessibleDescription(genercenterLink)
 	font := label.Font()
 	font.SetPointSize(32)
 	label.SetFont(font)
 	label.SetStyleSheet(CreateLabelStylesheet())
+	label.ConnectTimerEvent(func(event *core.QTimerEvent) {
+		if label.IsVisible() {
+			if strings.Contains(label.ObjectName(), "Score") {
+				counter, _ := strconv.Atoi(strings.Split(label.ObjectName(), " ")[1])
+				if counter > 10 && counter%10 == 0 {
+					gdo := game.GetGameDataObject(label.AccessibleDescription())
+					if strings.Contains(label.ObjectName(), gdo.HomeTeam.Abbrev) {
+						label.SetText(strconv.Itoa(gdo.HomeTeam.Score))
+						label.Repaint()
+					} else {
+						label.SetText(strconv.Itoa(gdo.AwayTeam.Score))
+						label.Repaint()
+					}
+				} else {
+					counter += 1
+					label.SetObjectName(strings.Split(label.ObjectName(), " ")[0] + " " + strconv.Itoa(counter))
+				}
+			} else if strings.Contains(label.ObjectName(), "GameState") {
+				//Run clock when clock is running, counting down. Only Resetting When clock is stopped. That should get us somewhat close to instant feedback.
+				gdo := game.GetGameDataObject(label.AccessibleDescription())
+				if gdo.GameState == "LIVE" || gdo.GameState == "CRIT" {
+					if !gdo.Clock.InIntermission {
+						label.SetText(gdo.GameState + " - " + "P" + strconv.Itoa(gdo.PeriodDescriptor.Number) + " " + gdo.Clock.TimeRemaining)
+					} else {
+						label.SetText(gdo.GameState + "INT" + strconv.Itoa(gdo.PeriodDescriptor.Number) + " " + gdo.Clock.TimeRemaining)
+					}
+				}
+				label.Repaint()
+			}
+		}
+	})
+	label.StartTimer(1000, core.Qt__PreciseTimer)
 	return label
 }
 
-func CreateTeamWidget(team models.TeamData, sweaterColors map[string][]string, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
-	teamLayout := widgets.NewQVBoxLayout2(nil)
+func CreateTeamWidget(team models.TeamData, gamecenterLink string, sweaterColors map[string][]string, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
+	teamLayout := widgets.NewQVBoxLayout2(gameWidget)
 	teamWidget := widgets.NewQGroupBox(gameWidget)
 	teamLayout.AddWidget(CreateTeamRadioStreamButton(team.Abbrev, team.RadioLink, sweaterColors, gameWidget), 0, core.Qt__AlignCenter)
-	teamLayout.AddWidget(CreateDataLabel(team.Abbrev, gameWidget), 0, core.Qt__AlignCenter)
-	teamLayout.AddWidget(CreateDataLabel(strconv.Itoa(team.Score), gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(CreateDataLabel("TeamAbbrev", team.Abbrev, gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(CreateDataLabel(team.Abbrev+"Score "+"0", strconv.Itoa(team.Score), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
 	teamWidget.SetLayout(teamLayout)
 	return teamWidget
 }
 
-func CreateIceCenterWidget(gameDataObject models.GameData, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
-	layout := widgets.NewQVBoxLayout2(nil)
+func CreateIceCenterWidget(gameDataObject models.GameData, gamecenterLink string, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
+	layout := widgets.NewQVBoxLayout2(gameWidget)
 	centerIceWidget := widgets.NewQGroupBox(gameWidget)
 	layout.AddWidget(CreateIceRinklabel(gameWidget, gameDataObject.HomeTeam), 0, core.Qt__AlignCenter)
-	layout.AddWidget(CreateDataLabel(gameDataObject.GameState+" - "+"P"+strconv.Itoa(gameDataObject.PeriodDescriptor.Number)+" "+gameDataObject.Clock.TimeRemaining, gameWidget),
+	layout.AddWidget(CreateDataLabel("GameState "+strconv.Itoa(gameDataObject.Clock.SecondsRemaining), gameDataObject.GameState+" - "+"P"+strconv.Itoa(gameDataObject.PeriodDescriptor.Number)+" "+gameDataObject.Clock.TimeRemaining, gamecenterLink, gameWidget),
 		0, core.Qt__AlignCenter)
 	centerIceWidget.SetLayout(layout)
 	return centerIceWidget
 }
 
-func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData, sweaterColors map[string][]string, gameStackWidget *widgets.QStackedWidget) *widgets.QGroupBox {
-	layout := widgets.NewQGridLayout(nil)
+func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData, gamecenterLink string, sweaterColors map[string][]string, gameStackWidget *widgets.QStackedWidget) *widgets.QGroupBox {
+	layout := widgets.NewQGridLayout(gameStackWidget)
 	gameWidget := widgets.NewQGroupBox(gameStackWidget)
-	layout.AddWidget2(CreateTeamWidget(gameDataObject.HomeTeam, sweaterColors, gameWidget), 0, 0, core.Qt__AlignCenter)
-	layout.AddWidget2(CreateIceCenterWidget(gameDataObject, gameWidget), 0, 1, core.Qt__AlignCenter)
-	layout.AddWidget2(CreateTeamWidget(gameDataObject.AwayTeam, sweaterColors, gameWidget), 0, 2, core.Qt__AlignCenter)
-	layout.AddWidget2(CreateGameDetailsWidgetFromGameDataObject(gameDataObject, gameWidget), 3, 1, core.Qt__AlignCenter)
+	layout.AddWidget2(CreateTeamWidget(gameDataObject.HomeTeam, gamecenterLink, sweaterColors, gameWidget), 0, 0, core.Qt__AlignCenter)
+	layout.AddWidget2(CreateIceCenterWidget(gameDataObject, gamecenterLink, gameWidget), 0, 1, core.Qt__AlignCenter)
+	layout.AddWidget2(CreateTeamWidget(gameDataObject.AwayTeam, gamecenterLink, sweaterColors, gameWidget), 0, 2, core.Qt__AlignCenter)
+	layout.AddWidget2(CreateGameDetailsWidgetFromGameDataObject(gameDataObject, gamecenterLink, gameWidget), 3, 1, core.Qt__AlignCenter)
 	gameWidget.SetLayout(layout)
 	gameWidget.SetStyleSheet(CreateGameStylesheet(gameDataObject.HomeTeam.Abbrev, gameDataObject.AwayTeam.Abbrev, sweaterColors))
 	//This is where we want to set up out timer event, Basically update the whole Game every Second. We're going to do this over the stack.
@@ -138,30 +180,38 @@ func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData, sweaterC
 	//We want landinglink for the updates.
 	//Or we want iterate over the the stacked wigets updating the UI.
 	//Ideally, we want to update one youre looking at every second and update on switch. Minimizing the amount of API calls.
+
 	return gameWidget
 }
 
-func CreateGamesWidget(gameDataObjects []models.GameData, sweaterColors map[string][]string, window *widgets.QMainWindow, gameManager *widgets.QGroupBox) *widgets.QStackedWidget {
+func CreateGamesWidget(gameDataObjects []models.GameData, gamecenterLinks []string, sweaterColors map[string][]string, gameManager *widgets.QGroupBox) *widgets.QStackedWidget {
 	gameStackWidget := widgets.NewQStackedWidget(gameManager)
-	for _, gameDataObject := range gameDataObjects {
-		gameWidget := CreateGameWidgetFromGameDataObject(gameDataObject, sweaterColors, gameStackWidget)
+	for i, gameDataObject := range gameDataObjects {
+		gameWidget := CreateGameWidgetFromGameDataObject(gameDataObject, gamecenterLinks[i], sweaterColors, gameStackWidget)
 		gameStackWidget.AddWidget(gameWidget)
 	}
 	gameStackWidget.SetCurrentIndex(0)
 	return gameStackWidget
 }
 
-func CreateGameDetailsWidgetFromGameDataObject(gamedataObject models.GameData, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
-	//For this use MarshalIndent just to see the data
-	//This will also become part of the Update
+func CreateGameDetailsWidgetFromGameDataObject(gamedataObject models.GameData, gamecenterLink string, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
 	gameDetailsJson, err := json.MarshalIndent(gamedataObject, "", "\t")
 	radioErrors.ErrorCheck(err)
-	gameDetailsLayout := widgets.NewQGridLayout(nil)
+	gameDetailsLayout := widgets.NewQGridLayout(gameWidget)
 	gameDetailsWidget := widgets.NewQGroupBox(gameWidget)
 	scrollableArea := widgets.NewQScrollArea(gameDetailsWidget)
 	jsonDumpLabel := widgets.NewQLabel2("Test", scrollableArea, core.Qt__Window)
 	jsonDumpLabel.SetWordWrap(true)
 	jsonDumpLabel.SetText(string(gameDetailsJson))
+	jsonDumpLabel.ConnectTimerEvent(func(event *core.QTimerEvent) {
+		if jsonDumpLabel.IsVisible() {
+			gdo := game.GetGameDataObject(gamecenterLink)
+			gameDetailsJson, _ := json.MarshalIndent(gdo, "", " ")
+			jsonDumpLabel.SetText(string(gameDetailsJson))
+			jsonDumpLabel.Repaint()
+		}
+	})
+	jsonDumpLabel.StartTimer(30000, core.Qt__VeryCoarseTimer)
 	scrollableArea.SetWidgetResizable(true)
 	scrollableArea.SetWidget(jsonDumpLabel)
 	gameDetailsLayout.AddWidget(scrollableArea)
@@ -184,7 +234,7 @@ func CreateGameDropdownsWidget(gameDataObjects []models.GameData, gamesStack *wi
 	return dropdown
 }
 
-func CreateGameManagerWidget(gameDataObjects []models.GameData, sweaterColors map[string][]string, window *widgets.QMainWindow) *widgets.QGroupBox {
+func CreateGameManagerWidget(gameDataObjects []models.GameData, gamecenterLinks []string, sweaterColors map[string][]string) *widgets.QGroupBox {
 	gameManager := widgets.NewQGroupBox(nil)
 	topbarLayout := widgets.NewQVBoxLayout()
 	gameStackLayout := widgets.NewQStackedLayout()
@@ -192,7 +242,7 @@ func CreateGameManagerWidget(gameDataObjects []models.GameData, sweaterColors ma
 
 	gameManagerLayout.AddLayout(topbarLayout, 1)
 	gameManagerLayout.AddLayout(gameStackLayout, 1)
-	gamesStack := CreateGamesWidget(gameDataObjects, sweaterColors, window, gameManager)
+	gamesStack := CreateGamesWidget(gameDataObjects, gamecenterLinks, sweaterColors, gameManager)
 	gameDropdown := CreateGameDropdownsWidget(gameDataObjects, gamesStack, gameManager)
 
 	topbarLayout.AddWidget(gameDropdown, 1, core.Qt__AlignAbsolute)
@@ -217,23 +267,30 @@ func UpdateUI(gameManager *widgets.QGroupBox) {
 func KillFun() {
 	audio.KillFun()
 }
+func KillAllTheFun() {
+	audio.KillFun()
+	for range 3 {
+		time.Sleep(3 * time.Second)
+		audio.KillFun()
+	}
+}
 
 func CreateAndRunUI() {
 	app := widgets.NewQApplication(len(os.Args), os.Args)
 	app.SetApplicationDisplayName("QuickRadio")
 	app.ConnectAboutToQuit(func() {
-		KillFun()
+		KillAllTheFun()
 	})
 	app.ConnectDestroyQApplication(func() {
-		KillFun()
+		KillAllTheFun()
 	})
 	app.SetWindowIcon(GetTeamIcon("NHLF"))
 	loadingScreen := CreateLoadingScreen()
 	loadingScreen.Show()
 	window := widgets.NewQMainWindow(nil, 0)
-	gameDataObjects := game.UIGetGameDataObjects()
+	gameDataObjects, gamecenterLinks := game.UIGetGameDataObjectsAndGameLandingLinks()
 	sweaterColors := game.GetSweaterColors()
-	gameManager := CreateGameManagerWidget(gameDataObjects, sweaterColors, window)
+	gameManager := CreateGameManagerWidget(gameDataObjects, gamecenterLinks, sweaterColors)
 	window.SetCentralWidget(gameManager)
 	loadingScreen.Finish(nil)
 	window.Show()

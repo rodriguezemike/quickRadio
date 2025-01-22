@@ -14,7 +14,7 @@ func GetSweaterColors() map[string][]string {
 	return quickio.GetSweaterColors()
 }
 
-func UIGetGameLandingLinks() []string {
+func GetGameLandingLinks() []string {
 	linksMap := quickio.GetLinksJson()
 	html := quickio.GetGameHtml(linksMap)
 	gamecenterBase := fmt.Sprintf("%v", linksMap["gamecenter_api_base"])
@@ -27,20 +27,34 @@ func UIGetGameLandingLinks() []string {
 
 func UIGetGameDataObjects() []models.GameData {
 	var gameDataObjects []models.GameData
-	landingLinks := UIGetGameLandingLinks()
+	landingLinks := GetGameLandingLinks()
 	for _, landingLink := range landingLinks {
 		gameDataObjects = append(gameDataObjects, GetGameDataObject(landingLink))
 	}
 	return gameDataObjects
 }
 
+func UIGetGameDataObjectsAndGameLandingLinks() ([]models.GameData, []string) {
+	landingLinks := GetGameLandingLinks()
+	gameDataObjects := GetGameDataObjectFromLandingLinks(landingLinks)
+	return gameDataObjects, landingLinks
+}
+
 func UIGetGameDataObjectMap() map[string]models.GameData {
 	var gameDataMap = make(map[string]models.GameData)
-	landingLinks := UIGetGameLandingLinks()
+	landingLinks := GetGameLandingLinks()
 	for _, landingLink := range landingLinks {
 		gameDataMap[landingLink] = GetGameDataObject(landingLink)
 	}
 	return gameDataMap
+}
+
+func GetGameDataObjectFromLandingLinks(landingLinks []string) []models.GameData {
+	var gameDataObjects []models.GameData
+	for _, landingLink := range landingLinks {
+		gameDataObjects = append(gameDataObjects, GetGameDataObject(landingLink))
+	}
+	return gameDataObjects
 }
 
 func GetGameDataObject(gameLandingLink string) models.GameData {
