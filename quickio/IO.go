@@ -25,6 +25,15 @@ import (
 	ffmpeg_go "github.com/u2takey/ffmpeg-go"
 )
 
+func GetRadioFormatLinkAndDirectory(radioLink string) (string, string, []string) {
+	qualitySlug := GetQualityStreamSlug(radioLink, "192K")
+	radioFormatLink := BuildQualityRadioPath(radioLink, qualitySlug)
+	aacPaths := GetAACPaths(radioFormatLink)
+	wavPaths := DownloadAndTranscodeAACs(aacPaths)
+	radioDirectory := filepath.Dir(wavPaths[0])
+	return radioFormatLink, radioDirectory, wavPaths
+}
+
 func GetGameHtml(linksMap map[string]interface{}) string {
 	var html string
 	sleepTimer := linksMap["load_sleep_timer"].(float64)
@@ -200,7 +209,9 @@ func DownloadAndTranscodeAACs(paths []string) []string {
 			localpath, err := DownloadAAC(path)
 			radioErrors.ErrorCheck(err)
 			wavPath := TranscodeToWave(localpath)
-			wavpaths = append(wavpaths, wavPath)
+			if strings.HasSuffix(wavPath, ".wav") {
+				wavpaths = append(wavpaths, strings.TrimSpace(wavPath))
+			}
 		}(paths[i])
 		workGroup.Wait()
 	}
@@ -262,6 +273,23 @@ func UpdateRadioWavs(qualityLink string) {
 	DownloadAndTranscodeAACs(aacPaths)
 }
 
+func UpdateRadioWavsWithContext(ctx context.Context, qualityLink string) {
+	running := false
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			if !running {
+				aacPaths := GetAACPaths(qualityLink)
+				go DownloadAndTranscodeAACs(aacPaths)
+				running = true
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
+
 func GetTestFileObject(desiredFilename string) *os.File {
 	_, filename, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(filepath.Dir(filename))
@@ -318,18 +346,24 @@ func EmptyTmpFolder() {
 	os.RemoveAll(tempDirectory)
 }
 
+func EmptyRadioDirectory(radioDirectory string) {
+	log.Println("FUNC - EmptyRadioDirectory")
+	log.Println("VAR - ", radioDirectory)
+	os.RemoveAll(radioDirectory)
+}
+
 func CreateRadioLock() {
-	lockPath := path.Join(GetQuickTmpFolder(), "LOCK.RADIO")
+	lockPath := path.Join(GetQuickTmpFolder(), "RADIO_IN_USE.LOCK")
 	os.Create(lockPath)
 }
 
 func IsRadioLocked() bool {
-	lockPath := path.Join(GetQuickTmpFolder(), "LOCK.RADIO")
+	lockPath := path.Join(GetQuickTmpFolder(), "RADIO_IN_USE.LOCK")
 	return DoesFileExist(lockPath)
 }
 
 func DeleteRadioLock() {
-	lockPath := path.Join(GetQuickTmpFolder(), "LOCK.RADIO")
+	lockPath := path.Join(GetQuickTmpFolder(), "RADIO_IN_USE.LOCK")
 	DoesFileExistErr(lockPath)
 	os.Remove(lockPath)
 }
