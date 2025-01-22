@@ -252,13 +252,6 @@ func CreateLoadingScreen() *widgets.QSplashScreen {
 	return splash
 }
 
-func UpdateUI(gameManager *widgets.QGroupBox) {
-	//Update ALl UI elements. Or figure out how to add a Slot to update them every so often.
-	//Do this per widget. Its better. use concuurency and all that jazz.
-	gameDataObjects := game.UIGetGameDataObjects()
-	println(gameDataObjects)
-}
-
 func KillAllTheFun() {
 	audio.KillFun()
 	for range 3 {
