@@ -30,7 +30,7 @@ func GetRadioFormatLinkAndDirectory(radioLink string) (string, string, []string)
 	radioFormatLink := BuildQualityRadioPath(radioLink, qualitySlug)
 	aacPaths := GetAACPaths(radioFormatLink)
 	wavPaths := DownloadAndTranscodeAACs(aacPaths)
-	radioDirectory := filepath.Dir(wavPaths[0])
+	radioDirectory := filepath.Dir(wavPaths[len(wavPaths)-1])
 	return radioFormatLink, radioDirectory, wavPaths
 }
 
@@ -184,7 +184,9 @@ func BuildAACRadioPath(radioQualityLink string, aacFile string) string {
 }
 
 func GetAACPaths(qualityRadioPath string) []string {
+	log.Println("IO::GetAACPaths")
 	audioFilepaths := []string{}
+	log.Println("IO::GetAACPaths::POLLING ", qualityRadioPath)
 	resp, err := http.Get(qualityRadioPath)
 	radioErrors.ErrorCheck(err)
 	defer resp.Body.Close()
@@ -199,8 +201,8 @@ func GetAACPaths(qualityRadioPath string) []string {
 }
 
 func DownloadAndTranscodeAACs(paths []string) []string {
-	log.Println("FILE IO - FUNC - DownloadAndTranscodeAACs")
-	wavpaths := make([]string, len(paths))
+	//log.Println("IO::DownloadAndTranscodeAACs")
+	var wavpaths []string
 	var workGroup sync.WaitGroup
 	for i := 0; i < len(paths); i++ {
 		workGroup.Add(1)
@@ -210,27 +212,23 @@ func DownloadAndTranscodeAACs(paths []string) []string {
 			radioErrors.ErrorCheck(err)
 			wavPath := TranscodeToWave(localpath)
 			if strings.HasSuffix(wavPath, ".wav") {
+				//wavpaths[i] = strings.TrimSpace(wavPath)
 				wavpaths = append(wavpaths, strings.TrimSpace(wavPath))
 			}
 		}(paths[i])
 		workGroup.Wait()
 	}
-	log.Println("VAR - wavpaths", wavpaths)
+	//log.Println("IO::DownloadAndTranscodeAACs::wavpaths", wavpaths)
 	return wavpaths
 }
 
 func DownloadAAC(aacRequestPath string) (string, error) {
-	log.Println("FUNC - DownloadAAC")
+	//log.Println("IO::DownloadAAC")
 	quickRadioTempDirectory := GetQuickTmpFolder()
 	filename := strings.Split(aacRequestPath, "/")[len(strings.Split(aacRequestPath, "/"))-1]
 	gameSubDirectory := filepath.Join(strings.Split(aacRequestPath, "/")[4 : len(strings.Split(aacRequestPath, "/"))-2]...)
 	CreateTmpDirectory(filepath.Join(quickRadioTempDirectory, gameSubDirectory))
 	filepath := filepath.Join(quickRadioTempDirectory, gameSubDirectory, filename)
-	log.Println("VAR - quickRadioTempDirectory", quickRadioTempDirectory)
-	log.Println("VAR - filename", filename)
-	log.Println("VAR - gameSubDirectory", gameSubDirectory)
-	log.Println("VAR - filepath", filepath)
-	log.Println("VAR - aacRequestPath", aacRequestPath)
 	if runtime.GOOS == "windows" {
 		if !DoesFileExist(filepath) {
 			cmd := exec.Command("curl", "-o", filepath, aacRequestPath)
@@ -256,6 +254,7 @@ func DownloadAAC(aacRequestPath string) (string, error) {
 			radioErrors.ErrorCheck(err)
 		}
 	}
+	//log.Println("IO::DownloadAAC::filepath", filepath)
 	return filepath, nil
 }
 
@@ -274,13 +273,16 @@ func UpdateRadioWavs(qualityLink string) {
 }
 
 func UpdateRadioWavsWithContext(ctx context.Context, qualityLink string) {
+	log.Println("IO::UpdateRadioWavsWithContext")
 	running := false
 	for {
 		select {
 		case <-ctx.Done():
+			log.Println("IO::UpdateRadioWavsWithContext::Done.")
 			return
 		default:
 			if !running {
+				log.Println("IO::UpdateRadioWavsWithContext::Running.")
 				aacPaths := GetAACPaths(qualityLink)
 				go DownloadAndTranscodeAACs(aacPaths)
 				running = true
@@ -334,21 +336,16 @@ func DoesFileExist(filepath string) bool {
 }
 
 func GetQuickTmpFolder() string {
-	log.Println("FUNC - GetQuickTmpFolder")
 	tempDirectory := os.TempDir()
 	return filepath.Join(tempDirectory, "QuickRadio")
 }
 
 func EmptyTmpFolder() {
-	log.Println("FUNC - EmptyTmpFolder")
 	tempDirectory := GetQuickTmpFolder()
-	log.Println("Removing Temp Directory ", tempDirectory)
 	os.RemoveAll(tempDirectory)
 }
 
 func EmptyRadioDirectory(radioDirectory string) {
-	log.Println("FUNC - EmptyRadioDirectory")
-	log.Println("VAR - ", radioDirectory)
 	os.RemoveAll(radioDirectory)
 }
 
@@ -364,6 +361,5 @@ func IsRadioLocked() bool {
 
 func DeleteRadioLock() {
 	lockPath := path.Join(GetQuickTmpFolder(), "RADIO_IN_USE.LOCK")
-	DoesFileExistErr(lockPath)
 	os.Remove(lockPath)
 }

@@ -65,8 +65,10 @@ func CreateTeamRadioStreamButton(teamAbbrev string, radioLink string, sweaterCol
 	button.SetCheckable(true)
 	button.ConnectToggled(func(onCheck bool) {
 		if onCheck {
+			//go audio.StartFun(radioLink)
 			go audio.StartRadioFun(radioLink)
 		} else {
+			//go audio.StopRadio()
 			go audio.StopRadioFun()
 		}
 	})

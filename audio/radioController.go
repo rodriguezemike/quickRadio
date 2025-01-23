@@ -8,6 +8,7 @@ import (
 	"quickRadio/models"
 	"quickRadio/quickio"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gopxl/beep"
@@ -25,7 +26,7 @@ type RadioController struct {
 	streamers              []beep.StreamSeekCloser
 	speakerInitialized     bool
 	ctx                    context.Context
-	cancelFunc             context.CancelFunc
+	goroutineMap           sync.Map
 }
 
 func (controller *RadioController) initalizeRadioSpeaker(format beep.Format) {
@@ -34,10 +35,15 @@ func (controller *RadioController) initalizeRadioSpeaker(format beep.Format) {
 }
 
 func (controller *RadioController) PollRadioFormatLink() {
+	log.Println("readioController::PollRadioFormatLink")
+	log.Println("PollRadioFormatLink::controller.RadioFormatLink", controller.RadioFormatLink)
 	ctx, cancel := context.WithDeadline(controller.ctx, time.Now().Add(10*time.Second))
 	defer cancel()
 	go quickio.UpdateRadioWavsWithContext(ctx, controller.RadioFormatLink)
-	controller.cancelFunc = cancel
+	controller.goroutineMap.Store(ctx, cancel)
+	log.Println("PollRadioFormatLink::Sleeping for 10 seconds to let it do its work")
+	time.Sleep(10 * time.Second)
+	controller.goroutineMap.Delete(ctx)
 }
 
 func (controller *RadioController) addStreamerToPlaybackQueue(streamer beep.StreamSeekCloser) {
@@ -61,6 +67,9 @@ func (controller *RadioController) initializeRadio(wavFilePath string) beep.Stre
 func (controller *RadioController) updateSharedData() {
 	var streamers []beep.StreamSeekCloser
 	var wavPaths []string
+	log.Println("RadioController::updateSharedData")
+	log.Println("RadioController::updateSharedData::Controller Wavpaths ->", controller.WavPaths)
+	log.Println("RadioController::updateSharedData::Controller Streamers ->", controller.streamers)
 	latestFileInfo, _ := os.Stat(controller.WavPaths[len(controller.WavPaths)-1])
 	files, _ := os.ReadDir(controller.RadioDirectory)
 	for _, f := range files {
@@ -72,20 +81,22 @@ func (controller *RadioController) updateSharedData() {
 		}
 	}
 	controller.streamers = streamers
-	controller.WavPaths = wavPaths
+	if len(wavPaths) != 0 {
+		controller.WavPaths = wavPaths
+	}
 }
 
 func (controller *RadioController) initalPlayback() {
 	streamer := controller.initializeRadio(controller.WavPaths[len(controller.WavPaths)-1])
 	speaker.Play(&controller.streamQueue)
 	controller.addStreamerToPlaybackQueue(streamer)
-	controller.PollRadioFormatLink()
+	go controller.PollRadioFormatLink()
 }
 
 func (controller *RadioController) updatePlayback() {
-	log.Println("FUNC - UPDATE PLAYBACK")
+	log.Println("RadioController::updatePlayback")
 	for _, streamer := range controller.streamers {
-		log.Println("Playing Streamer ", streamer)
+		log.Println("RadioController::updatePlayback::Playing Streamer ", streamer)
 		controller.addStreamerToPlaybackQueue(streamer)
 	}
 }
@@ -93,8 +104,11 @@ func (controller *RadioController) updatePlayback() {
 func (controller *RadioController) stopRadio() {
 	speaker.Clear()
 	quickio.DeleteRadioLock()
-	controller.cancelFunc()
-	time.Sleep(1 * time.Second)
+	controller.goroutineMap.Range(func(key, value interface{}) bool {
+		callback, _ := value.(context.CancelFunc)
+		callback()
+		return true
+	})
 	quickio.EmptyRadioDirectory(controller.RadioDirectory)
 }
 
@@ -110,11 +124,14 @@ func (controller *RadioController) PlayRadio() {
 			}
 			controller.updateSharedData()
 			if len(controller.streamers) == 0 {
-				controller.PollRadioFormatLink()
+				log.Println("PlayRadio::POLLING RADIO FORMAT LINK")
+				go controller.PollRadioFormatLink()
 				time.Sleep(time.Duration(controller.EmergencySleepInterval) * time.Second)
 				continue
 			}
 			controller.updatePlayback()
+			go controller.PollRadioFormatLink()
+			time.Sleep(time.Duration(controller.NormalSleepInterval) * time.Second)
 		}
 	}
 }
@@ -125,21 +142,26 @@ func StartRadioFun(radioLink string) {
 }
 
 func StopRadioFun() {
+	speaker.Clear()
 	quickio.DeleteRadioLock()
 }
 
 func NewRadioController(radioLink string) RadioController {
+	log.Println("Func -> NewRadioController")
 	var controller RadioController
 	controller.RadioFormatLink, controller.RadioDirectory, controller.WavPaths = quickio.GetRadioFormatLinkAndDirectory(radioLink)
 	controller.NormalSleepInterval = 3
 	controller.EmergencySleepInterval = 1
 	controller.ctx = context.Background()
 	controller.speakerInitialized = false
+	log.Println("NewRadioController::controller.WavPaths ", controller.WavPaths)
+	log.Println("NewRadioController::controller.RadioDirectory ", controller.RadioDirectory)
+	log.Println("NewRadioController::controller.RadioFormatLink ", controller.RadioFormatLink)
 	return controller
 }
 
 func RadioKillFun() {
 	quickio.DeleteRadioLock()
-	time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
 	quickio.EmptyTmpFolder()
 }
