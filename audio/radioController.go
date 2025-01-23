@@ -75,7 +75,7 @@ func (controller *RadioController) updateSharedData() {
 	for _, f := range files {
 		info, _ := f.Info()
 		if info.ModTime().After(latestFileInfo.ModTime()) && strings.HasSuffix(f.Name(), ".wav") {
-			streamer, _ := DecodeWaveFile(filepath.Join(controller.RadioDirectory, f.Name()))
+			streamer, _ := controller.decodeWaveFile(filepath.Join(controller.RadioDirectory, f.Name()))
 			streamers = append(streamers, streamer)
 			wavPaths = append(wavPaths, filepath.Join(controller.RadioDirectory, f.Name()))
 		}

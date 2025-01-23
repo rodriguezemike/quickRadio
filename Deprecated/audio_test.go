@@ -1,4 +1,6 @@
-package audio
+package deprecated
+
+////Formally audio
 
 import (
 	"errors"
