@@ -1,6 +1,9 @@
+//go:build ignore
+// +build ignore
+
 package deprecated
 
-////Formally audio
+//Deprecated:Formally audio
 
 import (
 	"errors"

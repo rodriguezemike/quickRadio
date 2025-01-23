@@ -1,5 +1,9 @@
-package audio
+//go:build ignore
+// +build ignore
 
+package deprecated
+
+// Deprecated:Formally audio
 import (
 	"log"
 	"os"

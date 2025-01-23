@@ -1,10 +1,14 @@
 package models
 
-import "testing"
+import (
+	"testing"
+	"time"
 
-func TestAudioData(t *testing.T) {
-	var audioQueue = &AudioStreamQueue{}
-	if audioQueue == nil {
-		t.Fatalf(`Error creating struct AudioStreamQueue.`)
-	}
+	"github.com/gopxl/beep/speaker"
+)
+
+func TestAudioDataInit(t *testing.T) {
+	var testStream = &AudioStreamQueue{}
+	speaker.Play(testStream)
+	time.Sleep(5 * time.Second)
 }
