@@ -19,6 +19,12 @@ import (
 
 //Once were Happy with this, we should refactor into a proper singleton UI
 //This would make it easier to update as we move towards AI Things in later phasees of the UI.
+//On refactor, write a layer that handles the single polling of gamecenter every so often
+//Then saves out multiple jsons of the gamestate in the tempdir + awayteam vs hometeam
+//This would parts of the GDO and would be faster to open and populate our UI.
+//Minimizing the overall Calls to the api.
+
+//Also rename links.json to config.json and throw some useful stuff in here.
 
 func GetProjectDir() string {
 	_, filename, _, _ := runtime.Caller(0)
@@ -188,6 +194,36 @@ func CreateGamesWidget(gameDataObjects []models.GameData, gamecenterLinks []stri
 	}
 	gameStackWidget.SetCurrentIndex(0)
 	return gameStackWidget
+}
+
+func CreatePlayersOnIceWidgetForTeam(teamOnIce models.TeamOnIce, teamAbbrev string, gamecenterLink string, gameDetailsWidget *widgets.QGroupBox) *widgets.QGroupBox {
+	//Every 10k Seconds update by replacing all labels in the Widget. with New Data.
+	//When we refactor think of a better way to do this, including the many files approach.
+	players := []models.PlayerOnIce{}
+	players = append(append(append(players, teamOnIce.Forwards...), teamOnIce.Defensemen...), teamOnIce.Goalies...)
+	playersOnIceLayout := widgets.NewQVBoxLayout()
+	playersOnIceWidget := widgets.NewQGroupBox(gameDetailsWidget)
+	playersOnIceWidget.SetAccessibleName(gamecenterLink + " " + teamAbbrev)
+	onIceLabel := widgets.NewQLabel2("OnIce", playersOnIceWidget, core.Qt__Widget)
+	onIceLabel.SetText("Players On Ice")
+	playersOnIceLayout.AddWidget(onIceLabel, 0, core.Qt__AlignCenter)
+	for _, player := range players {
+		text := strconv.Itoa(player.SweaterNumber) + " " + player.Name.Default + player.PositionCode
+		playerLabel := widgets.NewQLabel2(player.Name.Default, playersOnIceWidget, core.Qt__Widget)
+		playerLabel.SetText(text)
+		playersOnIceLayout.AddWidget(playerLabel, 0, core.Qt__AlignCenter)
+	}
+	penalityBoxLabel := widgets.NewQLabel2("PenalityBox", playersOnIceWidget, core.Qt__Widget)
+	penalityBoxLabel.SetText("Penality Box")
+	playersOnIceLayout.AddWidget(penalityBoxLabel, 0, core.Qt__AlignCenter)
+	for _, player := range teamOnIce.PenaltyBox {
+		text := strconv.Itoa(player.SweaterNumber) + " " + player.Name.Default + player.PositionCode
+		playerLabel := widgets.NewQLabel2(player.Name.Default, playersOnIceWidget, core.Qt__Widget)
+		playerLabel.SetText(text)
+		playersOnIceLayout.AddWidget(playerLabel, 0, core.Qt__AlignCenter)
+	}
+	playersOnIceWidget.SetLayout(playersOnIceLayout)
+	return playersOnIceWidget
 }
 
 func CreateGameDetailsWidgetFromGameDataObject(gamedataObject models.GameData, gamecenterLink string, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {

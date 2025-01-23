@@ -20,6 +20,24 @@ type TeamData struct {
 	RadioLink string `json:"radioLink"`
 }
 
+type PlayerOnIce struct {
+	PlayerId int `json:"playerId"`
+	Name     struct {
+		Default string `json:"default"`
+	}
+	SweaterNumber int    `json:"sweaterNumber"`
+	PositionCode  string `json:"positionCode"`
+	Headshot      string `json:"headShot"`
+	TotalSOI      int    `json:"totalSOI"`
+}
+
+type TeamOnIce struct {
+	Forwards   []PlayerOnIce `json:"forwards"`
+	Defensemen []PlayerOnIce `json:"defensemen"`
+	Goalies    []PlayerOnIce `json:"goalies"`
+	PenaltyBox []PlayerOnIce `json:"penaltyBox"`
+}
+
 type GameData struct {
 	Id             int    `json:"id"`
 	Season         int    `json:"season"`
@@ -59,90 +77,8 @@ type GameData struct {
 	TiesInUse         bool     `json:"tiesInUse"`
 	Summary           struct {
 		IceSurface struct {
-			AwayTeam struct {
-				Forwards []struct {
-					PlayerId int `json:"playerId"`
-					Name     struct {
-						Default string `json:"default"`
-					}
-					SweaterNumber int    `json:"sweaterNumber"`
-					PositionCode  string `json:"positionCode"`
-					Headshot      string `json:"headShot"`
-					TotalSOI      int    `json:"totalSOI"`
-				} `json:"forwards"`
-				Defensemen []struct {
-					PlayerId int `json:"playerId"`
-					Name     struct {
-						Default string `json:"default"`
-					}
-					SweaterNumber int    `json:"sweaterNumber"`
-					PositionCode  string `json:"positionCode"`
-					Headshot      string `json:"headShot"`
-					TotalSOI      int    `json:"totalSOI"`
-				} `json:"defensemen"`
-				Goalies []struct {
-					PlayerId int `json:"playerId"`
-					Name     struct {
-						Default string `json:"default"`
-					}
-					SweaterNumber int    `json:"sweaterNumber"`
-					PositionCode  string `json:"positionCode"`
-					Headshot      string `json:"headShot"`
-					TotalSOI      int    `json:"totalSOI"`
-				} `json:"goalies"`
-				PenaltyBox []struct {
-					PlayerId int `json:"playerId"`
-					Name     struct {
-						Default string `json:"default"`
-					}
-					SweaterNumber int    `json:"sweaterNumber"`
-					PositionCode  string `json:"positionCode"`
-					Headshot      string `json:"headShot"`
-					TotalSOI      int    `json:"totalSOI"`
-				} `json:"penaltyBox"`
-			} `json:"awayTeam"`
-			HomeTeam struct {
-				Forwards []struct {
-					PlayerId int `json:"playerId"`
-					Name     struct {
-						Default string `json:"default"`
-					}
-					SweaterNumber int    `json:"sweaterNumber"`
-					PositionCode  string `json:"positionCode"`
-					Headshot      string `json:"headShot"`
-					TotalSOI      int    `json:"totalSOI"`
-				} `json:"forwards"`
-				Defensemen []struct {
-					PlayerId int `json:"playerId"`
-					Name     struct {
-						Default string `json:"default"`
-					}
-					SweaterNumber int    `json:"sweaterNumber"`
-					PositionCode  string `json:"positionCode"`
-					Headshot      string `json:"headShot"`
-					TotalSOI      int    `json:"totalSOI"`
-				} `json:"defensemen"`
-				Goalies []struct {
-					PlayerId int `json:"playerId"`
-					Name     struct {
-						Default string `json:"default"`
-					}
-					SweaterNumber int    `json:"sweaterNumber"`
-					PositionCode  string `json:"positionCode"`
-					Headshot      string `json:"headShot"`
-					TotalSOI      int    `json:"totalSOI"`
-				} `json:"goalies"`
-				PenaltyBox []struct {
-					PlayerId int `json:"playerId"`
-					Name     struct {
-						Default string `json:"default"`
-					}
-					SweaterNumber int    `json:"sweaterNumber"`
-					PositionCode  string `json:"positionCode"`
-					Headshot      string `json:"headShot"`
-					TotalSOI      int    `json:"totalSOI"`
-				} `json:"penaltyBox"`
-			} `json:"homeTeam"`
+			AwayTeam TeamOnIce `json:"awayTeam"`
+			HomeTeam TeamOnIce `json:"homeTeam"`
 		} `json:"IceSurface"`
 		Scoring []struct {
 			PeriodDescriptor struct {
