@@ -109,6 +109,7 @@ func (controller *RadioController) stopRadio() {
 		callback()
 		return true
 	})
+	time.Sleep(3 * time.Seconds)
 	quickio.EmptyRadioDirectory(controller.RadioDirectory)
 }
 

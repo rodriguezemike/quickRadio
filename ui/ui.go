@@ -2,6 +2,7 @@ package ui
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"path/filepath"
 	"quickRadio/audio"
@@ -25,6 +26,7 @@ import (
 //Minimizing the overall Calls to the api.
 
 //Also rename links.json to config.json and throw some useful stuff in here.
+//Need a layer for the GUI data seperate from our infinite loop for updating game data.
 
 func GetProjectDir() string {
 	_, filename, _, _ := runtime.Caller(0)
@@ -180,7 +182,7 @@ func CreateGameWidgetFromGameDataObject(gameDataObject models.GameData, gamecent
 	layout.AddWidget2(CreateTeamWidget(gameDataObject.HomeTeam, gamecenterLink, sweaterColors, gameWidget), 0, 0, core.Qt__AlignCenter)
 	layout.AddWidget2(CreateIceCenterWidget(gameDataObject, gamecenterLink, gameWidget), 0, 1, core.Qt__AlignCenter)
 	layout.AddWidget2(CreateTeamWidget(gameDataObject.AwayTeam, gamecenterLink, sweaterColors, gameWidget), 0, 2, core.Qt__AlignCenter)
-	layout.AddWidget2(CreateGameDetailsWidgetFromGameDataObject(gameDataObject, gamecenterLink, gameWidget), 3, 1, core.Qt__AlignCenter)
+	//layout.AddWidget3(CreateGameDetailsWidgetFromGameDataObject(gameDataObject, gamecenterLink, gameWidget), 1, 0, 3, 1, core.Qt__AlignCenter)
 	gameWidget.SetLayout(layout)
 	gameWidget.SetStyleSheet(CreateGameStylesheet(gameDataObject.HomeTeam.Abbrev, gameDataObject.AwayTeam.Abbrev, sweaterColors))
 	return gameWidget
@@ -196,33 +198,41 @@ func CreateGamesWidget(gameDataObjects []models.GameData, gamecenterLinks []stri
 	return gameStackWidget
 }
 
-func CreatePlayersOnIceWidgetForTeam(teamOnIce models.TeamOnIce, teamAbbrev string, gamecenterLink string, gameDetailsWidget *widgets.QGroupBox) *widgets.QGroupBox {
+func CreatePlayersOnIceWidgetForTeam(teamOnIce models.TeamOnIce, teamAbbrev string, gamecenterLink string, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
 	//Every 10k Seconds update by replacing all labels in the Widget. with New Data.
 	//When we refactor think of a better way to do this, including the many files approach.
+	log.Println("GUI::CreatePlayersOnIceWidgetForTeam - Line 204")
+	log.Println("GUI::CreatePlayersOnIceWidgetForTeam ", teamAbbrev)
 	players := []models.PlayerOnIce{}
 	players = append(append(append(players, teamOnIce.Forwards...), teamOnIce.Defensemen...), teamOnIce.Goalies...)
 	playersOnIceLayout := widgets.NewQVBoxLayout()
-	playersOnIceWidget := widgets.NewQGroupBox(gameDetailsWidget)
+	playersOnIceWidget := widgets.NewQGroupBox(gameWidget)
 	playersOnIceWidget.SetAccessibleName(gamecenterLink + " " + teamAbbrev)
+	log.Println("GUI::CreatePlayersOnIceWidgetForTeam - Line 210")
 	onIceLabel := widgets.NewQLabel2("OnIce", playersOnIceWidget, core.Qt__Widget)
 	onIceLabel.SetText("Players On Ice")
 	playersOnIceLayout.AddWidget(onIceLabel, 0, core.Qt__AlignCenter)
+	log.Println("GUI::CreatePlayersOnIceWidgetForTeam - Line 214")
 	for _, player := range players {
 		text := strconv.Itoa(player.SweaterNumber) + " " + player.Name.Default + player.PositionCode
 		playerLabel := widgets.NewQLabel2(player.Name.Default, playersOnIceWidget, core.Qt__Widget)
 		playerLabel.SetText(text)
 		playersOnIceLayout.AddWidget(playerLabel, 0, core.Qt__AlignCenter)
+		log.Println("GUI::CreatePlayersOnIceWidgetForTeam - Line 220")
 	}
 	penalityBoxLabel := widgets.NewQLabel2("PenalityBox", playersOnIceWidget, core.Qt__Widget)
 	penalityBoxLabel.SetText("Penality Box")
 	playersOnIceLayout.AddWidget(penalityBoxLabel, 0, core.Qt__AlignCenter)
+	log.Println("GUI::CreatePlayersOnIceWidgetForTeam - Line 225")
 	for _, player := range teamOnIce.PenaltyBox {
 		text := strconv.Itoa(player.SweaterNumber) + " " + player.Name.Default + player.PositionCode
 		playerLabel := widgets.NewQLabel2(player.Name.Default, playersOnIceWidget, core.Qt__Widget)
 		playerLabel.SetText(text)
 		playersOnIceLayout.AddWidget(playerLabel, 0, core.Qt__AlignCenter)
+		log.Println("GUI::CreatePlayersOnIceWidgetForTeam - Line 231")
 	}
 	playersOnIceWidget.SetLayout(playersOnIceLayout)
+	log.Println("GUI::CreatePlayersOnIceWidgetForTeam - Line 235")
 	return playersOnIceWidget
 }
 
@@ -246,8 +256,15 @@ func CreateGameDetailsWidgetFromGameDataObject(gamedataObject models.GameData, g
 	jsonDumpLabel.StartTimer(30000, core.Qt__VeryCoarseTimer)
 	scrollableArea.SetWidgetResizable(true)
 	scrollableArea.SetWidget(jsonDumpLabel)
-	gameDetailsLayout.AddWidget(scrollableArea)
+	homeTeamPlayersOnIce := CreatePlayersOnIceWidgetForTeam(gamedataObject.Summary.IceSurface.HomeTeam, gamedataObject.HomeTeam.Abbrev, gamecenterLink, gameWidget)
+	//awayTeamPlayersOnIce := CreatePlayersOnIceWidgetForTeam(gamedataObject.Summary.IceSurface.AwayTeam, gamedataObject.AwayTeam.Abbrev, gamecenterLink, gameWidget)
+	log.Println("GUI::CreateGameDetailsWidgetFromGameDataObject line 261")
+	gameDetailsLayout.AddWidget(homeTeamPlayersOnIce)
+	log.Println("GUI::CreateGameDetailsWidgetFromGameDataObject line 263")
+	gameDetailsLayout.AddWidget(gameDetailsWidget)
+	//gameDetailsLayout.AddWidget(awayTeamPlayersOnIce)
 	gameDetailsWidget.SetLayout(gameDetailsLayout)
+	log.Println("GUI::CreateGameDetailsWidgetFromGameDataObject line 265")
 	return gameDetailsWidget
 }
 

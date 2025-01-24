@@ -37,6 +37,112 @@ type TeamOnIce struct {
 	Goalies    []PlayerOnIce `json:"goalies"`
 	PenaltyBox []PlayerOnIce `json:"penaltyBox"`
 }
+type GameVersesData struct {
+	SeasonSeries []struct {
+		Id                int    `json:"id"`
+		Season            int    `json:"season"`
+		GameType          int    `json:"gameType"`
+		GameDate          string `json:"gameDate"`
+		StartTimeUTC      string `json:"startTimeUTC"`
+		EasternUTCOffset  string `json:"easternUTCOffset"`
+		VenueUTCOffset    string `json:"venueUTCOffset"`
+		GameState         string `json:"gameState"`
+		GameScheduleState string `json:"OK"`
+		AwayTeam          struct {
+			Id     int    `json:"id"`
+			Abbrev string `json:"abbrev"`
+			Logo   string `json:"logo"`
+			Score  int    `json:"score"`
+		} `json:"awayTeam"`
+		HomeTeam struct {
+			Id     int    `json:"id"`
+			Abbrev string `json:"abbrev"`
+			Logo   string `json:"logo"`
+			Score  int    `json:"score"`
+		} `json:"homeTeam"`
+		GameCenterLink string `json:"gameCenterLink"`
+	} `json:"seasonSeries"`
+	SeasonSeriesWins struct {
+		AwayTeamWins int `json:"awayTeamWins"`
+		HomeTeamWins int `json:"homeTeamWins"`
+	} `json:"seasonSeriesWins"`
+	GameInfo struct {
+		Referees []struct {
+			Default string `json:"default"`
+		} `json:"referees"`
+		Linesmen []struct {
+			Default string `json:"default"`
+		} `json:"linesmen"`
+		AwayTeam struct {
+			HeadCoach struct {
+				Default string `json:"default"`
+			} `json:"headCoach"`
+			Scratches []struct {
+				Id        int `json:"id"`
+				FirstName struct {
+					Default string `json:"default"`
+				} `json:"firstName"`
+				LastName struct {
+					Default string `json:"default"`
+				} `json:"lastName"`
+			}
+		} `json:"awayTeam"`
+		HomeTeam struct {
+			HeadCoach struct {
+				Default string `json:"default"`
+			} `json:"headCoach"`
+			Scratches []struct {
+				Id        int `json:"id"`
+				FirstName struct {
+					Default string `json:"default"`
+				} `json:"firstName"`
+				LastName struct {
+					Default string `json:"default"`
+				} `json:"lastName"`
+			}
+		} `json:"homeTeam"`
+		Linescore struct {
+			ByPeriod []struct {
+				PeriodDescriptor struct {
+					Number               int    `json:"number"`
+					PeriodType           string `json:"periodType"`
+					MaxRegulationPeriods int    `json:"maxRegulationPeriods"`
+				} `json:"PeriodDescriptor"`
+				Away int `json:"away"`
+				Home int `json:"home"`
+			} `json:"byPeriod"`
+			Totals struct {
+				Away int `json:"away"`
+				Home int `json:"home"`
+			} `json:"totals"`
+		} `json:"linescore"`
+		ShotsByPeriod []struct {
+			PeriodDescriptor struct {
+				Number               int    `json:"number"`
+				PeriodType           string `json:"periodType"`
+				MaxRegulationPeriods int    `json:"maxRegulationPeriods"`
+			} `json:"PeriodDescriptor"`
+			Away int `json:"away"`
+			Home int `json:"home"`
+		} `json:"shotsByPeriod"`
+		TeamGameStats []struct {
+			Category  string `json:"category"`
+			AwayValue string `json:"awayValue,string"`
+			HomeValue string `json:"homeValue,string"`
+		} `json:"teamGameStats"`
+		GameReports struct {
+			GameSummary       string `json:"gameSummary"`
+			EventSummary      string `json:"eventSummary"`
+			PlayByPlay        string `json:"playByPlay"`
+			FaceoffSummary    string `json:"faceoffSummary"`
+			FaceoffComparison string `json:"faceoffComparison"`
+			Rosters           string `json:"rosters"`
+			ShotSummary       string `json:"shotSummary"`
+			ToiAway           string `json:"toiAway"`
+			ToiHome           string `json:"toiHome"`
+		} `json:"gameReports"`
+	} `json:"gameInfo"`
+}
 
 type GameData struct {
 	Id             int    `json:"id"`
