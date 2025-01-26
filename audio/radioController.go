@@ -17,6 +17,7 @@ import (
 )
 
 type RadioController struct {
+	TeamAbbrev             string
 	WavPaths               []string
 	RadioDirectory         string
 	RadioFormatLink        string
@@ -34,8 +35,8 @@ func (controller *RadioController) initalizeRadioSpeaker(format beep.Format) {
 	controller.speakerInitialized = true
 }
 
-func (controller *RadioController) PollRadioFormatLink() {
-	log.Println("readioController::PollRadioFormatLink")
+func (controller *RadioController) pollRadioFormatLink() {
+	log.Println("readioController::pollRadioFormatLink")
 	log.Println("PollRadioFormatLink::controller.RadioFormatLink", controller.RadioFormatLink)
 	ctx, cancel := context.WithDeadline(controller.ctx, time.Now().Add(10*time.Second))
 	defer cancel()
@@ -90,7 +91,7 @@ func (controller *RadioController) initalPlayback() {
 	streamer := controller.initializeRadio(controller.WavPaths[len(controller.WavPaths)-1])
 	speaker.Play(&controller.streamQueue)
 	controller.addStreamerToPlaybackQueue(streamer)
-	go controller.PollRadioFormatLink()
+	go controller.pollRadioFormatLink()
 }
 
 func (controller *RadioController) updatePlayback() {
@@ -103,55 +104,63 @@ func (controller *RadioController) updatePlayback() {
 
 func (controller *RadioController) stopRadio() {
 	speaker.Clear()
-	quickio.DeleteRadioLock()
+	quickio.DeleteRadioLock(controller.TeamAbbrev)
 	controller.goroutineMap.Range(func(key, value interface{}) bool {
 		callback, _ := value.(context.CancelFunc)
 		callback()
 		return true
 	})
-	time.Sleep(3 * time.Seconds)
+	time.Sleep(3 * time.Second)
 	quickio.EmptyRadioDirectory(controller.RadioDirectory)
 }
 
-func (controller *RadioController) PlayRadio() {
-	if !quickio.IsRadioLocked() {
-		quickio.CreateRadioLock()
+func (controller *RadioController) playRadio() {
+	log.Println(controller.TeamAbbrev)
+	log.Println(quickio.IsOurRadioLocked(controller.TeamAbbrev))
+	if quickio.IsOurRadioLocked(controller.TeamAbbrev) {
 		controller.initalPlayback()
 		time.Sleep(time.Duration(controller.NormalSleepInterval) * time.Second)
 		for {
-			if !quickio.IsRadioLocked() {
+			if !quickio.IsOurRadioLocked(controller.TeamAbbrev) {
 				controller.stopRadio()
 				return
 			}
 			controller.updateSharedData()
 			if len(controller.streamers) == 0 {
 				log.Println("PlayRadio::POLLING RADIO FORMAT LINK")
-				go controller.PollRadioFormatLink()
+				go controller.pollRadioFormatLink()
 				time.Sleep(time.Duration(controller.EmergencySleepInterval) * time.Second)
 				continue
 			}
 			controller.updatePlayback()
-			go controller.PollRadioFormatLink()
+			go controller.pollRadioFormatLink()
 			time.Sleep(time.Duration(controller.NormalSleepInterval) * time.Second)
 		}
 	}
 }
 
-func StartRadioFun(radioLink string) {
-	controller := NewRadioController(radioLink)
-	controller.PlayRadio()
+func StartRadioFun(radioLink string, teamAbbrev string) {
+	if !quickio.IsRadioLocked() {
+		quickio.CreateRadioLock(teamAbbrev)
+		controller := newRadioController(radioLink, teamAbbrev)
+		controller.playRadio()
+	}
 }
 
-func StopRadioFun() {
-	speaker.Clear()
-	quickio.DeleteRadioLock()
+func StopRadioFun(teamAbbrev string) {
+	log.Println("StopRadioFun", teamAbbrev)
+	if quickio.IsOurRadioLocked(teamAbbrev) {
+		speaker.Clear()
+		quickio.DeleteRadioLock(teamAbbrev)
+	}
 }
 
-func NewRadioController(radioLink string) RadioController {
+func newRadioController(radioLink string, teamAbbrev string) RadioController {
 	log.Println("Func -> NewRadioController")
 	var controller RadioController
+	controller.TeamAbbrev = teamAbbrev
 	controller.RadioFormatLink, controller.RadioDirectory, controller.WavPaths = quickio.GetRadioFormatLinkAndDirectory(radioLink)
-	controller.NormalSleepInterval = 3
+	controller.NormalSleepInterval = 2
 	controller.EmergencySleepInterval = 1
 	controller.ctx = context.Background()
 	controller.speakerInitialized = false
@@ -162,7 +171,7 @@ func NewRadioController(radioLink string) RadioController {
 }
 
 func RadioKillFun() {
-	quickio.DeleteRadioLock()
+	quickio.DeleteAnyRadioLock()
 	time.Sleep(3 * time.Second)
 	quickio.EmptyTmpFolder()
 }

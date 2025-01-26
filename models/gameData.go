@@ -1,5 +1,11 @@
 package models
 
+type Sweater struct {
+	TeamAbbrev     string
+	PrimaryColor   string
+	SecondaryColor string
+}
+
 type TeamData struct {
 	Id   int `json:"id"`
 	Name struct {

@@ -349,17 +349,47 @@ func EmptyRadioDirectory(radioDirectory string) {
 	os.RemoveAll(radioDirectory)
 }
 
-func CreateRadioLock() {
-	lockPath := path.Join(GetQuickTmpFolder(), "RADIO_IN_USE.LOCK")
-	os.Create(lockPath)
+func GetLockpath(teamAbbrev string) string {
+	filename := teamAbbrev + ".RADIOLOCK"
+	return filepath.Join(GetQuickTmpFolder(), filename)
+}
+
+func CreateRadioLock(teamAbbrev string) {
+	lockPath := GetLockpath(teamAbbrev)
+	f, _ := os.Create(lockPath)
+	f.Close()
 }
 
 func IsRadioLocked() bool {
-	lockPath := path.Join(GetQuickTmpFolder(), "RADIO_IN_USE.LOCK")
+	files, _ := os.ReadDir(GetQuickTmpFolder())
+	for _, f := range files {
+		info, _ := f.Info()
+		if strings.HasSuffix(info.Name(), ".RADIOLOCK") {
+			return true
+		}
+	}
+	return false
+}
+
+func IsOurRadioLocked(teamAbbrev string) bool {
+	lockPath := GetLockpath(teamAbbrev)
 	return DoesFileExist(lockPath)
 }
 
-func DeleteRadioLock() {
-	lockPath := path.Join(GetQuickTmpFolder(), "RADIO_IN_USE.LOCK")
+func DeleteRadioLock(teamAbbrev string) {
+	log.Println("DeleteRadioLock", teamAbbrev)
+	lockPath := GetLockpath(teamAbbrev)
+	log.Println("DeleteRadioLock", lockPath)
 	os.Remove(lockPath)
+}
+
+func DeleteAnyRadioLock() {
+	tmpDirectory := GetQuickTmpFolder()
+	files, _ := os.ReadDir(tmpDirectory)
+	for _, f := range files {
+		info, _ := f.Info()
+		if strings.HasSuffix(info.Name(), ".RADIOLOCK") {
+			os.Remove(path.Join(tmpDirectory, info.Name()))
+		}
+	}
 }

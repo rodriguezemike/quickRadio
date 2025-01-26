@@ -8,6 +8,7 @@ import (
 	"quickRadio/audio"
 	"quickRadio/game"
 	"quickRadio/models"
+	"quickRadio/quickio"
 	"quickRadio/radioErrors"
 	"runtime"
 	"strconv"
@@ -73,11 +74,9 @@ func CreateTeamRadioStreamButton(teamAbbrev string, radioLink string, sweaterCol
 	button.SetCheckable(true)
 	button.ConnectToggled(func(onCheck bool) {
 		if onCheck {
-			//go audio.StartFun(radioLink)
-			go audio.StartRadioFun(radioLink)
+			go audio.StartRadioFun(radioLink, strings.Split(button.ObjectName(), "_")[1])
 		} else {
-			//go audio.StopRadio()
-			go audio.StopRadioFun()
+			go audio.StopRadioFun(strings.Split(button.ObjectName(), "_")[1])
 		}
 	})
 	return button
@@ -104,6 +103,7 @@ func CreateIceRinklabel(gameWidget *widgets.QGroupBox, homeTeamAbbrev models.Tea
 	//Finish drawing the Abbrevs on the Sides of the ICe. Lets take it to the between the dots instead of the Brodeur Zone.
 	//Do we want all mugs and call em from disc?
 	//It would be kinda cool to actually Draw on the ice. Maybe for later?
+	//"homeTeamDefendingSide": "left" Tells which side the home team starts on.
 	return iceRinkLabel
 }
 
@@ -311,6 +311,7 @@ func KillAllTheFun() {
 }
 
 func CreateAndRunUI() {
+	quickio.EmptyTmpFolder()
 	app := widgets.NewQApplication(len(os.Args), os.Args)
 	app.SetApplicationDisplayName("QuickRadio")
 	app.ConnectAboutToQuit(func() {
