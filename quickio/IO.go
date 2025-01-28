@@ -448,9 +448,30 @@ func EmptyRadioDirectory(radioDirectory string) {
 	os.RemoveAll(radioDirectory)
 }
 
+func EmptyActiveGameDirectory(activeGameDirectory string) {
+	files, _ := os.ReadDir(activeGameDirectory)
+	for _, f := range files {
+		info, _ := f.Info()
+		os.Remove(filepath.Join(activeGameDirectory, info.Name()))
+	}
+}
+
 func GetLockpath(teamAbbrev string) string {
 	filename := teamAbbrev + ".RADIOLOCK"
 	return filepath.Join(GetQuickTmpFolder(), filename)
+}
+
+func touchFile(filepath string) {
+	f, err := os.Create(filepath)
+	radioErrors.ErrorCheck(err)
+	f.Close()
+}
+
+func writeFile(filepath string, data string) {
+	f, err := os.Create(filepath)
+	radioErrors.ErrorCheck(err)
+	f.WriteString(data)
+	f.Close()
 }
 
 func CreateRadioLock(teamAbbrev string) {

@@ -36,14 +36,50 @@ func (controller *GameController) GetUIDataFromFilename(teamAbbrev string, dataL
 	return defaultReturnValue
 }
 
+func (controller *GameController) getGamestateString() string {
+	if controller.ActiveGameDataObject.GameState == "LIVE" || controller.ActiveGameDataObject.GameState == "CRIT"{
+		if !controller.ActiveGameDataObject.InIntermission{
+			return controller.ActiveGameDataObject.GameState + " - " \
+					+ controller.ActiveGameDataObject.Venue.Default + ", " + controller.ActiveGameDataObject.VenueLocation.Default \
+					+ " - " + "P" + strconv.Itoa(gdo.PeriodDescriptor.Number) + " " + gdo.Clock.TimeRemaining)
+		} else {
+			return controller.ActiveGameDataObject.GameState + " - " \
+			+ controller.ActiveGameDataObject.Venue.Default + ", " + controller.ActiveGameDataObject.VenueLocation.Default \
+			+ " INT " + strconv.Itoa(gdo.PeriodDescriptor.Number) + " " + gdo.Clock.TimeRemaining)
+		}
+	} else {
+		if controller.ActiveGameDataObject.GameState == "FUT" { 
+			return controller.ActiveGameDataObject.GameState + " - "\
+			+ controller.ActiveGameDataObject.GameDate + " - " + controller.ActiveGameDataObject.StartTimeUTC\
+			+ controller.ActiveGameDataObject.Venue.Default + ", " + controller.ActiveGameDataObject.VenueLocation.Default
+		} else {
+			return controller.ActiveGameDataObject.GameState
+		}
+	}
+}
+
+func (controller *GameController) getTeamOnIceJson(team models.TeamOnIce)[]byte{
+	onIceJson, _ := json.MarshalIndent(team, "", " ")
+	return onIceJson
+}
+
+func (controller *GameController) getTeamGameStats()[]byte{
+	tameGameStats, _ := json.MarshalIndent(controller.ActiveGameVersesDataObject.GameInfo.TeamGameStats)
+	return teamGameStats
+}
+
 func (controller *GameController) DumpGameData() {
-	homeScore := filepath.Join(controller.activeGameDirectory, activeGameDataObject.HomeTeam.TeamAbbrev + "_SCORE"+"."activeGameDataObject.HomeTeam.Score)
-	awayScore := filepath.Join(controller.activeGameDirectory, activeGameDataObject.AwayTeam.TeamAbbrev + "_SCORE"+"."activeGameDataObject.AwayTeam.Score)
-	//Funcify
-	f, _ := os.Create(homeScore)
-	f.Close()
-	f, _ := os.Create(awayScore)
-	//Ice Ticker (Game State - Period - TIme Left)
+	homeScorePath := filepath.Join(controller.activeGameDirectory, activeGameDataObject.HomeTeam.TeamAbbrev + "_SCORE."+ activeGameDataObject.HomeTeam.Score)
+	awayScorePath := filepath.Join(controller.activeGameDirectory, activeGameDataObject.AwayTeam.TeamAbbrev + "_SCORE."+ activeGameDataObject.AwayTeam.Score)
+	gameStatePath := filepath.Join(controller.activeGameDirectory, "ActiveGameState.label")
+	homePlayersOnIcePath := filepath.Join(controller.activeGameDirectory, activeGameDataObject.HomeTeam.TeamAbbrev + "_playersOnIce."+"json")
+	awayPlayersOnIcePath := filepath.Join(controller.activeGameDirectory, activeGameDataObject.AwayTeam.TeamAbbrev + "_playersOnIce."+"json")
+	go quickio.touchFile(homeScorePath)
+	go quickio.touchFile(awayScorePath)
+	go quickio.writeFile(gameStatePath, controller.getGamestateString())
+	go quickio.writeFile(homePlayersOnIcePath, controller.getTeamOnIceJson(activeGameDataObject.Summary.IceSurface.HomeTeam))
+	go quickio.write File(awayPlayersOnIcePath, controller.getTeamOnIceJson(activeGameDataObject.Summary.IceSurface.AwayTeam))
+
 	//Players On ice and in Penalty Box (On home/away side)
 	//Game Stats including sog, hits, faceoffs, etc (Center)
 }
