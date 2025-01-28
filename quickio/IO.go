@@ -305,10 +305,9 @@ func GoDownloadAndTranscodeAACs(paths []string) []string {
 			localpath, err := DownloadAAC(path)
 			radioErrors.ErrorCheck(err)
 			wavPath := TranscodeToWave(localpath)
-			if strings.HasSuffix(wavPath, ".wav") {
-				//wavpaths[i] = strings.TrimSpace(wavPath)
-				wavpaths = append(wavpaths, strings.TrimSpace(wavPath))
-			}
+			err = os.Remove(localpath)
+			radioErrors.ErrorCheck(err)
+			wavpaths = append(wavpaths, strings.TrimSpace(wavPath))
 		}(paths[i])
 		workGroup.Wait()
 	}
