@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"quickRadio/models"
 	"quickRadio/radioErrors"
 	"regexp"
 	"runtime"
@@ -29,7 +30,7 @@ func GetRadioFormatLinkAndDirectory(radioLink string) (string, string, []string)
 	qualitySlug := GetQualityStreamSlug(radioLink, "192K")
 	radioFormatLink := BuildQualityRadioPath(radioLink, qualitySlug)
 	aacPaths := GetAACPaths(radioFormatLink)
-	wavPaths := DownloadAndTranscodeAACs(aacPaths)
+	wavPaths := GoDownloadAndTranscodeAACs(aacPaths)
 	radioDirectory := filepath.Dir(wavPaths[len(wavPaths)-1])
 	return radioFormatLink, radioDirectory, wavPaths
 }
@@ -73,8 +74,30 @@ func GetSweaterColors() map[string][]string {
 		lineColors := strings.Split(scanner.Text(), ";")
 		sweaterColors[lineColors[0]] = lineColors[1:]
 	}
-
 	return sweaterColors
+}
+
+func GetSweaters() map[string]models.Sweater {
+	sweaters := make(map[string]models.Sweater)
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filepath.Dir(filename))
+	path := filepath.Join(dir, "assets", "teams", "sweater_colors.txt")
+
+	fileObject, err := os.Open(path)
+	radioErrors.ErrorCheck(err)
+	defer fileObject.Close()
+	scanner := bufio.NewScanner(fileObject)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		var sweater models.Sweater
+		lineColors := strings.Split(scanner.Text(), ";")
+		sweater.TeamAbbrev = lineColors[0]
+		sweater.PrimaryColor = lineColors[1]
+		sweater.SecondaryColor = lineColors[2]
+		sweaters[sweater.TeamAbbrev] = sweater
+	}
+
+	return sweaters
 }
 
 func GetLinksJson() map[string]interface{} {
@@ -92,7 +115,18 @@ func GetLinksJson() map[string]interface{} {
 	return linksMap
 }
 
-func GetGameLandingLinks(html string, gamecenterBase string, gamecenterLanding string, gameRegex string) ([]string, error) {
+func GetGameLandingLinks() []string {
+	linksMap := GetLinksJson()
+	html := GetGameHtml(linksMap)
+	gamecenterBase := fmt.Sprintf("%v", linksMap["gamecenter_api_base"])
+	gamecenterLanding := fmt.Sprintf("%v", linksMap["gamecenter_api_slug"])
+	gameRegex := fmt.Sprintf("%v", linksMap["game_regex"])
+	landingLinks, err := GetGameLandingLinksFromHTML(html, gamecenterBase, gamecenterLanding, gameRegex)
+	radioErrors.ErrorCheck(err)
+	return landingLinks
+}
+
+func GetGameLandingLinksFromHTML(html string, gamecenterBase string, gamecenterLanding string, gameRegex string) ([]string, error) {
 	var gameLandingLinks []string
 	gameRegexObject, _ := regexp.Compile(gameRegex)
 	allGames := gameRegexObject.FindAllString(html, -1)
@@ -200,7 +234,67 @@ func GetAACPaths(qualityRadioPath string) []string {
 	return audioFilepaths
 }
 
-func DownloadAndTranscodeAACs(paths []string) []string {
+func GetGameDataObjectFromLandingLinks(landingLinks []string) []models.GameData {
+	var gameDataObjects []models.GameData
+	for _, landingLink := range landingLinks {
+		gameDataObjects = append(gameDataObjects, GetGameDataObject(landingLink))
+	}
+	return gameDataObjects
+}
+
+func GetGameDataObject(gameLandingLink string) models.GameData {
+	var gameData = &models.GameData{}
+	byteValue := GetDataFromResponse(gameLandingLink)
+	err := json.Unmarshal(byteValue, gameData)
+	radioErrors.ErrorCheck(err)
+	return *gameData
+}
+
+func GetGameVersesData(gameLandingLink string) models.GameVersesData {
+	var versesData = &models.GameVersesData{}
+	gameLandingLink = strings.Replace(gameLandingLink, "landing", "right-rail", 1)
+	byteValue := GetDataFromResponse(gameLandingLink)
+	err := json.Unmarshal(byteValue, versesData)
+	radioErrors.ErrorCheck(err)
+	return *versesData
+}
+
+func GoGetGameDataObjectsFromLandingLinks(landingLinks []string) []models.GameData {
+	var gameDataObjects []models.GameData
+	var workGroup sync.WaitGroup
+	for i := 0; i < len(landingLinks); i++ {
+		workGroup.Add(i)
+		go func(path string) {
+			var gameData = &models.GameData{}
+			defer workGroup.Done()
+			byteValue := GetDataFromResponse(path)
+			err := json.Unmarshal(byteValue, gameData)
+			radioErrors.ErrorCheck(err)
+			gameDataObjects = append(gameDataObjects, *gameData)
+		}(landingLinks[i])
+		workGroup.Wait()
+	}
+	return gameDataObjects
+}
+func GoGetGameVersesDataFromLandingLinks(landingLinks []string) []models.GameVersesData {
+	var gameVersesDataObjects []models.GameVersesData
+	var workGroup sync.WaitGroup
+	for i := 0; i < len(landingLinks); i++ {
+		workGroup.Add(i)
+		go func(path string) {
+			var versesData = &models.GameVersesData{}
+			path = strings.Replace(path, "landing", "right-rail", 1)
+			byteValue := GetDataFromResponse(path)
+			err := json.Unmarshal(byteValue, versesData)
+			radioErrors.ErrorCheck(err)
+			gameVersesDataObjects = append(gameVersesDataObjects, *versesData)
+		}(landingLinks[i])
+		workGroup.Wait()
+	}
+	return gameVersesDataObjects
+}
+
+func GoDownloadAndTranscodeAACs(paths []string) []string {
 	//log.Println("IO::DownloadAndTranscodeAACs")
 	var wavpaths []string
 	var workGroup sync.WaitGroup
@@ -269,7 +363,7 @@ func TranscodeToWave(aacFilepath string) string {
 
 func UpdateRadioWavs(qualityLink string) {
 	aacPaths := GetAACPaths(qualityLink)
-	DownloadAndTranscodeAACs(aacPaths)
+	GoDownloadAndTranscodeAACs(aacPaths)
 }
 
 func UpdateRadioWavsWithContext(ctx context.Context, qualityLink string) {
@@ -284,7 +378,7 @@ func UpdateRadioWavsWithContext(ctx context.Context, qualityLink string) {
 			if !running {
 				log.Println("IO::UpdateRadioWavsWithContext::Running.")
 				aacPaths := GetAACPaths(qualityLink)
-				go DownloadAndTranscodeAACs(aacPaths)
+				go GoDownloadAndTranscodeAACs(aacPaths)
 				running = true
 			}
 			time.Sleep(1 * time.Second)
@@ -338,6 +432,12 @@ func DoesFileExist(filepath string) bool {
 func GetQuickTmpFolder() string {
 	tempDirectory := os.TempDir()
 	return filepath.Join(tempDirectory, "QuickRadio")
+}
+
+func GetActiveGameDirectory() string {
+	activeGameDirectory := filepath.Join(GetQuickTmpFolder(), "ActiveGame")
+	CreateTmpDirectory(activeGameDirectory)
+	return activeGameDirectory
 }
 
 func EmptyTmpFolder() {

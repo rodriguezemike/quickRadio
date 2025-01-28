@@ -124,7 +124,7 @@ func CreateDataLabel(name string, data string, genercenterLink string, gameWidge
 			if strings.Contains(label.ObjectName(), "Score") {
 				counter, _ := strconv.Atoi(strings.Split(label.ObjectName(), " ")[1])
 				if counter > 10 && counter%10 == 0 {
-					gdo := game.GetGameDataObject(label.AccessibleDescription())
+					gdo := quickio.GetGameDataObject(label.AccessibleDescription())
 					if strings.Contains(label.ObjectName(), gdo.HomeTeam.Abbrev) {
 						label.SetText(strconv.Itoa(gdo.HomeTeam.Score))
 						label.Repaint()
@@ -138,7 +138,7 @@ func CreateDataLabel(name string, data string, genercenterLink string, gameWidge
 				}
 			} else if strings.Contains(label.ObjectName(), "GameState") {
 				//Run clock when clock is running, counting down. Only Resetting When clock is stopped. That should get us somewhat close to instant feedback.
-				gdo := game.GetGameDataObject(label.AccessibleDescription())
+				gdo := quickio.GetGameDataObject(label.AccessibleDescription())
 				if gdo.GameState == "LIVE" || gdo.GameState == "CRIT" {
 					if !gdo.Clock.InIntermission {
 						label.SetText(gdo.GameState + " - " + "P" + strconv.Itoa(gdo.PeriodDescriptor.Number) + " " + gdo.Clock.TimeRemaining)
@@ -247,7 +247,7 @@ func CreateGameDetailsWidgetFromGameDataObject(gamedataObject models.GameData, g
 	jsonDumpLabel.SetText(string(gameDetailsJson))
 	jsonDumpLabel.ConnectTimerEvent(func(event *core.QTimerEvent) {
 		if jsonDumpLabel.IsVisible() {
-			gdo := game.GetGameDataObject(gamecenterLink)
+			gdo := quickio.GetGameDataObject(gamecenterLink)
 			gameDetailsJson, _ := json.MarshalIndent(gdo, "", " ")
 			jsonDumpLabel.SetText(string(gameDetailsJson))
 			jsonDumpLabel.Repaint()
