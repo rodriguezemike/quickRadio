@@ -100,6 +100,15 @@ func GetSweaters() map[string]models.Sweater {
 	return sweaters
 }
 
+func GetDataFromFile(path string) []byte {
+	fileObject, err := os.Open(path)
+	radioErrors.ErrorCheck(err)
+	defer fileObject.Close()
+	byteValue, err := io.ReadAll(fileObject)
+	radioErrors.ErrorCheck(err)
+	return byteValue
+}
+
 func GetLinksJson() map[string]interface{} {
 	var linksMap map[string]interface{}
 	_, filename, _, _ := runtime.Caller(0)
@@ -453,6 +462,18 @@ func EmptyActiveGameDirectory(activeGameDirectory string) {
 		info, _ := f.Info()
 		os.Remove(filepath.Join(activeGameDirectory, info.Name()))
 	}
+}
+
+func GetProjectDir() string {
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filepath.Dir(filename))
+	return dir
+}
+
+func GetLogoPath(logoFilename string) string {
+	dir := GetProjectDir()
+	path := filepath.Join(dir, "assets", "svgs", "logos", logoFilename)
+	return path
 }
 
 func GetLockpath(teamAbbrev string) string {

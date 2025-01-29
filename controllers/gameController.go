@@ -17,14 +17,18 @@ type GameController struct {
 	ActiveLandingLink          string
 	ActiveGameDataObject       models.GameData
 	ActiveGameVersesDataObject models.GameVersesData
-	sweaters                   map[string]models.Sweater
+	Sweaters                   map[string]models.Sweater
 	gameDataObjects            []models.GameData
 	gameVersesObjects          []models.GameVersesData
 	//Here we want what we will need to update the ui, filepaths, syncMaps, etc.
 	activeGameDirectory string
 }
 
-func (controller *GameController) emptyActiveGameDirectory() {
+func (controller *GameController) GetGameDataObjects() []models.GameData {
+	return controller.gameDataObjects
+}
+
+func (controller *GameController) EmptyActiveGameDirectory() {
 	go quickio.EmptyActiveGameDirectory(controller.activeGameDirectory)
 }
 
@@ -39,24 +43,28 @@ func (controller *GameController) GetUIDataFromFilename(teamAbbrev string, dataL
 	return defaultReturnValue
 }
 
-func (controller *GameController) getGamestateString() string {
-	if controller.ActiveGameDataObject.GameState == "LIVE" || controller.ActiveGameDataObject.GameState == "CRIT" {
-		if !controller.ActiveGameDataObject.Clock.InIntermission {
-			return controller.ActiveGameDataObject.GameState + " - " +
-				controller.ActiveGameDataObject.Venue.Default + ", " + controller.ActiveGameDataObject.VenueLocation.Default +
-				" - " + "P" + strconv.Itoa(controller.ActiveGameDataObject.PeriodDescriptor.Number) + " " + controller.ActiveGameDataObject.Clock.TimeRemaining
+func (controller *GameController) getActiveGamestateString() string {
+	return controller.GetGamestateString(controller.ActiveGameDataObject)
+}
+
+func (controller *GameController) GetGamestateString(gameDataObject models.GameData) string {
+	if gameDataObject.GameState == "LIVE" || gameDataObject.GameState == "CRIT" {
+		if gameDataObject.Clock.InIntermission {
+			return gameDataObject.GameState + " - " +
+				gameDataObject.Venue.Default + ", " + gameDataObject.VenueLocation.Default +
+				" - " + "P" + strconv.Itoa(gameDataObject.PeriodDescriptor.Number) + " " + controller.ActiveGameDataObject.Clock.TimeRemaining
 		} else {
-			return controller.ActiveGameDataObject.GameState + " - " +
-				controller.ActiveGameDataObject.Venue.Default + ", " + controller.ActiveGameDataObject.VenueLocation.Default +
-				" INT " + strconv.Itoa(controller.ActiveGameDataObject.PeriodDescriptor.Number) + " " + controller.ActiveGameDataObject.Clock.TimeRemaining
+			return gameDataObject.GameState + " - " +
+				gameDataObject.Venue.Default + ", " + gameDataObject.VenueLocation.Default +
+				" INT " + strconv.Itoa(gameDataObject.PeriodDescriptor.Number) + " " + controller.ActiveGameDataObject.Clock.TimeRemaining
 		}
 	} else {
-		if controller.ActiveGameDataObject.GameState == "FUT" {
-			return controller.ActiveGameDataObject.GameState + " - " +
-				controller.ActiveGameDataObject.GameDate + " - " + controller.ActiveGameDataObject.StartTimeUTC +
-				controller.ActiveGameDataObject.Venue.Default + ", " + controller.ActiveGameDataObject.VenueLocation.Default
+		if gameDataObject.GameState == "FUT" {
+			return gameDataObject.GameState + " - " +
+				gameDataObject.GameDate + " - " + gameDataObject.StartTimeUTC +
+				gameDataObject.Venue.Default + ", " + gameDataObject.VenueLocation.Default
 		} else {
-			return controller.ActiveGameDataObject.GameState
+			return gameDataObject.GameState
 		}
 	}
 }
@@ -71,16 +79,21 @@ func (controller *GameController) getTeamGameStats() []byte {
 	return tameGameStats
 }
 
+func (controller *GameController) GetActiveGamestateFromFile() string {
+	gameStatePath := filepath.Join(controller.activeGameDirectory, "ACTIVEGAMESTATE.label")
+	return string(quickio.GetDataFromFile(gameStatePath))
+}
+
 func (controller *GameController) DumpGameData() {
 	homeScorePath := filepath.Join(controller.activeGameDirectory, controller.ActiveGameDataObject.HomeTeam.Abbrev+"_SCORE."+strconv.Itoa(controller.ActiveGameDataObject.HomeTeam.Score))
 	awayScorePath := filepath.Join(controller.activeGameDirectory, controller.ActiveGameDataObject.AwayTeam.Abbrev+"_SCORE."+strconv.Itoa(controller.ActiveGameDataObject.AwayTeam.Score))
-	gameStatePath := filepath.Join(controller.activeGameDirectory, "ActiveGameState.label")
+	gameStatePath := filepath.Join(controller.activeGameDirectory, "ACTIVEGAMESTATE.label")
 	homePlayersOnIcePath := filepath.Join(controller.activeGameDirectory, controller.ActiveGameDataObject.HomeTeam.Abbrev+"_PLAYERSONICE.json")
 	awayPlayersOnIcePath := filepath.Join(controller.activeGameDirectory, controller.ActiveGameDataObject.AwayTeam.Abbrev+"_PLAYERSONICE.json")
 	tameGameStatsPath := filepath.Join(controller.activeGameDirectory, "TEAMGAMESTATS.json")
 	go quickio.TouchFile(homeScorePath)
 	go quickio.TouchFile(awayScorePath)
-	go quickio.WriteFile(gameStatePath, controller.getGamestateString())
+	go quickio.WriteFile(gameStatePath, controller.getActiveGamestateString())
 	go quickio.WriteFile(homePlayersOnIcePath, string(controller.getTeamOnIceJson(controller.ActiveGameDataObject.Summary.IceSurface.HomeTeam)))
 	go quickio.WriteFile(awayPlayersOnIcePath, string(controller.getTeamOnIceJson(controller.ActiveGameDataObject.Summary.IceSurface.AwayTeam)))
 	go quickio.WriteFile(tameGameStatsPath, string(controller.getTeamGameStats()))
@@ -117,7 +130,7 @@ func (controller *GameController) GetActiveRadioLink(teamAbbrev string) (string,
 func NewGameController() *GameController {
 	var controller GameController
 	controller.Landinglinks = quickio.GetGameLandingLinks()
-	controller.sweaters = quickio.GetSweaters()
+	controller.Sweaters = quickio.GetSweaters()
 	controller.gameDataObjects = quickio.GoGetGameDataObjectsFromLandingLinks(controller.Landinglinks)
 	controller.gameVersesObjects = quickio.GoGetGameVersesDataFromLandingLinks(controller.Landinglinks)
 	controller.activeGameDirectory = quickio.GetActiveGameDirectory()

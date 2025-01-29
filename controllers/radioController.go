@@ -102,9 +102,8 @@ func (controller *RadioController) updatePlayback() {
 	}
 }
 
-func (controller *RadioController) stopRadio() {
+func (controller *RadioController) StopRadio() {
 	speaker.Clear()
-	quickio.DeleteRadioLock(controller.TeamAbbrev)
 	controller.goroutineMap.Range(func(key, value interface{}) bool {
 		callback, _ := value.(context.CancelFunc)
 		callback()
@@ -112,9 +111,10 @@ func (controller *RadioController) stopRadio() {
 	})
 	time.Sleep(3 * time.Second)
 	quickio.EmptyRadioDirectory(controller.RadioDirectory)
+	quickio.DeleteRadioLock(controller.TeamAbbrev)
 }
 
-func (controller *RadioController) playRadio() {
+func (controller *RadioController) PlayRadio() {
 	log.Println(controller.TeamAbbrev)
 	log.Println(quickio.IsOurRadioLocked(controller.TeamAbbrev))
 	if quickio.IsOurRadioLocked(controller.TeamAbbrev) {
@@ -122,7 +122,7 @@ func (controller *RadioController) playRadio() {
 		time.Sleep(time.Duration(controller.NormalSleepInterval) * time.Second)
 		for {
 			if !quickio.IsOurRadioLocked(controller.TeamAbbrev) {
-				controller.stopRadio()
+				controller.StopRadio()
 				return
 			}
 			controller.updateSharedData()
@@ -139,14 +139,6 @@ func (controller *RadioController) playRadio() {
 	}
 }
 
-func StartRadioFun(radioLink string, teamAbbrev string) {
-	if !quickio.IsRadioLocked() {
-		quickio.CreateRadioLock(teamAbbrev)
-		controller := newRadioController(radioLink, teamAbbrev)
-		controller.playRadio()
-	}
-}
-
 func StopRadioFun(teamAbbrev string) {
 	log.Println("StopRadioFun", teamAbbrev)
 	if quickio.IsOurRadioLocked(teamAbbrev) {
@@ -155,7 +147,7 @@ func StopRadioFun(teamAbbrev string) {
 	}
 }
 
-func newRadioController(radioLink string, teamAbbrev string) *RadioController {
+func NewRadioController(radioLink string, teamAbbrev string) *RadioController {
 	log.Println("Func -> NewRadioController")
 	var controller RadioController
 	controller.TeamAbbrev = teamAbbrev
