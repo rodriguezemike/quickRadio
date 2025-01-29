@@ -53,7 +53,7 @@ type GameVersesData struct {
 		EasternUTCOffset  string `json:"easternUTCOffset"`
 		VenueUTCOffset    string `json:"venueUTCOffset"`
 		GameState         string `json:"gameState"`
-		GameScheduleState string `json:"OK"`
+		GameScheduleState string `json:"gameScheduleState"`
 		AwayTeam          struct {
 			Id     int    `json:"id"`
 			Abbrev string `json:"abbrev"`
