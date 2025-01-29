@@ -305,8 +305,7 @@ func GoDownloadAndTranscodeAACs(paths []string) []string {
 			localpath, err := DownloadAAC(path)
 			radioErrors.ErrorCheck(err)
 			wavPath := TranscodeToWave(localpath)
-			err = os.Remove(localpath)
-			radioErrors.ErrorCheck(err)
+			_ = os.Remove(localpath)
 			wavpaths = append(wavpaths, strings.TrimSpace(wavPath))
 		}(paths[i])
 		workGroup.Wait()
@@ -461,13 +460,13 @@ func GetLockpath(teamAbbrev string) string {
 	return filepath.Join(GetQuickTmpFolder(), filename)
 }
 
-func touchFile(filepath string) {
+func TouchFile(filepath string) {
 	f, err := os.Create(filepath)
 	radioErrors.ErrorCheck(err)
 	f.Close()
 }
 
-func writeFile(filepath string, data string) {
+func WriteFile(filepath string, data string) {
 	f, err := os.Create(filepath)
 	radioErrors.ErrorCheck(err)
 	f.WriteString(data)
