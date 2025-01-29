@@ -27,6 +27,9 @@ type GameController struct {
 func (controller *GameController) GetGameDataObjects() []models.GameData {
 	return controller.gameDataObjects
 }
+func (controller *GameController) GetGameVersesObjects() []models.GameVersesData {
+	return controller.gameVersesObjects
+}
 
 func (controller *GameController) EmptyActiveGameDirectory() {
 	go quickio.EmptyActiveGameDirectory(controller.activeGameDirectory)

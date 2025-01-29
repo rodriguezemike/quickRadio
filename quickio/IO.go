@@ -178,21 +178,21 @@ func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 	return gameLandingLink, nil
 }
 
-func GetDataFromResponse(url string) []byte {
+func GetDataFromResponse(url string) ([]byte, io.ReadCloser) {
 	//Seperate this into two funcs one to store in IO and the other to that is used here.
 	resp, err := http.Get(url)
 	radioErrors.ErrorCheck(err)
-	defer resp.Body.Close()
 	byteValue, err := io.ReadAll(resp.Body)
 	radioErrors.ErrorCheck(err)
-	return byteValue
+	return byteValue, resp.Body
 
 }
 
 func GetQualityStreamSlug(radioLink string, audioQuality string) string {
-	byteValue := GetDataFromResponse(radioLink)
+	byteValue, bodyCloser := GetDataFromResponse(radioLink)
 	audioQualitySlug, err := ExtractQualityStreamSlug(string(byteValue), audioQuality)
 	radioErrors.ErrorCheck(err)
+	bodyCloser.Close()
 	return audioQualitySlug
 }
 
@@ -253,33 +253,39 @@ func GetGameDataObjectFromLandingLinks(landingLinks []string) []models.GameData 
 
 func GetGameDataObject(gameLandingLink string) models.GameData {
 	var gameData = &models.GameData{}
-	byteValue := GetDataFromResponse(gameLandingLink)
+	byteValue, bodyCloser := GetDataFromResponse(gameLandingLink)
 	err := json.Unmarshal(byteValue, gameData)
 	radioErrors.ErrorCheck(err)
+	bodyCloser.Close()
 	return *gameData
 }
 
 func GetGameVersesData(gameLandingLink string) models.GameVersesData {
 	var versesData = &models.GameVersesData{}
 	gameLandingLink = strings.Replace(gameLandingLink, "landing", "right-rail", 1)
-	byteValue := GetDataFromResponse(gameLandingLink)
+	byteValue, bodyCloser := GetDataFromResponse(gameLandingLink)
 	err := json.Unmarshal(byteValue, versesData)
 	radioErrors.ErrorCheck(err)
+	bodyCloser.Close()
 	return *versesData
 }
 
 func GoGetGameDataObjectsFromLandingLinks(landingLinks []string) []models.GameData {
 	var gameDataObjects []models.GameData
 	var workGroup sync.WaitGroup
+	log.Println("IO::GoGetGameDataObjectsFromLandingLinks")
+	log.Println("IO::GoGetGameDataObjectsFromLandingLinks::landingLinks", landingLinks)
 	for i := 0; i < len(landingLinks); i++ {
-		workGroup.Add(i)
+		workGroup.Add(1)
 		go func(path string) {
-			var gameData = &models.GameData{}
 			defer workGroup.Done()
-			byteValue := GetDataFromResponse(path)
+			var gameData = &models.GameData{}
+			log.Println("IO::GoGetGameDataObjectsFromLandingLinks::anonFunc::path", path)
+			byteValue, bodyCloser := GetDataFromResponse(path)
 			err := json.Unmarshal(byteValue, gameData)
 			radioErrors.ErrorCheck(err)
 			gameDataObjects = append(gameDataObjects, *gameData)
+			bodyCloser.Close()
 		}(landingLinks[i])
 		workGroup.Wait()
 	}
@@ -289,14 +295,16 @@ func GoGetGameVersesDataFromLandingLinks(landingLinks []string) []models.GameVer
 	var gameVersesDataObjects []models.GameVersesData
 	var workGroup sync.WaitGroup
 	for i := 0; i < len(landingLinks); i++ {
-		workGroup.Add(i)
+		workGroup.Add(1)
 		go func(path string) {
+			defer workGroup.Done()
 			var versesData = &models.GameVersesData{}
 			path = strings.Replace(path, "landing", "right-rail", 1)
-			byteValue := GetDataFromResponse(path)
+			byteValue, bodyCloser := GetDataFromResponse(path)
 			err := json.Unmarshal(byteValue, versesData)
 			radioErrors.ErrorCheck(err)
 			gameVersesDataObjects = append(gameVersesDataObjects, *versesData)
+			bodyCloser.Close()
 		}(landingLinks[i])
 		workGroup.Wait()
 	}
@@ -362,8 +370,7 @@ func DownloadAAC(aacRequestPath string) (string, error) {
 func TranscodeToWave(aacFilepath string) string {
 	wavFilepath := strings.Replace(aacFilepath, ".aac", ".wav", 1)
 	if !DoesFileExist(wavFilepath) {
-		err := ffmpeg_go.Input(aacFilepath).Output(wavFilepath).OverWriteOutput().ErrorToStdOut().Run()
-		radioErrors.ErrorCheck(err)
+		_ = ffmpeg_go.Input(aacFilepath).Output(wavFilepath).OverWriteOutput().Run()
 	}
 	return wavFilepath
 }
