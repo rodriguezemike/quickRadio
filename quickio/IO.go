@@ -40,7 +40,10 @@ func GetGameHtml(linksMap map[string]interface{}) string {
 	sleepTimer := linksMap["load_sleep_timer"].(float64)
 	baseUrl := fmt.Sprintf("%v", linksMap["base"])
 
-	ctx, cancel := chromedp.NewContext(context.Background())
+	opts := append(chromedp.DefaultExecAllocatorOptions[:], chromedp.Headless, chromedp.NoSandbox)
+	allocContext, ctxCancel := chromedp.NewExecAllocator(context.Background(), opts...)
+	defer ctxCancel()
+	ctx, cancel := chromedp.NewContext(allocContext)
 	defer cancel()
 
 	err := chromedp.Run(ctx,
