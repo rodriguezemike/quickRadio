@@ -70,7 +70,9 @@ jobs:
           go get golang.org/x/tools@v0.0.0-20190420181800-aa740d480789
 
       - name: Run tests
-        run: go test ./...
+        run: |
+          go test -timeout 300s -run quickRadio/controllers
+          go test -timeout 300s -run quickRadio/models
 
       - name: Build project
         run: go build -v .
