@@ -71,8 +71,6 @@ jobs:
 
       - name: Run tests
         run: |
-          go test -timeout 300s -run quickRadio/controllers
-          go test -timeout 300s -run quickRadio/models
-
+          go test -timeout 300s -v ./...
       - name: Build project
         run: go build -v .
