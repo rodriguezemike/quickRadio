@@ -233,16 +233,13 @@ func GetAACPaths(qualityRadioPath string) []string {
 	log.Println("IO::GetAACPaths")
 	audioFilepaths := []string{}
 	log.Println("IO::GetAACPaths::POLLING ", qualityRadioPath)
-	resp, err := http.Get(qualityRadioPath)
-	radioErrors.ErrorCheck(err)
+	resp, _ := http.Get(qualityRadioPath)
 	defer resp.Body.Close()
-	byteValue, err := io.ReadAll(resp.Body)
-	radioErrors.ErrorCheck(err)
-	audioSlugs, err := GetAACSlugsFromQualityFile(string(byteValue))
+	byteValue, _ := io.ReadAll(resp.Body)
+	audioSlugs, _ := GetAACSlugsFromQualityFile(string(byteValue))
 	for _, audioSlug := range audioSlugs {
 		audioFilepaths = append(audioFilepaths, BuildAACRadioPath(qualityRadioPath, audioSlug))
 	}
-	radioErrors.ErrorCheck(err)
 	return audioFilepaths
 }
 
