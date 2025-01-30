@@ -118,7 +118,7 @@ func (view *QuickRadioView) CreateIceCenterWidget(gameDataObject models.GameData
 	layout := widgets.NewQVBoxLayout2(gameWidget)
 	centerIceWidget := widgets.NewQGroupBox(gameWidget)
 	layout.AddWidget(CreateIceRinklabel(gameWidget, gameDataObject, view), 0, core.Qt__AlignCenter)
-	layout.AddWidget(view.CreateDataLabel("GAMESTATE", view.gameController.GetGamestateString(gameDataObject), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
+	layout.AddWidget(view.CreateDataLabel("GAMESTATE", view.gameController.GetGamestateString(&gameDataObject), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
 	centerIceWidget.SetLayout(layout)
 	return centerIceWidget
 }
