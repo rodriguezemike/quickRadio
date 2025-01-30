@@ -15,8 +15,8 @@ type GameController struct {
 	Landinglinks               []string
 	ActiveGameIndex            int
 	ActiveLandingLink          string
-	ActiveGameDataObject       models.GameData
-	ActiveGameVersesDataObject models.GameVersesData
+	ActiveGameDataObject       *models.GameData
+	ActiveGameVersesDataObject *models.GameVersesData
 	Sweaters                   map[string]models.Sweater
 	gameDataObjects            []models.GameData
 	gameVersesObjects          []models.GameVersesData
@@ -32,7 +32,7 @@ func (controller *GameController) GetGameVersesObjects() []models.GameVersesData
 }
 
 func (controller *GameController) EmptyActiveGameDirectory() {
-	go quickio.EmptyActiveGameDirectory(controller.activeGameDirectory)
+	quickio.EmptyActiveGameDirectory(controller.activeGameDirectory)
 }
 
 func (controller *GameController) GetUIDataFromFilename(teamAbbrev string, dataLabel string, defaultReturnValue string) string {
@@ -50,7 +50,7 @@ func (controller *GameController) getActiveGamestateString() string {
 	return controller.GetGamestateString(controller.ActiveGameDataObject)
 }
 
-func (controller *GameController) GetGamestateString(gameDataObject models.GameData) string {
+func (controller *GameController) GetGamestateString(gameDataObject *models.GameData) string {
 	if gameDataObject.GameState == "LIVE" || gameDataObject.GameState == "CRIT" {
 		if gameDataObject.Clock.InIntermission {
 			return gameDataObject.GameState + " - " +
@@ -94,12 +94,12 @@ func (controller *GameController) DumpGameData() {
 	homePlayersOnIcePath := filepath.Join(controller.activeGameDirectory, controller.ActiveGameDataObject.HomeTeam.Abbrev+"_PLAYERSONICE.json")
 	awayPlayersOnIcePath := filepath.Join(controller.activeGameDirectory, controller.ActiveGameDataObject.AwayTeam.Abbrev+"_PLAYERSONICE.json")
 	tameGameStatsPath := filepath.Join(controller.activeGameDirectory, "TEAMGAMESTATS.json")
-	go quickio.TouchFile(homeScorePath)
-	go quickio.TouchFile(awayScorePath)
-	go quickio.WriteFile(gameStatePath, controller.getActiveGamestateString())
-	go quickio.WriteFile(homePlayersOnIcePath, string(controller.getTeamOnIceJson(controller.ActiveGameDataObject.Summary.IceSurface.HomeTeam)))
-	go quickio.WriteFile(awayPlayersOnIcePath, string(controller.getTeamOnIceJson(controller.ActiveGameDataObject.Summary.IceSurface.AwayTeam)))
-	go quickio.WriteFile(tameGameStatsPath, string(controller.getTeamGameStats()))
+	quickio.TouchFile(homeScorePath)
+	quickio.TouchFile(awayScorePath)
+	quickio.WriteFile(gameStatePath, controller.getActiveGamestateString())
+	quickio.WriteFile(homePlayersOnIcePath, string(controller.getTeamOnIceJson(controller.ActiveGameDataObject.Summary.IceSurface.HomeTeam)))
+	quickio.WriteFile(awayPlayersOnIcePath, string(controller.getTeamOnIceJson(controller.ActiveGameDataObject.Summary.IceSurface.AwayTeam)))
+	quickio.WriteFile(tameGameStatsPath, string(controller.getTeamGameStats()))
 }
 
 func (controller *GameController) UpdateDataObjects() {
@@ -109,14 +109,15 @@ func (controller *GameController) UpdateDataObjects() {
 }
 
 func (controller *GameController) UpdateActiveDataObjects() {
-	singletonActiveLandingLink := []string{controller.ActiveLandingLink}
-	controller.ActiveGameDataObject = quickio.GetGameDataObject(controller.ActiveLandingLink)
-	controller.ActiveGameVersesDataObject = quickio.GoGetGameVersesDataFromLandingLinks(singletonActiveLandingLink)[0]
+	controller.gameDataObjects = quickio.GoGetGameDataObjectsFromLandingLinks(controller.Landinglinks)
+	controller.gameVersesObjects = quickio.GoGetGameVersesDataFromLandingLinks(controller.Landinglinks)
+	controller.ActiveGameDataObject = &controller.gameDataObjects[controller.ActiveGameIndex]
+	controller.ActiveGameVersesDataObject = &controller.gameVersesObjects[controller.ActiveGameIndex]
 }
 
 func (controller *GameController) SwitchActiveObjects(gameIndex int) {
-	controller.ActiveGameDataObject = controller.gameDataObjects[gameIndex]
-	controller.ActiveGameVersesDataObject = controller.gameVersesObjects[gameIndex]
+	controller.ActiveGameDataObject = &controller.gameDataObjects[gameIndex]
+	controller.ActiveGameVersesDataObject = &controller.gameVersesObjects[gameIndex]
 	controller.ActiveGameIndex = gameIndex
 }
 
@@ -138,5 +139,7 @@ func NewGameController() *GameController {
 	controller.gameVersesObjects = quickio.GoGetGameVersesDataFromLandingLinks(controller.Landinglinks)
 	controller.activeGameDirectory = quickio.GetActiveGameDirectory()
 	controller.ActiveGameIndex = 0
+	controller.ActiveGameDataObject = &controller.gameDataObjects[controller.ActiveGameIndex]
+	controller.ActiveGameVersesDataObject = &controller.gameVersesObjects[controller.ActiveGameIndex]
 	return &controller
 }

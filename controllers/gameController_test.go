@@ -1,24 +1,12 @@
 package controllers
 
 import (
-	"encoding/json"
-	"io"
 	"os"
 	"path/filepath"
-	"quickRadio/models"
-	"quickRadio/quickio"
 	"reflect"
+	"strings"
 	"testing"
 )
-
-func GetGameDataObjectForTest() models.GameData {
-	var gameData = &models.GameData{}
-	fileObject := quickio.GetTestFileObject("quicklanding.json")
-	defer fileObject.Close()
-	byteValue, _ := io.ReadAll(fileObject)
-	_ = json.Unmarshal(byteValue, gameData)
-	return *gameData
-}
 
 func TestActiveDirectoryValue(t *testing.T) {
 	controller := NewGameController()
@@ -27,6 +15,78 @@ func TestActiveDirectoryValue(t *testing.T) {
 		t.Fatalf(`controller.activeGameDirectory != %s || controller.activeGameDirectory = %s`, want, controller.activeGameDirectory)
 	}
 
+}
+
+func TestEmptyActiveGameDirectory(t *testing.T) {
+	controller := NewGameController()
+	controller.DumpGameData()
+	controller.EmptyActiveGameDirectory()
+	files, _ := os.ReadDir(controller.activeGameDirectory)
+	for _, f := range files {
+		info, _ := f.Info()
+		t.Fatalf(`Found a File. There should no files in the active directory. %s`, info.Name())
+	}
+}
+
+func TestSwitchActiveDataObjects(t *testing.T) {
+	controller := NewGameController()
+	wantedActiveGameDataObject := &controller.gameDataObjects[2]
+	wantedActiveVersesGameDataObject := &controller.gameVersesObjects[2]
+	controller.SwitchActiveObjects(2)
+	if controller.ActiveGameDataObject != wantedActiveGameDataObject {
+		t.Fatalf(`&controller.ActiveGameDataObject != &wantedActiveGameDataObject | Address wanted %v | Address got %v`, &wantedActiveGameDataObject, &controller.ActiveGameDataObject)
+	}
+	if controller.ActiveGameVersesDataObject != wantedActiveVersesGameDataObject {
+		t.Fatalf(`&controller.ActiveGameVersesDataObject != wantedActiveVersesGameDataObject | Address wanted %v | Address got %v`, &wantedActiveVersesGameDataObject, &controller.ActiveGameVersesDataObject)
+	}
+}
+
+func TestDumpGameData(t *testing.T) {
+	controller := NewGameController()
+	controller.DumpGameData()
+	files, _ := os.ReadDir(controller.activeGameDirectory)
+	filesFound := 0
+	scoreFilesFound := 0
+	gameStatesFilesFound := 0
+	playersOnIceFilesFound := 0
+	teamGameStatsFilesFound := 0
+
+	wantedNumberOfFiles := 6
+	wantedScoreFiles := 2
+	wantedGameStateFiles := 1
+	wantedPlayersOnIceFiles := 2
+	wantedTeamGameStatsFiles := 1
+	for _, f := range files {
+		filesFound += 1
+		info, _ := f.Info()
+		if strings.Contains(info.Name(), "SCORE") {
+			scoreFilesFound += 1
+		}
+		if strings.Contains(info.Name(), "ACTIVEGAMESTATE") {
+			gameStatesFilesFound += 1
+		}
+		if strings.Contains(info.Name(), "PLAYERSONICE") {
+			playersOnIceFilesFound += 1
+		}
+		if strings.Contains(info.Name(), "TEAMGAMESTATS") {
+			teamGameStatsFilesFound += 1
+		}
+	}
+	if filesFound != wantedNumberOfFiles {
+		t.Fatalf(`filesFound != wantedNumberOfFiles || Found %d | Wanted %d`, filesFound, wantedNumberOfFiles)
+	}
+	if scoreFilesFound != wantedScoreFiles {
+		t.Fatalf(`scoreFilesFound != wantedScoreFiles || Found %d | Wanted %d`, scoreFilesFound, wantedScoreFiles)
+	}
+	if gameStatesFilesFound != wantedGameStateFiles {
+		t.Fatalf(`gameStatesFilesFound != wantedGameStateFiles || Found %d | Wanted %d`, gameStatesFilesFound, wantedGameStateFiles)
+	}
+	if playersOnIceFilesFound != wantedPlayersOnIceFiles {
+		t.Fatalf(`playersOnIceFilesFound != wantedPlayersOnIceFiles || Found %d | Wanted %d`, playersOnIceFilesFound, wantedPlayersOnIceFiles)
+	}
+	if teamGameStatsFilesFound != wantedTeamGameStatsFiles {
+		t.Fatalf(`teamGameStatsFilesFound != wantedTeamGameStatsFiles || Found %d | Wanted %d`, teamGameStatsFilesFound, wantedTeamGameStatsFiles)
+	}
 }
 
 func TestNewGameContollerTypes(t *testing.T) {
