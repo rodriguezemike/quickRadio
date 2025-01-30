@@ -58,7 +58,7 @@ func GetGameHtml(linksMap map[string]interface{}) string {
 			return err
 		}),
 	)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	return html
 }
 
@@ -69,7 +69,7 @@ func GetSweaterColors() map[string][]string {
 	path := filepath.Join(dir, "assets", "teams", "sweater_colors.txt")
 
 	fileObject, err := os.Open(path)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	defer fileObject.Close()
 	scanner := bufio.NewScanner(fileObject)
 	scanner.Split(bufio.ScanLines)
@@ -87,7 +87,7 @@ func GetSweaters() map[string]models.Sweater {
 	path := filepath.Join(dir, "assets", "teams", "sweater_colors.txt")
 
 	fileObject, err := os.Open(path)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	defer fileObject.Close()
 	scanner := bufio.NewScanner(fileObject)
 	scanner.Split(bufio.ScanLines)
@@ -105,10 +105,10 @@ func GetSweaters() map[string]models.Sweater {
 
 func GetDataFromFile(path string) []byte {
 	fileObject, err := os.Open(path)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	defer fileObject.Close()
 	byteValue, err := io.ReadAll(fileObject)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	return byteValue
 }
 
@@ -119,7 +119,7 @@ func GetLinksJson() map[string]interface{} {
 	jsonPath := filepath.Join(dir, "assets", "links", "links.json")
 
 	jsonFileObject, err := os.Open(jsonPath)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	defer jsonFileObject.Close()
 	byteValue, _ := io.ReadAll(jsonFileObject)
 
@@ -134,7 +134,7 @@ func GetGameLandingLinks() []string {
 	gamecenterLanding := fmt.Sprintf("%v", linksMap["gamecenter_api_slug"])
 	gameRegex := fmt.Sprintf("%v", linksMap["game_regex"])
 	landingLinks, err := GetGameLandingLinksFromHTML(html, gamecenterBase, gamecenterLanding, gameRegex)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	return landingLinks
 }
 
@@ -184,9 +184,9 @@ func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 func GetDataFromResponse(url string) ([]byte, io.ReadCloser) {
 	//Seperate this into two funcs one to store in IO and the other to that is used here.
 	resp, err := http.Get(url)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	byteValue, err := io.ReadAll(resp.Body)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	return byteValue, resp.Body
 
 }
@@ -194,7 +194,7 @@ func GetDataFromResponse(url string) ([]byte, io.ReadCloser) {
 func GetQualityStreamSlug(radioLink string, audioQuality string) string {
 	byteValue, bodyCloser := GetDataFromResponse(radioLink)
 	audioQualitySlug, err := ExtractQualityStreamSlug(string(byteValue), audioQuality)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	bodyCloser.Close()
 	return audioQualitySlug
 }
@@ -233,7 +233,8 @@ func GetAACPaths(qualityRadioPath string) []string {
 	log.Println("IO::GetAACPaths")
 	audioFilepaths := []string{}
 	log.Println("IO::GetAACPaths::POLLING ", qualityRadioPath)
-	resp, _ := http.Get(qualityRadioPath)
+	resp, err := http.Get(qualityRadioPath)
+	radioErrors.ErrorLog(err)
 	defer resp.Body.Close()
 	byteValue, _ := io.ReadAll(resp.Body)
 	audioSlugs, _ := GetAACSlugsFromQualityFile(string(byteValue))
@@ -255,7 +256,7 @@ func GetGameDataObject(gameLandingLink string) models.GameData {
 	var gameData = &models.GameData{}
 	byteValue, bodyCloser := GetDataFromResponse(gameLandingLink)
 	err := json.Unmarshal(byteValue, gameData)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	bodyCloser.Close()
 	return *gameData
 }
@@ -265,7 +266,7 @@ func GetGameVersesData(gameLandingLink string) models.GameVersesData {
 	gameLandingLink = strings.Replace(gameLandingLink, "landing", "right-rail", 1)
 	byteValue, bodyCloser := GetDataFromResponse(gameLandingLink)
 	err := json.Unmarshal(byteValue, versesData)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	bodyCloser.Close()
 	return *versesData
 }
@@ -283,7 +284,7 @@ func GoGetGameDataObjectsFromLandingLinks(landingLinks []string) []models.GameDa
 			log.Println("IO::GoGetGameDataObjectsFromLandingLinks::anonFunc::path", path)
 			byteValue, bodyCloser := GetDataFromResponse(path)
 			err := json.Unmarshal(byteValue, gameData)
-			radioErrors.ErrorCheck(err)
+			radioErrors.ErrorLog(err)
 			gameDataObjects = append(gameDataObjects, *gameData)
 			bodyCloser.Close()
 		}(landingLinks[i])
@@ -302,7 +303,7 @@ func GoGetGameVersesDataFromLandingLinks(landingLinks []string) []models.GameVer
 			path = strings.Replace(path, "landing", "right-rail", 1)
 			byteValue, bodyCloser := GetDataFromResponse(path)
 			err := json.Unmarshal(byteValue, versesData)
-			radioErrors.ErrorCheck(err)
+			radioErrors.ErrorLog(err)
 			gameVersesDataObjects = append(gameVersesDataObjects, *versesData)
 			bodyCloser.Close()
 		}(landingLinks[i])
@@ -320,7 +321,7 @@ func GoDownloadAndTranscodeAACs(paths []string) []string {
 		go func(path string) {
 			defer workGroup.Done()
 			localpath, err := DownloadAAC(path)
-			radioErrors.ErrorCheck(err)
+			radioErrors.ErrorLog(err)
 			wavPath := TranscodeToWave(localpath)
 			_ = os.Remove(localpath)
 			wavpaths = append(wavpaths, strings.TrimSpace(wavPath))
@@ -342,25 +343,25 @@ func DownloadAAC(aacRequestPath string) (string, error) {
 		if !DoesFileExist(filepath) {
 			cmd := exec.Command("curl", "-o", filepath, aacRequestPath)
 			_, err := cmd.CombinedOutput()
-			radioErrors.ErrorCheck(err)
+			radioErrors.ErrorLog(err)
 			err = DoesFileExistErr(filepath)
-			radioErrors.ErrorCheck(err)
+			radioErrors.ErrorLog(err)
 		}
 	} else if runtime.GOOS == "linux" {
 		if !DoesFileExist(filepath) {
 			cmd := exec.Command("wget", aacRequestPath, filepath)
 			_, err := cmd.CombinedOutput()
-			radioErrors.ErrorCheck(err)
+			radioErrors.ErrorLog(err)
 			err = DoesFileExistErr(filepath)
-			radioErrors.ErrorCheck(err)
+			radioErrors.ErrorLog(err)
 		}
 	} else {
 		if !DoesFileExist(filepath) {
 			cmd := exec.Command("wget", aacRequestPath, filepath)
 			_, err := cmd.CombinedOutput()
-			radioErrors.ErrorCheck(err)
+			radioErrors.ErrorLog(err)
 			err = DoesFileExistErr(filepath)
-			radioErrors.ErrorCheck(err)
+			radioErrors.ErrorLog(err)
 		}
 	}
 	//log.Println("IO::DownloadAAC::filepath", filepath)
@@ -413,10 +414,10 @@ func CreateTmpDirectory(tmpDirectory string) {
 		return
 	} else if os.IsNotExist(err) {
 		err := os.MkdirAll(tmpDirectory, 0777)
-		radioErrors.ErrorCheck(err)
+		radioErrors.ErrorLog(err)
 		return
 	} else {
-		radioErrors.ErrorCheck(err)
+		radioErrors.ErrorLog(err)
 		return
 	}
 }
@@ -427,7 +428,7 @@ func DoesFileExistErr(filepath string) error {
 	} else if os.IsNotExist(err) {
 		return errors.New("file does not exist")
 	} else {
-		radioErrors.ErrorCheck(err)
+		radioErrors.ErrorLog(err)
 		return err
 	}
 }
@@ -438,7 +439,7 @@ func DoesFileExist(filepath string) bool {
 	} else if os.IsNotExist(err) {
 		return false
 	} else {
-		radioErrors.ErrorCheck(err)
+		radioErrors.ErrorLog(err)
 		return false
 	}
 }
@@ -490,13 +491,13 @@ func GetLockpath(teamAbbrev string) string {
 
 func TouchFile(filepath string) {
 	f, err := os.Create(filepath)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	f.Close()
 }
 
 func WriteFile(filepath string, data string) {
 	f, err := os.Create(filepath)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	f.WriteString(data)
 	f.Close()
 }

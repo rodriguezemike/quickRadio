@@ -2,8 +2,13 @@ package radioErrors
 
 import "log"
 
-func ErrorCheck(err error) {
+func ErrorLog(err error) {
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+	}
+}
+func ErrorFail(err error) {
+	if err != nil {
+		log.Fatalln(err)
 	}
 }
