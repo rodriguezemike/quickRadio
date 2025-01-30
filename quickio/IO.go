@@ -351,7 +351,8 @@ func DownloadAAC(aacRequestPath string) (string, error) {
 		}
 	} else if runtime.GOOS == "linux" {
 		if !DoesFileExist(filepath) {
-			cmd := exec.Command("wget", aacRequestPath, filepath)
+			log.Println("wget ", aacRequestPath, "-O", " ", filepath)
+			cmd := exec.Command("wget", aacRequestPath, "-O", filepath)
 			_, err := cmd.CombinedOutput()
 			radioErrors.ErrorLog(err)
 			err = DoesFileExistErr(filepath)
@@ -359,7 +360,8 @@ func DownloadAAC(aacRequestPath string) (string, error) {
 		}
 	} else {
 		if !DoesFileExist(filepath) {
-			cmd := exec.Command("wget", aacRequestPath, filepath)
+			log.Println("wget ", aacRequestPath, "-O", " ", filepath)
+			cmd := exec.Command("wget", aacRequestPath, "-O", filepath)
 			_, err := cmd.CombinedOutput()
 			radioErrors.ErrorLog(err)
 			err = DoesFileExistErr(filepath)
