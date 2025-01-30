@@ -27,7 +27,7 @@ type RadioController struct {
 	streamers              []beep.StreamSeekCloser
 	speakerInitialized     bool
 	ctx                    context.Context
-	goroutineMap           sync.Map
+	goroutineMap           *sync.Map
 }
 
 func (controller *RadioController) initalizeRadioSpeaker(format beep.Format) {
@@ -117,7 +117,8 @@ func (controller *RadioController) StopRadio() {
 func (controller *RadioController) PlayRadio() {
 	log.Println(controller.TeamAbbrev)
 	log.Println(quickio.IsOurRadioLocked(controller.TeamAbbrev))
-	if quickio.IsOurRadioLocked(controller.TeamAbbrev) {
+	if !quickio.IsRadioLocked() {
+		quickio.CreateRadioLock(controller.TeamAbbrev)
 		controller.initalPlayback()
 		time.Sleep(time.Duration(controller.NormalSleepInterval) * time.Second)
 		for {
@@ -136,14 +137,6 @@ func (controller *RadioController) PlayRadio() {
 			go controller.pollRadioFormatLink()
 			time.Sleep(time.Duration(controller.NormalSleepInterval) * time.Second)
 		}
-	}
-}
-
-func StopRadioFun(teamAbbrev string) {
-	log.Println("StopRadioFun", teamAbbrev)
-	if quickio.IsOurRadioLocked(teamAbbrev) {
-		speaker.Clear()
-		quickio.DeleteRadioLock(teamAbbrev)
 	}
 }
 

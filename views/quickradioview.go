@@ -68,14 +68,14 @@ func (view *QuickRadioView) CreateTeamRadioStreamButton(teamAbbrev string, radio
 		teamAbbrev, _ = view.GetTeamDataFromUIObjectName(button.ObjectName(), "_")
 		if onCheck {
 			if !quickio.IsRadioLocked() {
-				//If Slow make it go.
 				view.radioController = controllers.NewRadioController(radioLink, teamAbbrev)
-				quickio.CreateRadioLock(teamAbbrev)
 				go view.radioController.PlayRadio()
 			}
 		} else {
-			go view.radioController.StopRadio()
-			view.radioController = nil
+			if quickio.IsOurRadioLocked(teamAbbrev) {
+				go view.radioController.StopRadio()
+				view.radioController = nil
+			}
 		}
 	})
 	return button

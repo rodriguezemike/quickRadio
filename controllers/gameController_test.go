@@ -3,6 +3,7 @@ package controllers
 import (
 	"os"
 	"path/filepath"
+	"quickRadio/quickio"
 	"reflect"
 	"strings"
 	"testing"
@@ -14,7 +15,7 @@ func TestActiveDirectoryValue(t *testing.T) {
 	if want != controller.activeGameDirectory {
 		t.Fatalf(`controller.activeGameDirectory != %s || controller.activeGameDirectory = %s`, want, controller.activeGameDirectory)
 	}
-
+	quickio.EmptyTmpFolder()
 }
 
 func TestEmptyActiveGameDirectory(t *testing.T) {
@@ -39,6 +40,8 @@ func TestSwitchActiveDataObjects(t *testing.T) {
 	if controller.ActiveGameVersesDataObject != wantedActiveVersesGameDataObject {
 		t.Fatalf(`&controller.ActiveGameVersesDataObject != wantedActiveVersesGameDataObject | Address wanted %v | Address got %v`, &wantedActiveVersesGameDataObject, &controller.ActiveGameVersesDataObject)
 	}
+	quickio.EmptyTmpFolder()
+
 }
 
 func TestDumpGameData(t *testing.T) {
@@ -87,6 +90,8 @@ func TestDumpGameData(t *testing.T) {
 	if teamGameStatsFilesFound != wantedTeamGameStatsFiles {
 		t.Fatalf(`teamGameStatsFilesFound != wantedTeamGameStatsFiles || Found %d | Wanted %d`, teamGameStatsFilesFound, wantedTeamGameStatsFiles)
 	}
+	quickio.EmptyTmpFolder()
+
 }
 
 func TestNewGameContollerTypes(t *testing.T) {
@@ -100,11 +105,11 @@ func TestNewGameContollerTypes(t *testing.T) {
 	if reflect.ValueOf(controller.ActiveLandingLink).Kind().String() != "string" {
 		t.Fatalf(`reflect.ValueOf(controller.ActiveLandingLink).Kind().String() != "string" | reflect.ValueOf(controller.ActiveLandingLink).Kind()) = %s`, reflect.ValueOf(controller.ActiveLandingLink).Kind())
 	}
-	if reflect.ValueOf(controller.ActiveGameDataObject).Kind().String() != "struct" {
-		t.Fatalf(`reflect.ValueOf(controller.ActiveGameDataObject).Kind().String() != "struct" | reflect.ValueOf(controller.ActiveGameDataObject).Kind()) = %s`, reflect.ValueOf(controller.ActiveGameDataObject).Kind())
+	if reflect.ValueOf(controller.ActiveGameDataObject).Kind().String() != "ptr" {
+		t.Fatalf(`reflect.ValueOf(controller.ActiveGameDataObject).Kind().String() != "ptr" | reflect.ValueOf(controller.ActiveGameDataObject).Kind()) = %s`, reflect.ValueOf(controller.ActiveGameDataObject).Kind())
 	}
-	if reflect.ValueOf(controller.ActiveGameVersesDataObject).Kind().String() != "struct" {
-		t.Fatalf(`reflect.ValueOf(controller.ActiveGameVersesDataObject).Kind().String() != "struct" | reflect.ValueOf(controller.ActiveGameVersesDataObject).Kind()) = %s`, reflect.ValueOf(controller.ActiveGameVersesDataObject).Kind())
+	if reflect.ValueOf(controller.ActiveGameVersesDataObject).Kind().String() != "ptr" {
+		t.Fatalf(`reflect.ValueOf(controller.ActiveGameVersesDataObject).Kind().String() != "ptr" | reflect.ValueOf(controller.ActiveGameVersesDataObject).Kind()) = %s`, reflect.ValueOf(controller.ActiveGameVersesDataObject).Kind())
 	}
 	if reflect.ValueOf(controller.Sweaters).Kind().String() != "map" {
 		t.Fatalf(`reflect.ValueOf(controller.Sweaters).Kind().String() != "map" | reflect.ValueOf(controller.Sweaters).Kind()) = %s`, reflect.ValueOf(controller.Sweaters).Kind())
