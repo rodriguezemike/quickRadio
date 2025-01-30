@@ -37,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y qt5-qmake qtbase5-dev libqt5webkit5-dev libffmpeg-dev
+          sudo apt-get install -y qt5-qmake qtbase5-dev libqt5webkit5-dev ffmpeg libav-tools libavcodec-dev libavcodec57 libavdevice-dev libavdevice57 libavfilter-dev libavfilter6 libavformat-dev libavformat57 libavresample-dev libavresample3 libavutil-dev libavutil55 libpostproc-dev libpostproc54 libswresample-dev libswresample2 libswscale-dev libswscale4
           go get github.com/aws/aws-sdk-go@v1.55.5
           go get github.com/chromedp/cdproto@v0.0.0-20241003230502-a4a8f7c660df
           go get github.com/chromedp/chromedp@v0.10.0
