@@ -32,7 +32,7 @@ func GetGameLandingLinks() []string {
 	gamecenterLanding := fmt.Sprintf("%v", linksMap["gamecenter_api_slug"])
 	gameRegex := fmt.Sprintf("%v", linksMap["game_regex"])
 	landingLinks, err := quickio.GetGameLandingLinksFromHTML(html, gamecenterBase, gamecenterLanding, gameRegex)
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	return landingLinks
 }
 

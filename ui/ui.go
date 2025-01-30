@@ -238,7 +238,7 @@ func CreatePlayersOnIceWidgetForTeam(teamOnIce models.TeamOnIce, teamAbbrev stri
 
 func CreateGameDetailsWidgetFromGameDataObject(gamedataObject models.GameData, gamecenterLink string, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
 	gameDetailsJson, err := json.MarshalIndent(gamedataObject, "", "\t")
-	radioErrors.ErrorCheck(err)
+	radioErrors.ErrorLog(err)
 	gameDetailsLayout := widgets.NewQGridLayout(gameWidget)
 	gameDetailsWidget := widgets.NewQGroupBox(gameWidget)
 	scrollableArea := widgets.NewQScrollArea(gameDetailsWidget)
