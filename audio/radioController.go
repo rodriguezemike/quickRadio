@@ -27,7 +27,7 @@ type RadioController struct {
 	streamers              []beep.StreamSeekCloser
 	speakerInitialized     bool
 	ctx                    context.Context
-	goroutineMap           sync.Map
+	goroutineMap           *sync.Map
 }
 
 func (controller *RadioController) initalizeRadioSpeaker(format beep.Format) {
@@ -164,6 +164,7 @@ func newRadioController(radioLink string, teamAbbrev string) RadioController {
 	controller.EmergencySleepInterval = 1
 	controller.ctx = context.Background()
 	controller.speakerInitialized = false
+	controller.goroutineMap = &sync.Map{}
 	log.Println("NewRadioController::controller.WavPaths ", controller.WavPaths)
 	log.Println("NewRadioController::controller.RadioDirectory ", controller.RadioDirectory)
 	log.Println("NewRadioController::controller.RadioFormatLink ", controller.RadioFormatLink)

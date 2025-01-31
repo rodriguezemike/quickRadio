@@ -323,7 +323,7 @@ func GoDownloadAndTranscodeAACs(paths []string) []string {
 			localpath, err := DownloadAAC(path)
 			radioErrors.ErrorLog(err)
 			wavPath := TranscodeToWave(localpath)
-			_ = os.Remove(localpath)
+			//_ = os.Remove(localpath)
 			wavpaths = append(wavpaths, strings.TrimSpace(wavPath))
 		}(paths[i])
 		workGroup.Wait()
@@ -506,7 +506,9 @@ func WriteFile(filepath string, data string) {
 
 func CreateRadioLock(teamAbbrev string) {
 	lockPath := GetLockpath(teamAbbrev)
-	f, _ := os.Create(lockPath)
+	CreateTmpDirectory(GetQuickTmpFolder())
+	f, err := os.Create(lockPath)
+	radioErrors.ErrorLog(err)
 	f.Close()
 }
 
