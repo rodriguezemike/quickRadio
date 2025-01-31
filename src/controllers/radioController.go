@@ -140,6 +140,10 @@ func (controller *RadioController) PlayRadio() {
 	}
 }
 
+func (controller *RadioController) KillFun() {
+	controller.StopRadio()
+}
+
 func NewRadioController(radioLink string, teamAbbrev string) *RadioController {
 	log.Println("radioController::NewRadioController")
 	var controller RadioController
@@ -154,10 +158,4 @@ func NewRadioController(radioLink string, teamAbbrev string) *RadioController {
 	log.Println("radioController::NewRadioController::controller.RadioDirectory ", controller.RadioDirectory)
 	log.Println("radioController::NewRadioController::controller.RadioFormatLink ", controller.RadioFormatLink)
 	return &controller
-}
-
-func RadioKillFun() {
-	quickio.DeleteAnyRadioLock()
-	time.Sleep(3 * time.Second)
-	quickio.EmptyTmpFolder()
 }

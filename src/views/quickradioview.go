@@ -217,6 +217,11 @@ func (view *QuickRadioView) RunLoadingScream() {
 
 func (view *QuickRadioView) KillAllTheFun() {
 	//Kill ALL THE FUN.
+	view.gameController.KillFun()
+	view.radioController.KillFun()
+	view.gameController = nil
+	view.radioController = nil
+	quickio.EmptyTmpFolder()
 	//Stop all go rountines
 	//Delete All the things
 	//Close.

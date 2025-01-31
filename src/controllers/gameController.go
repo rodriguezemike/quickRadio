@@ -171,6 +171,13 @@ func (controller *GameController) GetActiveRadioLink(teamAbbrev string) (string,
 	}
 }
 
+func (controller *GameController) KillFun() {
+	controller.KillActiveGame()
+	controller.ConsumeActiveGameData()
+	controller.dataConsumed = false
+	controller.EmptyActiveGameDirectory()
+}
+
 func NewGameController() *GameController {
 	var controller GameController
 	controller.Landinglinks = quickio.GetGameLandingLinks()
