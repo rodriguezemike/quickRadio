@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"quickRadio/models"
 	"quickRadio/quickio"
-	"quickRadio/radioErrors"
 )
 
 //Future Refactor will be 'GameController'
@@ -31,8 +30,7 @@ func GetGameLandingLinks() []string {
 	gamecenterBase := fmt.Sprintf("%v", linksMap["gamecenter_api_base"])
 	gamecenterLanding := fmt.Sprintf("%v", linksMap["gamecenter_api_slug"])
 	gameRegex := fmt.Sprintf("%v", linksMap["game_regex"])
-	landingLinks, err := quickio.GetGameLandingLinksFromHTML(html, gamecenterBase, gamecenterLanding, gameRegex)
-	radioErrors.ErrorLog(err)
+	landingLinks := quickio.GetGameLandingLinksFromHTML(html, gamecenterBase, gamecenterLanding, gameRegex)
 	return landingLinks
 }
 

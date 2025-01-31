@@ -133,12 +133,11 @@ func GetGameLandingLinks() []string {
 	gamecenterBase := fmt.Sprintf("%v", linksMap["gamecenter_api_base"])
 	gamecenterLanding := fmt.Sprintf("%v", linksMap["gamecenter_api_slug"])
 	gameRegex := fmt.Sprintf("%v", linksMap["game_regex"])
-	landingLinks, err := GetGameLandingLinksFromHTML(html, gamecenterBase, gamecenterLanding, gameRegex)
-	radioErrors.ErrorLog(err)
+	landingLinks := GetGameLandingLinksFromHTML(html, gamecenterBase, gamecenterLanding, gameRegex)
 	return landingLinks
 }
 
-func GetGameLandingLinksFromHTML(html string, gamecenterBase string, gamecenterLanding string, gameRegex string) ([]string, error) {
+func GetGameLandingLinksFromHTML(html string, gamecenterBase string, gamecenterLanding string, gameRegex string) []string {
 	var gameLandingLinks []string
 	gameRegexObject, _ := regexp.Compile(gameRegex)
 	allGames := gameRegexObject.FindAllString(html, -1)
@@ -150,10 +149,7 @@ func GetGameLandingLinksFromHTML(html string, gamecenterBase string, gamecenterL
 			gameLandingLinks = append(gameLandingLinks, landingLink)
 		}
 	}
-	if len(gameLandingLinks) == 0 {
-		return nil, errors.New("couldnt find any game for today")
-	}
-	return gameLandingLinks, nil
+	return gameLandingLinks
 }
 
 func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding string, gameRegexs []string, teamAbbrev string) (string, error) {

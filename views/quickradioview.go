@@ -147,7 +147,6 @@ func (view *QuickRadioView) CreateGameWidgetFromGameDataObject(gameDataObject mo
 	layout.AddWidget2(view.CreateTeamWidget(gameDataObject.HomeTeam, gamecenterLink, gameWidget), 0, 0, core.Qt__AlignCenter)
 	layout.AddWidget2(view.CreateIceCenterWidget(gameDataObject, gamecenterLink, gameWidget), 0, 1, core.Qt__AlignCenter)
 	layout.AddWidget2(view.CreateTeamWidget(gameDataObject.AwayTeam, gamecenterLink, gameWidget), 0, 2, core.Qt__AlignCenter)
-	//layout.AddWidget3(CreateGameDetailsWidgetFromGameDataObject(gameDataObject, gamecenterLink, gameWidget), 1, 0, 3, 1, core.Qt__AlignCenter)
 	gameWidget.SetLayout(layout)
 	gameWidget.SetStyleSheet(CreateGameStylesheet(gameDataObject.HomeTeam.Abbrev, gameDataObject.AwayTeam.Abbrev))
 	return gameWidget
