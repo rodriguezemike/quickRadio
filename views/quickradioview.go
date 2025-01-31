@@ -15,15 +15,16 @@ import (
 )
 
 type QuickRadioView struct {
-	LabelTimer        int
-	gameController    *controllers.GameController
-	radioController   *controllers.RadioController
-	app               *widgets.QApplication
-	window            *widgets.QMainWindow
-	gameManagerWidget *widgets.QGroupBox
-	gamesStackWidget  *widgets.QStackedWidget
-	activeGameWidget  *widgets.QWidget
-	activeGameIndex   int
+	LabelTimer              int
+	activeGameDataUpdateMap map[string]bool
+	gameController          *controllers.GameController
+	radioController         *controllers.RadioController
+	app                     *widgets.QApplication
+	window                  *widgets.QMainWindow
+	gameManagerWidget       *widgets.QGroupBox
+	gamesStackWidget        *widgets.QStackedWidget
+	activeGameWidget        *widgets.QWidget
+	activeGameIndex         int
 }
 
 func (view *QuickRadioView) getIceRinkPixmap() *gui.QPixmap {
@@ -91,13 +92,17 @@ func (view *QuickRadioView) CreateDataLabel(name string, data string, genercente
 	label.SetStyleSheet(CreateLabelStylesheet())
 	label.ConnectTimerEvent(func(event *core.QTimerEvent) {
 		if label.IsVisible() {
-			if strings.Contains(label.ObjectName(), "SCORE") {
-				teamAbbrev, dataLabel := view.GetTeamDataFromUIObjectName(label.ObjectName(), "_")
-				label.SetText(view.gameController.GetUIDataFromFilename(teamAbbrev, dataLabel, "-1"))
-			} else if strings.Contains(label.ObjectName(), "GAMESTATE") {
-				label.SetText(view.gameController.GetActiveGamestateFromFile())
+			val, ok := view.activeGameDataUpdateMap[label.ObjectName()]
+			if !ok || !val {
+				if strings.Contains(label.ObjectName(), "SCORE") {
+					teamAbbrev, dataLabel := view.GetTeamDataFromUIObjectName(label.ObjectName(), "_")
+					label.SetText(view.gameController.GetUIDataFromFilename(teamAbbrev, dataLabel, "-1"))
+				} else if strings.Contains(label.ObjectName(), "GAMESTATE") {
+					label.SetText(view.gameController.GetActiveGamestateFromFile())
+				}
+				label.Repaint()
+				view.activeGameDataUpdateMap[label.ObjectName()] = true
 			}
-			label.Repaint()
 		}
 	})
 	label.StartTimer(view.LabelTimer, core.Qt__PreciseTimer)
@@ -117,9 +122,22 @@ func (view *QuickRadioView) CreateTeamWidget(team models.TeamData, gamecenterLin
 func (view *QuickRadioView) CreateIceCenterWidget(gameDataObject models.GameData, gamecenterLink string, gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
 	layout := widgets.NewQVBoxLayout2(gameWidget)
 	centerIceWidget := widgets.NewQGroupBox(gameWidget)
+	gameStateLabel := view.CreateDataLabel("GAMESTATE", view.gameController.GetGamestateString(&gameDataObject), gamecenterLink, gameWidget)
 	layout.AddWidget(CreateIceRinklabel(gameWidget, gameDataObject, view), 0, core.Qt__AlignCenter)
-	layout.AddWidget(view.CreateDataLabel("GAMESTATE", view.gameController.GetGamestateString(&gameDataObject), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
+	layout.AddWidget(gameStateLabel, 0, core.Qt__AlignCenter)
 	centerIceWidget.SetLayout(layout)
+	centerIceWidget.ConnectTimerEvent(func(event *core.QTimerEvent) {
+		for _, value := range view.activeGameDataUpdateMap {
+			if !value {
+				return
+			}
+		}
+		for key := range view.activeGameDataUpdateMap {
+			view.activeGameDataUpdateMap[key] = false
+			view.gameController.ConsumeActiveGameData()
+		}
+	})
+	centerIceWidget.StartTimer(view.LabelTimer*2, core.Qt__CoarseTimer)
 	return centerIceWidget
 }
 
@@ -155,13 +173,11 @@ func (view *QuickRadioView) CreateGameDropdownsWidget() *widgets.QComboBox {
 	dropdown.SetFixedWidth(600)
 	dropdown.AddItems(gameNames)
 	dropdown.ConnectCurrentIndexChanged(func(index int) {
-		//Kill Active Polling Here
-		view.gameController.EmptyActiveGameDirectory()
-		view.gameController.UpdateActiveDataObjects()
+		view.activeGameDataUpdateMap = nil
+		view.activeGameDataUpdateMap = map[string]bool{}
+		view.gameController.KillActiveGame()
 		view.gameController.SwitchActiveObjects(index)
-		view.activeGameIndex = index
-		//We want to start to run updates again on the active directory here.
-		//go view.GameController.PollActiveGamelink(index)
+		view.gameController.RunActiveGame()
 		view.gamesStackWidget.SetCurrentIndex(index)
 		view.activeGameWidget = view.gamesStackWidget.CurrentWidget()
 	})

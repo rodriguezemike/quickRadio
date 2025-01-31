@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -9,17 +10,22 @@ import (
 	"quickRadio/quickio"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type GameController struct {
 	Landinglinks               []string
 	ActiveGameIndex            int
 	ActiveLandingLink          string
+	dataConsumed               bool
 	ActiveGameDataObject       *models.GameData
 	ActiveGameVersesDataObject *models.GameVersesData
 	Sweaters                   map[string]models.Sweater
 	gameDataObjects            []models.GameData
 	gameVersesObjects          []models.GameVersesData
+	ctx                        context.Context
+	goroutineMap               *sync.Map
+
 	//Here we want what we will need to update the ui, filepaths, syncMaps, etc.
 	activeGameDirectory string
 }
@@ -87,7 +93,7 @@ func (controller *GameController) GetActiveGamestateFromFile() string {
 	return string(quickio.GetDataFromFile(gameStatePath))
 }
 
-func (controller *GameController) DumpGameData() {
+func (controller *GameController) ProduceActiveGameData() {
 	homeScorePath := filepath.Join(controller.activeGameDirectory, controller.ActiveGameDataObject.HomeTeam.Abbrev+"_SCORE."+strconv.Itoa(controller.ActiveGameDataObject.HomeTeam.Score))
 	awayScorePath := filepath.Join(controller.activeGameDirectory, controller.ActiveGameDataObject.AwayTeam.Abbrev+"_SCORE."+strconv.Itoa(controller.ActiveGameDataObject.AwayTeam.Score))
 	gameStatePath := filepath.Join(controller.activeGameDirectory, "ACTIVEGAMESTATE.label")
@@ -100,17 +106,49 @@ func (controller *GameController) DumpGameData() {
 	quickio.WriteFile(homePlayersOnIcePath, string(controller.getTeamOnIceJson(controller.ActiveGameDataObject.Summary.IceSurface.HomeTeam)))
 	quickio.WriteFile(awayPlayersOnIcePath, string(controller.getTeamOnIceJson(controller.ActiveGameDataObject.Summary.IceSurface.AwayTeam)))
 	quickio.WriteFile(tameGameStatsPath, string(controller.getTeamGameStats()))
+	controller.dataConsumed = false
+
+}
+func (controller *GameController) ConsumeActiveGameData() {
+	controller.EmptyActiveGameDirectory()
+	controller.dataConsumed = true
+}
+
+func (controller *GameController) RunActiveGame() {
+	//Here we want to ProduceGameData to be consumed by our UI.
+	ctx, cancel := context.WithCancel(controller.ctx)
+	defer cancel()
+	controller.goroutineMap.Store(ctx, cancel)
+	for {
+		select {
+		case <-ctx.Done():
+			controller.goroutineMap.Delete(ctx)
+			controller.ConsumeActiveGameData()
+			return
+		default:
+			if controller.dataConsumed {
+				controller.UpdateActiveDataObjects()
+				controller.ProduceActiveGameData()
+			}
+		}
+	}
+}
+
+func (controller *GameController) KillActiveGame() {
+	controller.goroutineMap.Range(func(key, value interface{}) bool {
+		callback, _ := value.(context.CancelFunc)
+		callback()
+		return true
+	})
 }
 
 func (controller *GameController) UpdateDataObjects() {
 	controller.gameDataObjects = quickio.GoGetGameDataObjectsFromLandingLinks(controller.Landinglinks)
 	controller.gameVersesObjects = quickio.GoGetGameVersesDataFromLandingLinks(controller.Landinglinks)
-	controller.SwitchActiveObjects(controller.ActiveGameIndex)
 }
 
 func (controller *GameController) UpdateActiveDataObjects() {
-	controller.gameDataObjects = quickio.GoGetGameDataObjectsFromLandingLinks(controller.Landinglinks)
-	controller.gameVersesObjects = quickio.GoGetGameVersesDataFromLandingLinks(controller.Landinglinks)
+	controller.UpdateDataObjects()
 	controller.ActiveGameDataObject = &controller.gameDataObjects[controller.ActiveGameIndex]
 	controller.ActiveGameVersesDataObject = &controller.gameVersesObjects[controller.ActiveGameIndex]
 }
@@ -141,5 +179,7 @@ func NewGameController() *GameController {
 	controller.ActiveGameIndex = 0
 	controller.ActiveGameDataObject = &controller.gameDataObjects[controller.ActiveGameIndex]
 	controller.ActiveGameVersesDataObject = &controller.gameVersesObjects[controller.ActiveGameIndex]
+	controller.ctx = context.Background()
+	controller.dataConsumed = false
 	return &controller
 }

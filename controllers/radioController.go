@@ -36,7 +36,7 @@ func (controller *RadioController) initalizeRadioSpeaker(format beep.Format) {
 }
 
 func (controller *RadioController) pollRadioFormatLink() {
-	log.Println("readioController::pollRadioFormatLink")
+	log.Println("radioController::pollRadioFormatLink")
 	log.Println("PollRadioFormatLink::controller.RadioFormatLink", controller.RadioFormatLink)
 	ctx, cancel := context.WithDeadline(controller.ctx, time.Now().Add(10*time.Second))
 	defer cancel()

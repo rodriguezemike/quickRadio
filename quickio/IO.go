@@ -274,6 +274,7 @@ func GetGameVersesData(gameLandingLink string) models.GameVersesData {
 }
 
 func GoGetGameDataObjectsFromLandingLinks(landingLinks []string) []models.GameData {
+	//If we have to, we will sort by game ID
 	var gameDataObjects []models.GameData
 	var workGroup sync.WaitGroup
 	log.Println("IO::GoGetGameDataObjectsFromLandingLinks")
@@ -295,6 +296,7 @@ func GoGetGameDataObjectsFromLandingLinks(landingLinks []string) []models.GameDa
 	return gameDataObjects
 }
 func GoGetGameVersesDataFromLandingLinks(landingLinks []string) []models.GameVersesData {
+	//If we have to, we will sort by GameId.
 	var gameVersesDataObjects []models.GameVersesData
 	var workGroup sync.WaitGroup
 	for i := 0; i < len(landingLinks); i++ {

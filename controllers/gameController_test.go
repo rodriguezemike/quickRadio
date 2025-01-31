@@ -20,7 +20,7 @@ func TestActiveDirectoryValue(t *testing.T) {
 
 func TestEmptyActiveGameDirectory(t *testing.T) {
 	controller := NewGameController()
-	controller.DumpGameData()
+	controller.ProduceActiveGameData()
 	controller.EmptyActiveGameDirectory()
 	files, _ := os.ReadDir(controller.activeGameDirectory)
 	for _, f := range files {
@@ -46,7 +46,7 @@ func TestSwitchActiveDataObjects(t *testing.T) {
 
 func TestDumpGameData(t *testing.T) {
 	controller := NewGameController()
-	controller.DumpGameData()
+	controller.ProduceActiveGameData()
 	files, _ := os.ReadDir(controller.activeGameDirectory)
 	filesFound := 0
 	scoreFilesFound := 0
