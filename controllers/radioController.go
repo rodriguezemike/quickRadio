@@ -141,7 +141,7 @@ func (controller *RadioController) PlayRadio() {
 }
 
 func NewRadioController(radioLink string, teamAbbrev string) *RadioController {
-	log.Println("Func -> NewRadioController")
+	log.Println("radioController::NewRadioController")
 	var controller RadioController
 	controller.TeamAbbrev = teamAbbrev
 	controller.RadioFormatLink, controller.RadioDirectory, controller.WavPaths = quickio.GetRadioFormatLinkAndDirectory(radioLink)
@@ -149,9 +149,10 @@ func NewRadioController(radioLink string, teamAbbrev string) *RadioController {
 	controller.EmergencySleepInterval = 1
 	controller.ctx = context.Background()
 	controller.speakerInitialized = false
-	log.Println("NewRadioController::controller.WavPaths ", controller.WavPaths)
-	log.Println("NewRadioController::controller.RadioDirectory ", controller.RadioDirectory)
-	log.Println("NewRadioController::controller.RadioFormatLink ", controller.RadioFormatLink)
+	controller.goroutineMap = &sync.Map{}
+	log.Println("radioController::NewRadioController::controller.WavPaths ", controller.WavPaths)
+	log.Println("radioController::NewRadioController::controller.RadioDirectory ", controller.RadioDirectory)
+	log.Println("radioController::NewRadioController::controller.RadioFormatLink ", controller.RadioFormatLink)
 	return &controller
 }
 

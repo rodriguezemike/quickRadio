@@ -181,5 +181,6 @@ func NewGameController() *GameController {
 	controller.ActiveGameVersesDataObject = &controller.gameVersesObjects[controller.ActiveGameIndex]
 	controller.ctx = context.Background()
 	controller.dataConsumed = false
+	controller.goroutineMap = &sync.Map{}
 	return &controller
 }
