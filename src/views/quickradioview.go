@@ -96,7 +96,7 @@ func (view *QuickRadioView) CreateDataLabel(name string, data string, genercente
 			if !ok || !val {
 				if strings.Contains(label.ObjectName(), "SCORE") {
 					teamAbbrev, dataLabel := view.GetTeamDataFromUIObjectName(label.ObjectName(), "_")
-					label.SetText(view.gameController.GetUIDataFromFilename(teamAbbrev, dataLabel, "-1"))
+					label.SetText(view.gameController.GetUIDataFromFilename(teamAbbrev, dataLabel, "0"))
 				} else if strings.Contains(label.ObjectName(), "GAMESTATE") {
 					label.SetText(view.gameController.GetActiveGamestateFromFile())
 				}
@@ -113,7 +113,7 @@ func (view *QuickRadioView) CreateTeamWidget(team models.TeamData, gamecenterLin
 	teamWidget := widgets.NewQGroupBox(gameWidget)
 	teamLayout.AddWidget(view.CreateTeamRadioStreamButton(team.Abbrev, team.RadioLink, gameWidget), 0, core.Qt__AlignCenter)
 	teamLayout.AddWidget(view.CreateDataLabel("TeamAbbrev", team.Abbrev, gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
-	teamLayout.AddWidget(view.CreateDataLabel(view.SetTeamDataUIObjectName(team.Abbrev, "SOG", "_"), strconv.Itoa(team.Sog), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(view.CreateDataLabel(view.SetTeamDataUIObjectName(team.Abbrev, "SOG", "_"), "SOG: "+strconv.Itoa(team.Sog), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
 	teamLayout.AddWidget(view.CreateDataLabel(view.SetTeamDataUIObjectName(team.Abbrev, "SCORE", "_"), strconv.Itoa(team.Score), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
 	teamWidget.SetLayout(teamLayout)
 	return teamWidget
@@ -174,9 +174,7 @@ func (view *QuickRadioView) CreateGameDropdownsWidget() *widgets.QComboBox {
 	dropdown.ConnectCurrentIndexChanged(func(index int) {
 		view.activeGameDataUpdateMap = nil
 		view.activeGameDataUpdateMap = map[string]bool{}
-		view.gameController.KillActiveGame()
-		view.gameController.SwitchActiveObjects(index)
-		view.gameController.RunActiveGame()
+		go view.gameController.SwitchActiveGame(index)
 		view.gamesStackWidget.SetCurrentIndex(index)
 		view.activeGameWidget = view.gamesStackWidget.CurrentWidget()
 	})
@@ -248,5 +246,6 @@ func (view *QuickRadioView) CreateAndRunApp() {
 func NewQuickRadioView() *QuickRadioView {
 	var view QuickRadioView
 	view.LabelTimer = 3000
+	view.activeGameDataUpdateMap = map[string]bool{}
 	return &view
 }

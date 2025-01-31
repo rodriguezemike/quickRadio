@@ -78,6 +78,12 @@ func (controller *GameController) GetGamestateString(gameDataObject *models.Game
 	}
 }
 
+func (controller *GameController) SwitchActiveGame(index int) {
+	controller.KillActiveGame()
+	controller.SwitchActiveObjects(index)
+	controller.RunActiveGame()
+}
+
 func (controller *GameController) getTeamOnIceJson(team models.TeamOnIce) []byte {
 	onIceJson, _ := json.MarshalIndent(team, "", " ")
 	return onIceJson

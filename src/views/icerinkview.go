@@ -23,7 +23,7 @@ func CreateIceRinklabel(gameWidget *widgets.QGroupBox, gameDataObject models.Gam
 	painter := gui.NewQPainter2(compositePixmap)
 	painter.DrawPixmap9(0, 0, iceRinkPixmap)
 	//painter.DrawPixmap11((iceRinkPixmap.Size().Width()/2)-30, (iceRinkPixmap.Size().Height()/2)-35, 64, 64, homeTeamPixmap)
-	painter.DrawPixmap11((iceRinkPixmap.Size().Width()/2)-30, (iceRinkPixmap.Size().Height()/2)-35, 400, 400, homeTeamPixmap) //Hold idea
+	painter.DrawPixmap11((iceRinkPixmap.Size().Width()/2)-200, (iceRinkPixmap.Size().Height()/2)-200, 400, 400, homeTeamPixmap) //Hold idea
 	//This draws our team sides. Look into 'tinting' the Ice different gradient colors for the team. Red line dividing them.
 	if homeTeamOnLeft {
 		painter.DrawText3((iceRinkPixmap.Size().Width() / 4), (iceRinkPixmap.Size().Height()/2)-35, homeTeam.Abbrev)
