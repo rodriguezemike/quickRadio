@@ -1,6 +1,7 @@
-package models
+package models_test
 
 import (
+	"quickRadio/models"
 	"testing"
 	"time"
 
@@ -8,7 +9,7 @@ import (
 )
 
 func TestAudioDataInit(t *testing.T) {
-	var testStream = &AudioStreamQueue{}
+	var testStream = &models.AudioStreamQueue{}
 	speaker.Play(testStream)
 	time.Sleep(5 * time.Second)
 }

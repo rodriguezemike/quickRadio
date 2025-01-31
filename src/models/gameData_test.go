@@ -1,18 +1,18 @@
-package models
+package models_test
 
 import (
 	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
+	"quickRadio/models"
+	"quickRadio/quickio"
 	"testing"
 )
 
 func TestGameData(t *testing.T) {
-	var gameData = &GameData{}
-	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filepath.Dir(filename))
+	var gameData = &models.GameData{}
+	dir := quickio.GetProjectDir()
 	testFilePath := filepath.Join(dir, "assets", "tests", "gamelanding.json")
 	jsonFileObject, err := os.Open(testFilePath)
 	if err != nil {
