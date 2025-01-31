@@ -71,8 +71,10 @@ jobs:
           go get golang.org/x/tools@v0.0.0-20190420181800-aa740d480789
 
       - name: Run tests
+        working-directory: ./src/
         run: |
           go test -timeout 300s -v ./... 
           
       - name: Build project
+        working-directory: ./src/
         run: go build -v .
