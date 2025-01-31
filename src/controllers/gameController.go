@@ -90,7 +90,9 @@ func (controller *GameController) getTeamGameStats() []byte {
 
 func (controller *GameController) GetActiveGamestateFromFile() string {
 	gameStatePath := filepath.Join(controller.activeGameDirectory, "ACTIVEGAMESTATE.label")
-	return string(quickio.GetDataFromFile(gameStatePath))
+	data, fileObject := quickio.GetDataFromFile(gameStatePath)
+	fileObject.Close()
+	return string(data)
 }
 
 func (controller *GameController) ProduceActiveGameData() {

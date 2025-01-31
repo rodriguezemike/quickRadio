@@ -222,7 +222,7 @@ func (view *QuickRadioView) KillAllTheFun() {
 	//Close.
 }
 
-func (view *QuickRadioView) CreateAndRunUI() {
+func (view *QuickRadioView) CreateAndRunApp() {
 	quickio.EmptyTmpFolder()
 	view.app = widgets.NewQApplication(len(os.Args), os.Args)
 	view.app.SetApplicationDisplayName("QuickRadio")
@@ -238,4 +238,10 @@ func (view *QuickRadioView) CreateAndRunUI() {
 
 	view.window.Show()
 	view.app.Exec()
+}
+
+func NewQuickRadioView() *QuickRadioView {
+	var view QuickRadioView
+	view.LabelTimer = 3000
+	return &view
 }

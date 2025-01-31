@@ -1,9 +1,10 @@
 package main
 
 import (
-	"quickRadio/ui"
+	"quickRadio/views"
 )
 
 func main() {
-	ui.CreateAndRunUI()
+	ui := views.NewQuickRadioView()
+	ui.CreateAndRunApp()
 }
