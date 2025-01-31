@@ -71,6 +71,11 @@ jobs:
 
       - name: Run tests
         run: |
-          go test -timeout 300s -v ./...
+          go test -timeout 300s -v ./... -json > TestResults-${{ github.job }}.json
+      - name: Upload Go test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: Go-results-${{ github.job }}
+          path: TestResults-${{ github.job }}.json
       - name: Build project
         run: go build -v .
