@@ -58,6 +58,7 @@ func (view *QuickRadioView) GetTeamDataFromUIObjectName(objectName string, delim
 }
 
 func (view *QuickRadioView) CreateTeamRadioStreamButton(teamAbbrev string, radioLink string, gameWidget *widgets.QGroupBox) *widgets.QPushButton {
+	radioSampleRate := "192K"
 	teamIcon := view.GetTeamIcon(teamAbbrev)
 	button := widgets.NewQPushButton(gameWidget)
 	button.SetStyleSheet(CreateTeamButtonStylesheet(view.gameController.Sweaters[teamAbbrev]))
@@ -68,13 +69,13 @@ func (view *QuickRadioView) CreateTeamRadioStreamButton(teamAbbrev string, radio
 	button.ConnectToggled(func(onCheck bool) {
 		teamAbbrev, _ = view.GetTeamDataFromUIObjectName(button.ObjectName(), "_")
 		if onCheck {
-			if radioLink != "" && !quickio.IsRadioLocked() {
-				view.radioController = controllers.NewRadioController(radioLink, teamAbbrev)
+			if radioLink != "" {
+				view.radioController = controllers.NewRadioController(radioLink, teamAbbrev, radioSampleRate)
 				go view.radioController.PlayRadio()
 			}
 		} else {
-			if radioLink != "" && quickio.IsOurRadioLocked(teamAbbrev) {
-				go view.radioController.StopRadio()
+			if radioLink != "" {
+				go view.radioController.StopRadio(teamAbbrev)
 				view.radioController = nil
 			}
 		}

@@ -86,8 +86,8 @@ func GetAACPaths(qualityRadioPath string) []string {
 	return audioFilepaths
 }
 
-func GetRadioFormatLinkAndDirectory(radioLink string) (string, string, []string) {
-	qualitySlug := GetQualityStreamSlug(radioLink, "192K")
+func GetRadioFormatLinkAndDirectory(radioLink string, sampleRate string) (string, string, []string) {
+	qualitySlug := GetQualityStreamSlug(radioLink, sampleRate)
 	radioFormatLink := BuildQualityRadioPath(radioLink, qualitySlug)
 	aacPaths := GetAACPaths(radioFormatLink)
 	wavPaths := GoDownloadAndTranscodeAACs(aacPaths)

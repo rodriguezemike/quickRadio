@@ -17,17 +17,19 @@ import (
 )
 
 type RadioController struct {
+	SampleRate             string
 	TeamAbbrev             string
 	WavPaths               []string
 	RadioDirectory         string
 	RadioFormatLink        string
 	EmergencySleepInterval int
 	NormalSleepInterval    int
-	streamQueue            models.AudioStreamQueue
+	streamQueue            *models.AudioStreamQueue
 	streamers              []beep.StreamSeekCloser
-	speakerInitialized     bool
 	ctx                    context.Context
+	radiolock              *sync.Mutex
 	goroutineMap           *sync.Map
+	speakerInitialized     bool
 }
 
 func (controller *RadioController) initalizeRadioSpeaker(format beep.Format) {
@@ -89,7 +91,7 @@ func (controller *RadioController) updateSharedData() {
 
 func (controller *RadioController) initalPlayback() {
 	streamer := controller.initializeRadio(controller.WavPaths[len(controller.WavPaths)-1])
-	speaker.Play(&controller.streamQueue)
+	speaker.Play(controller.streamQueue)
 	controller.addStreamerToPlaybackQueue(streamer)
 	go controller.pollRadioFormatLink()
 }
@@ -102,28 +104,30 @@ func (controller *RadioController) updatePlayback() {
 	}
 }
 
-func (controller *RadioController) StopRadio() {
+func (controller *RadioController) stopRadio() {
 	speaker.Clear()
 	controller.goroutineMap.Range(func(key, value interface{}) bool {
 		callback, _ := value.(context.CancelFunc)
 		callback()
 		return true
 	})
-	time.Sleep(3 * time.Second)
 	quickio.EmptyRadioDirectory(controller.RadioDirectory)
-	quickio.DeleteRadioLock(controller.TeamAbbrev)
+	controller.radiolock.Unlock()
+}
+
+func (controller *RadioController) StopRadio(teamAbbrev string) {
+	if teamAbbrev == controller.TeamAbbrev {
+		controller.radiolock.Unlock()
+	}
 }
 
 func (controller *RadioController) PlayRadio() {
-	log.Println(controller.TeamAbbrev)
-	log.Println(quickio.IsOurRadioLocked(controller.TeamAbbrev))
-	if !quickio.IsRadioLocked() {
-		quickio.CreateRadioLock(controller.TeamAbbrev)
+	if controller.radiolock.TryLock() {
 		controller.initalPlayback()
 		time.Sleep(time.Duration(controller.NormalSleepInterval) * time.Second)
 		for {
-			if !quickio.IsOurRadioLocked(controller.TeamAbbrev) {
-				controller.StopRadio()
+			if controller.radiolock.TryLock() {
+				controller.stopRadio()
 				return
 			}
 			controller.updateSharedData()
@@ -141,19 +145,25 @@ func (controller *RadioController) PlayRadio() {
 }
 
 func (controller *RadioController) KillFun() {
-	controller.StopRadio()
+	controller.StopRadio(controller.TeamAbbrev)
+	controller.streamQueue = nil
+	controller.streamers = nil
+	quickio.EmptyRadioDirectory(controller.RadioDirectory)
 }
 
-func NewRadioController(radioLink string, teamAbbrev string) *RadioController {
+func NewRadioController(radioLink string, teamAbbrev string, sampleRate string) *RadioController {
 	log.Println("radioController::NewRadioController")
 	var controller RadioController
+	controller.SampleRate = sampleRate
 	controller.TeamAbbrev = teamAbbrev
-	controller.RadioFormatLink, controller.RadioDirectory, controller.WavPaths = quickio.GetRadioFormatLinkAndDirectory(radioLink)
+	controller.RadioFormatLink, controller.RadioDirectory, controller.WavPaths = quickio.GetRadioFormatLinkAndDirectory(radioLink, sampleRate)
 	controller.NormalSleepInterval = 2
 	controller.EmergencySleepInterval = 1
 	controller.ctx = context.Background()
 	controller.speakerInitialized = false
 	controller.goroutineMap = &sync.Map{}
+	controller.radiolock = &sync.Mutex{}
+	controller.streamQueue = &models.AudioStreamQueue{}
 	log.Println("radioController::NewRadioController::controller.WavPaths ", controller.WavPaths)
 	log.Println("radioController::NewRadioController::controller.RadioDirectory ", controller.RadioDirectory)
 	log.Println("radioController::NewRadioController::controller.RadioFormatLink ", controller.RadioFormatLink)
