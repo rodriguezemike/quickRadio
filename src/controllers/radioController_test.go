@@ -44,8 +44,8 @@ func TestNewRadioControllerTypes(t *testing.T) {
 	if reflect.ValueOf(controller.NormalSleepInterval).Kind().String() != "int" {
 		t.Fatalf(`reflect.ValueOf(controller.NormalSleepInterval).Kind().String() != "int" | reflect.ValueOf(controller.NormalSleepInterval).Kind()) = %s`, reflect.ValueOf(controller.NormalSleepInterval).Kind())
 	}
-	if reflect.ValueOf(controller.streamQueue).Kind().String() != "struct" {
-		t.Fatalf(`reflect.ValueOf(controller.streamQueue).Kind().String() != "struct" | reflect.ValueOf(controller.streamQueue).Kind()) = %s`, reflect.ValueOf(controller.streamQueue).Kind())
+	if reflect.ValueOf(controller.streamQueue).Kind().String() != "ptr" {
+		t.Fatalf(`reflect.ValueOf(controller.streamQueue).Kind().String() != "ptr" | reflect.ValueOf(controller.streamQueue).Kind()) = %s`, reflect.ValueOf(controller.streamQueue).Kind())
 	}
 	if reflect.ValueOf(controller.streamers).Kind().String() != "slice" {
 		t.Fatalf(`reflect.ValueOf(controller.streamers).Kind().String() != "slice" | reflect.ValueOf(controller.streamers).Kind()) = %s`, reflect.ValueOf(controller.streamers).Kind())
