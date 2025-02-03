@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"quickRadio/quickio"
@@ -31,16 +32,21 @@ func TestEmptyActiveGameDirectory(t *testing.T) {
 
 func TestSwitchActiveDataObjects(t *testing.T) {
 	controller := NewGameController()
-	wantedActiveGameDataObject := &controller.gameDataObjects[2]
-	wantedActiveVersesGameDataObject := &controller.gameVersesObjects[2]
-	controller.SwitchActiveObjects(2)
-	if controller.ActiveGameDataObject != wantedActiveGameDataObject {
-		t.Fatalf(`&controller.ActiveGameDataObject != &wantedActiveGameDataObject | Address wanted %v | Address got %v`, &wantedActiveGameDataObject, &controller.ActiveGameDataObject)
+	gamesLen := len(controller.Landinglinks)
+	if gamesLen > 0 {
+		wantedActiveGameDataObject := &controller.gameDataObjects[gamesLen-1]
+		wantedActiveVersesGameDataObject := &controller.gameVersesObjects[gamesLen-1]
+		controller.SwitchActiveObjects(gamesLen - 1)
+		if controller.ActiveGameDataObject != wantedActiveGameDataObject {
+			t.Fatalf(`&controller.ActiveGameDataObject != &wantedActiveGameDataObject | Address wanted %v | Address got %v`, &wantedActiveGameDataObject, &controller.ActiveGameDataObject)
+		}
+		if controller.ActiveGameVersesDataObject != wantedActiveVersesGameDataObject {
+			t.Fatalf(`&controller.ActiveGameVersesDataObject != wantedActiveVersesGameDataObject | Address wanted %v | Address got %v`, &wantedActiveVersesGameDataObject, &controller.ActiveGameVersesDataObject)
+		}
+		quickio.EmptyTmpFolder()
+	} else {
+		log.Println("gameContoller_test::TestSwitchActiveDataObjects", "SSSKKKKKKKKKIPPPP - No active games today :C if only hockey season was 365 days a year.")
 	}
-	if controller.ActiveGameVersesDataObject != wantedActiveVersesGameDataObject {
-		t.Fatalf(`&controller.ActiveGameVersesDataObject != wantedActiveVersesGameDataObject | Address wanted %v | Address got %v`, &wantedActiveVersesGameDataObject, &controller.ActiveGameVersesDataObject)
-	}
-	quickio.EmptyTmpFolder()
 
 }
 
