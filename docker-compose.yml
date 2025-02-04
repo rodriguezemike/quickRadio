@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  go-app-linux:
+    build:
+      context: .
+      dockerfile: docker/linux/Dockerfile # Ensure your Dockerfile is named correctly
+    platform: linux/amd64 # Ensures that the container is built for Linux
+    container_name: go-app-linux
+    ports:
+      - "8080:8080" # Adjust this based on your app's port
+    volumes:
+      - .:/src
+    environment:
+      - ENV=linux
+    networks:
+      - go-network
+
+  go-app-windows:
+    build:
+      context: .
+      dockerfile: docker/windows/Dockerfile
+    platform: windows/amd64 # This will use Windows as the base environment
+    container_name: go-app-windows
+    ports:
+      - "8081:8080" # Adjust for any differences in port, if needed
+    volumes:
+      - .:/src
+    environment:
+      - ENV=windows
+    networks:
+      - go-network
+
+  go-app-unix:
+    build:
+      context: .
+      dockerfile: dockers/unix/Dockerfile
+    platform: linux/amd64 # For Unix-like systems (Linux for compatibility)
+    container_name: go-app-unix
+    ports:
+      - "8082:8080" # Adjust port based on need
+    volumes:
+      - .:/src
+    environment:
+      - ENV=unix
+    networks:
+      - go-network
+
+networks:
+  go-network:
+    driver: bridge
