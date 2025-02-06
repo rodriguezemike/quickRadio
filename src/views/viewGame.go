@@ -7,16 +7,6 @@ import (
 	"github.com/therecipe/qt/widgets"
 )
 
-func (view *QuickRadioView) CreateGamesWidget() *widgets.QStackedWidget {
-	gameStackWidget := widgets.NewQStackedWidget(view.gameManagerWidget)
-	for i, gameDataObject := range view.gameController.GetGameDataObjects() {
-		gameWidget := view.CreateGameWidgetFromGameDataObject(gameDataObject, view.gameController.Landinglinks[i])
-		gameStackWidget.AddWidget(gameWidget)
-	}
-	gameStackWidget.SetCurrentIndex(view.activeGameIndex)
-	return gameStackWidget
-}
-
 func (view *QuickRadioView) CreateGameWidgetFromGameDataObject(gameDataObject models.GameData, gamecenterLink string) *widgets.QGroupBox {
 	layout := widgets.NewQGridLayout(view.gamesStackWidget)
 	gameWidget := widgets.NewQGroupBox(view.gamesStackWidget)
