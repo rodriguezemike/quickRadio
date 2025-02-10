@@ -38,7 +38,7 @@ jobs:
         run : sudo apt update && sudo apt upgrade
 
       - name: Install apt dependencies
-        run : sudo apt-get install -y libxcb-cursor0 libqt5webkit5-dev libasound2-dev qt5-qmake qtbase5-dev ffmpeg
+        run : sudo apt-get install -y xvfb libxcb-cursor0 libqt5webkit5-dev libasound2-dev qt5-qmake qtbase5-dev ffmpeg
 
       - name: Install Go dependencies
         working-directory: ./src/
@@ -84,7 +84,10 @@ jobs:
 
       - name: Run View Tests
         working-directory: ./src/
-        run: go test -timeout 300s -v ./views/... -skip-for-ci
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 &
+          go test -timeout 300s -v ./views/... -skip-for-ci
 
       - name: Build project
         working-directory: ./src/

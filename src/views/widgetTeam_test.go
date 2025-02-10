@@ -7,7 +7,6 @@ import (
 	"quickRadio/views"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/therecipe/qt/widgets"
 )
@@ -53,9 +52,6 @@ func TestTeamWidgetUI(t *testing.T) {
 		window.SetCentralWidget(widget.UI)
 		window.Show()
 		app.Exec()
-		time.Sleep(30 * time.Second)
-		app.CloseAllWindows()
-		app.Quit()
 	} else {
 		t.Skip("We are in a CI env and skipping Visual based test.")
 	}

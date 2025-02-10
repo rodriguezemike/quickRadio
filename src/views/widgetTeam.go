@@ -1,7 +1,6 @@
 package views
 
 import (
-	"log"
 	"quickRadio/controllers"
 	"quickRadio/models"
 	"quickRadio/quickio"
@@ -132,10 +131,8 @@ func (widget *TeamWidget) ClearUpdateMap() {
 
 func (widget *TeamWidget) createTeamWidget(team *models.TeamData, gamecenterLink string, gameWidget *widgets.QGroupBox) {
 	if team == nil {
-		log.Println("Team is Nil ")
 		team = models.CreateDefaultTeam()
 	}
-	log.Println("Team ", team)
 	teamLayout := widgets.NewQVBoxLayout2(gameWidget)
 	teamWidget := widgets.NewQGroupBox(gameWidget)
 	teamLayout.AddWidget(widget.createTeamRadioStreamButton(team.Abbrev, team.RadioLink, gameWidget), 0, core.Qt__AlignCenter)
