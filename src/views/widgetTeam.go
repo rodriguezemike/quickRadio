@@ -17,9 +17,6 @@ import (
 type TeamWidget struct {
 	LabelTimer      int
 	UI              *widgets.QGroupBox
-	pixMap          *gui.QPixmap
-	icon            *gui.QIcon
-	radioButton     *widgets.QPushButton
 	gameController  *controllers.GameController
 	radioController *controllers.RadioController
 	radioLock       *sync.Mutex
