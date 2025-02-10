@@ -55,10 +55,9 @@ func (widget *TeamWidget) createDataLabel(name string, data string, genercenterL
 				if strings.Contains(label.ObjectName(), "SCORE") {
 					teamAbbrev, dataLabel := widget.getTeamDataFromUIObjectName(label.ObjectName(), "_")
 					label.SetText(widget.gameController.GetUIDataFromFilename(teamAbbrev, dataLabel, "0"))
-				} else if strings.Contains(label.ObjectName(), "GAMESTATE") {
 					label.SetText(widget.gameController.GetActiveGamestateFromFile())
+					label.Repaint()
 				}
-				label.Repaint()
 				widget.updateMap[label.ObjectName()] = true
 			}
 		}
