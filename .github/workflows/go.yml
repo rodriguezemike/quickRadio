@@ -70,12 +70,17 @@ jobs:
           go get golang.org/x/sys@v0.26.0
           go get golang.org/x/tools@v0.0.0-20190420181800-aa740d480789
 
-      - name: Run tests
+      - name: Run Model Tests
         working-directory: ./src/
-        run: |
-          go test -timeout 300s ./models/...
-          go test -timeout 300s ./controllers/...
-          go test -timeout 300s ./views/... -skip-for-ci
+        run: go test -timeout 300s ./models/...
+      
+      - name: Run Controller Tests
+        working-directory: ./src/
+        run: go test -timeout 300s ./controllers/...
+
+      - name: Run View Tests
+        working-directory: ./src/
+        run: go test -timeout 300s ./views/... -skip-for-ci
 
       - name: Build project
         working-directory: ./src/
