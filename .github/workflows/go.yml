@@ -38,7 +38,7 @@ jobs:
         run : sudo apt update && sudo apt upgrade
 
       - name: Install apt dependencies
-        run : sudo apt-get install -y libx11-dev xvfb libxcb-icccm4 libxcb-cursor0 libxcb-randr0-dev libxcb-xtest0-dev libxcb-xinerama0-dev libxcb-shape0-dev libxcb-xkb-dev libqt5webkit5-dev libasound2-dev qt5-qmake qtbase5-dev ffmpeg
+        run : sudo apt-get install -y libx11-dev xvfb libxcb-icccm4 libxcb-cursor0 libxcb-randr0-dev libxcb-xtest0-dev libxcb-xinerama0-dev libxcb-shape0-dev libxcb-xkb-dev libqt5webkit5-dev libasound2-dev qt5-default qt5-qmake qtbase5-dev ffmpeg
 
       - name: Install Go dependencies
         working-directory: ./src/
@@ -92,8 +92,8 @@ jobs:
       - name: Run View Tests
         working-directory: ./src/
         run:  |
-          echo $QT_DEBUG_PLUGINS
-          echo $DISPLAY
+          echo '$QT_DEBUG_PLUGINS'
+          echo '$DISPLAY'
           go test -timeout 300s -v ./views/... -skip-for-ci
 
       - name: Build project
