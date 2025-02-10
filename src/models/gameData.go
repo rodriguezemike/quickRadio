@@ -26,6 +26,14 @@ type TeamData struct {
 	RadioLink string `json:"radioLink"`
 }
 
+func CreateDefaultTeam() *TeamData {
+	data := TeamData{}
+	data.Id = 0
+	data.Abbrev = "NHLF"
+	data.RadioLink = ""
+	return &data
+}
+
 type PlayerOnIce struct {
 	PlayerId int `json:"playerId"`
 	Name     struct {

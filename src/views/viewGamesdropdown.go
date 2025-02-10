@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 package views
 
 import "github.com/therecipe/qt/widgets"

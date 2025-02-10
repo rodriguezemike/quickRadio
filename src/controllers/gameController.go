@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"quickRadio/models"
@@ -192,10 +193,17 @@ func NewGameController() *GameController {
 	controller.gameVersesObjects = quickio.GoGetGameVersesDataFromLandingLinks(controller.Landinglinks)
 	controller.activeGameDirectory = quickio.GetActiveGameDirectory()
 	controller.ActiveGameIndex = 0
-	controller.ActiveGameDataObject = &controller.gameDataObjects[controller.ActiveGameIndex]
-	controller.ActiveGameVersesDataObject = &controller.gameVersesObjects[controller.ActiveGameIndex]
+	if len(controller.gameDataObjects) > 0 {
+		controller.ActiveGameDataObject = &controller.gameDataObjects[controller.ActiveGameIndex]
+		controller.ActiveGameVersesDataObject = &controller.gameVersesObjects[controller.ActiveGameIndex]
+	} else {
+		controller.ActiveGameDataObject = &models.GameData{}
+		controller.ActiveGameVersesDataObject = &models.GameVersesData{}
+	}
+
 	controller.ctx = context.Background()
 	controller.dataConsumed = false
 	controller.goroutineMap = &sync.Map{}
+	log.Println("gameController::NewGameController::controller ", controller)
 	return &controller
 }

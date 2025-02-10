@@ -40,5 +40,8 @@ RUN go get github.com/aws/aws-sdk-go@v1.55.5 && \
 COPY . .
 RUN go build -o QuickRadio .
 
+# Expose the port your application runs on (if needed)
+# EXPOSE 8080 
+
 CMD ["./QuickRadio"]
 

@@ -219,6 +219,7 @@ func GoGetGameDataObjectsFromLandingLinks(landingLinks []string) []models.GameDa
 		}(landingLinks[i])
 		workGroup.Wait()
 	}
+	log.Println("IO::GoGetGameDataObjectsFromLandingLinks::gameDataObjects", gameDataObjects)
 	return gameDataObjects
 }
 

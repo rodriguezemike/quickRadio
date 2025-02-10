@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func GetRadioController() *RadioController {
+func GetTestRadioController() *RadioController {
 	radioLink := "https://d2igy0yla8zi0u.cloudfront.net/lak/20242025/lak-radio.m3u8"
 	teamAbbrev := "LAK"
 	sampleRate := "192K"
@@ -16,7 +16,7 @@ func GetRadioController() *RadioController {
 }
 
 func TestRadioDirectory(t *testing.T) {
-	controller := GetRadioController()
+	controller := GetTestRadioController()
 	wantedRadioDirectory := filepath.Join(quickio.GetQuickTmpFolder(), "20242025", "lak-radio_192K")
 	if controller.RadioDirectory != wantedRadioDirectory {
 		t.Fatalf("controller.RadioDirectory != wantedRadioDirectory || controller.RadioDirectory = %s wantedRadioDirectory = %s", controller.RadioDirectory, wantedRadioDirectory)
@@ -25,7 +25,7 @@ func TestRadioDirectory(t *testing.T) {
 }
 
 func TestNewRadioControllerTypes(t *testing.T) {
-	controller := GetRadioController()
+	controller := GetTestRadioController()
 	if reflect.ValueOf(controller.TeamAbbrev).Kind().String() != "string" {
 		t.Fatalf(`reflect.ValueOf(controller.TeamAbbrev).Kind().String() != "string" | reflect.ValueOf(controller.TeamAbbrev).Kind().String()  = %s`, reflect.ValueOf(controller.TeamAbbrev).Kind())
 	}

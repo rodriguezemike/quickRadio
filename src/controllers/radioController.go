@@ -169,3 +169,22 @@ func NewRadioController(radioLink string, teamAbbrev string, sampleRate string) 
 	log.Println("radioController::NewRadioController::controller.RadioFormatLink ", controller.RadioFormatLink)
 	return &controller
 }
+
+func NewRadioControllerWithLock(radioLink string, teamAbbrev string, sampleRate string, radioLock *sync.Mutex) *RadioController {
+	log.Println("radioController::NewRadioController")
+	var controller RadioController
+	controller.SampleRate = sampleRate
+	controller.TeamAbbrev = teamAbbrev
+	controller.RadioFormatLink, controller.RadioDirectory, controller.WavPaths = quickio.GetRadioFormatLinkAndDirectory(radioLink, sampleRate)
+	controller.NormalSleepInterval = 2
+	controller.EmergencySleepInterval = 1
+	controller.ctx = context.Background()
+	controller.speakerInitialized = false
+	controller.goroutineMap = &sync.Map{}
+	controller.radiolock = radioLock
+	controller.streamQueue = &models.AudioStreamQueue{}
+	log.Println("radioController::NewRadioController::controller.WavPaths ", controller.WavPaths)
+	log.Println("radioController::NewRadioController::controller.RadioDirectory ", controller.RadioDirectory)
+	log.Println("radioController::NewRadioController::controller.RadioFormatLink ", controller.RadioFormatLink)
+	return &controller
+}
