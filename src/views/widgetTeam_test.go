@@ -1,6 +1,7 @@
 package views_test
 
 import (
+	"flag"
 	"os"
 	"quickRadio/controllers"
 	"quickRadio/views"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/therecipe/qt/widgets"
 )
+
+var flagCI = flag.Bool("skip-for-ci", false, "Skip Visual UI test for ci envs")
 
 func createTestTeamWidget() (*widgets.QApplication, *controllers.GameController, int, *sync.Mutex, *views.TeamWidget) {
 	app := widgets.NewQApplication(len(os.Args), os.Args)
@@ -41,10 +44,16 @@ func TestTeamWidgetConstructor(t *testing.T) {
 // That needs to be ran. Unless we do this in parallel to test multiple tonditions it dont make that much of a diff compared to just manually testing the UI.
 // Plus we need eyes on our UI for this level.
 func TestTeamWidgetUI(t *testing.T) {
-	app, _, _, _, widget := createTestTeamWidget()
-	app.SetApplicationDisplayName("TestTeamWidgetUI")
-	window := widgets.NewQMainWindow(nil, 0)
-	window.SetCentralWidget(widget.UI)
-	window.Show()
-	app.Exec()
+	flag.Parse()
+	if !*flagCI {
+		app, _, _, _, widget := createTestTeamWidget()
+		app.SetApplicationDisplayName("TestTeamWidgetUI")
+		window := widgets.NewQMainWindow(nil, 0)
+		window.SetCentralWidget(widget.UI)
+		window.Show()
+		app.Exec()
+	} else {
+		t.Skip("We are in a CI env and skipping Visual based test.")
+	}
+
 }
