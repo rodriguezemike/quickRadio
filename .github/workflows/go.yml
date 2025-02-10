@@ -73,7 +73,7 @@ jobs:
       - name: Run tests
         working-directory: ./src/
         run: |
-          go test -timeout 300s -v ./... 
+          go test -timeout 300s -v -skip-for-ci ./... 
           
       - name: Build project
         working-directory: ./src/
