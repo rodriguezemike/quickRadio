@@ -55,7 +55,6 @@ func (widget *TeamWidget) createDataLabel(name string, data string, genercenterL
 				if strings.Contains(label.ObjectName(), "SCORE") {
 					teamAbbrev, dataLabel := widget.getTeamDataFromUIObjectName(label.ObjectName(), "_")
 					label.SetText(widget.gameController.GetUIDataFromFilename(teamAbbrev, dataLabel, "0"))
-					label.SetText(widget.gameController.GetActiveGamestateFromFile())
 					label.Repaint()
 				}
 				widget.updateMap[label.ObjectName()] = true
@@ -82,6 +81,22 @@ func (widget *TeamWidget) getTeamIcon(teamAbbrev string) *gui.QIcon {
 
 func (widget *TeamWidget) setTeamDataUIObjectName(teamAbbrev string, uiLabel string, delimiter string) string {
 	return teamAbbrev + delimiter + uiLabel
+}
+
+func (widget *TeamWidget) createRadioQualityButton(gameWidget *widgets.QGroupBox) *widgets.QGroupBox {
+	layout := widgets.NewQHBoxLayout2(gameWidget)
+	radioQualityWidget := widgets.NewQGroupBox(gameWidget)
+	radioQualityButtons := widgets.NewQButtonGroup(radioQualityWidget)
+
+	for index, val := range []string{"124K", "192K"} {
+		button := widgets.NewQPushButton(radioQualityWidget)
+		button.SetText(val)
+		button.SetCheckable(true)
+		radioQualityButtons.AddButton(button, index)
+	}
+	layout.AddWidget(radioQualityWidget, 0, core.Qt__AlignCenter)
+	radioQualityWidget.SetLayout(layout)
+	return radioQualityWidget
 }
 
 func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLink string, gameWidget *widgets.QGroupBox) *widgets.QPushButton {
@@ -125,8 +140,9 @@ func (widget *TeamWidget) createTeamWidget(team *models.TeamData, gamecenterLink
 	teamWidget := widgets.NewQGroupBox(gameWidget)
 	teamLayout.AddWidget(widget.createTeamRadioStreamButton(team.Abbrev, team.RadioLink, gameWidget), 0, core.Qt__AlignCenter)
 	teamLayout.AddWidget(widget.createDataLabel("TeamAbbrev", team.Abbrev, gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
-	teamLayout.AddWidget(widget.createDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SOG", "_"), "SOG: "+strconv.Itoa(team.Sog), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
 	teamLayout.AddWidget(widget.createDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SCORE", "_"), strconv.Itoa(team.Score), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(widget.createDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SOG", "_"), "SOG: "+strconv.Itoa(team.Sog), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(widget.createRadioQualityButton(gameWidget), 0, core.Qt__AlignCenter)
 	teamWidget.SetLayout(teamLayout)
 	widget.UI = teamWidget
 }
