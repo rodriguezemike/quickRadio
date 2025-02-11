@@ -74,14 +74,6 @@ jobs:
           go get golang.org/x/sys@v0.26.0
           go get golang.org/x/tools@v0.0.0-20190420181800-aa740d480789
 
-      - name: Run View Tests
-        working-directory: ./src/
-        run:  |
-          Xvfb :99 -screen 0 1024x768x24 & 
-          export DISPLAY=:99
-          echo $DISPLAY
-          go test -timeout 300s -v ./views/... -skip-for-ci 
-
       - name: Run Model Tests
         working-directory: ./src/
         run: go test -timeout 300s -v ./models/...
@@ -90,7 +82,12 @@ jobs:
         working-directory: ./src/
         run: go test -timeout 300s -v ./controllers/...
 
-
+      - name: Run View Tests
+        working-directory: ./src/
+        run:  |
+          Xvfb :99 -screen 0 1024x768x24 & 
+          export DISPLAY=:99
+          go test -timeout 300s -v ./views/... -skip-for-ci 
 
       - name: Build project
         working-directory: ./src/
