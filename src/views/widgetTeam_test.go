@@ -14,6 +14,7 @@ import (
 var flagCI = flag.Bool("skip-for-ci", false, "Skip Visual UI test for ci envs")
 
 func createTestTeamWidget() (*widgets.QApplication, *controllers.GameController, int, *sync.Mutex, *views.TeamWidget) {
+	os.Setenv("DISPLAY", ":99")
 	app := widgets.NewQApplication(len(os.Args), os.Args)
 	gameController := controllers.NewGameController()
 	labelTimer := 1000
