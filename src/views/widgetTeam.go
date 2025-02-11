@@ -1,6 +1,7 @@
 package views
 
 import (
+	"log"
 	"quickRadio/controllers"
 	"quickRadio/models"
 	"quickRadio/quickio"
@@ -39,10 +40,19 @@ func (widget *TeamWidget) getTeamDataFromUIObjectName(objectName string, delimit
 	return objectNameSplit[0], objectNameSplit[1]
 }
 
-func (widget *TeamWidget) createDataLabel(name string, data string, genercenterLink string, gameWidget *widgets.QGroupBox) *widgets.QLabel {
+func (widget *TeamWidget) createStaticDataLabel(name string, data string, fontSize int, gameWidget *widgets.QGroupBox) *widgets.QLabel {
 	label := widgets.NewQLabel2(data, gameWidget, core.Qt__Widget)
 	label.SetObjectName(name)
-	label.SetAccessibleDescription(genercenterLink)
+	font := label.Font()
+	font.SetPointSize(fontSize)
+	label.SetFont(font)
+	return label
+}
+
+func (widget *TeamWidget) createDataLabel(name string, data string, gamecenterLink string, gameWidget *widgets.QGroupBox) *widgets.QLabel {
+	label := widgets.NewQLabel2(data, gameWidget, core.Qt__Widget)
+	label.SetObjectName(name)
+	label.SetAccessibleDescription(gamecenterLink)
 	font := label.Font()
 	font.SetPointSize(32)
 	label.SetFont(font)
@@ -84,17 +94,37 @@ func (widget *TeamWidget) setTeamDataUIObjectName(teamAbbrev string, uiLabel str
 
 func (widget *TeamWidget) createRadioQualityButtons(gameWidget *widgets.QGroupBox) (*widgets.QPushButton, *widgets.QPushButton) {
 	buttonLow := widgets.NewQPushButton(gameWidget)
-	buttonLow.SetText("124K")
+	buttonLow.SetText("Bad Internet")
+	buttonLow.SetToolTip("124K")
 	buttonLow.SetCheckable(true)
+	buttonLow.SetCheckedDefault(false)
+	buttonLow.SetEnabled(false)
 	buttonHigh := widgets.NewQPushButton(gameWidget)
-	buttonHigh.SetText("192K")
+	buttonHigh.SetText("Good Internet")
+	buttonHigh.SetToolTip("192K")
 	buttonHigh.SetCheckable(true)
+	buttonHigh.SetCheckedDefault(true)
+	buttonHigh.ConnectToggled(func(onCheck bool) {
+		if onCheck {
+			buttonLow.SetEnabled(false)
+			buttonLow.SetChecked(false)
+		} else {
+			buttonLow.SetEnabled(true)
+		}
+	})
+	buttonLow.ConnectToggled(func(onCheck bool) {
+		if onCheck {
+			buttonHigh.SetEnabled(false)
+			buttonHigh.SetChecked(false)
+		} else {
+			buttonHigh.SetEnabled(true)
+		}
+	})
 	return buttonLow, buttonHigh
 
 }
 
-func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLink string, gameWidget *widgets.QGroupBox) *widgets.QPushButton {
-	radioSampleRate := "192K"
+func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLink string, gameWidget *widgets.QGroupBox, radioQualityButtonLow *widgets.QPushButton, radioQualityButtonHigh *widgets.QPushButton) *widgets.QPushButton {
 	teamIcon := widget.getTeamIcon(teamAbbrev)
 	button := widgets.NewQPushButton(gameWidget)
 	button.SetStyleSheet(CreateTeamButtonStylesheet(widget.gameController.Sweaters[teamAbbrev]))
@@ -103,6 +133,12 @@ func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLi
 	button.SetIconSize(button.FrameSize())
 	button.SetCheckable(true)
 	button.ConnectToggled(func(onCheck bool) {
+		var radioSampleRate string
+		if radioQualityButtonHigh.IsChecked() {
+			radioSampleRate = radioQualityButtonHigh.ToolTip()
+		} else {
+			radioSampleRate = radioQualityButtonLow.ToolTip()
+		}
 		teamAbbrev, _ = widget.getTeamDataFromUIObjectName(button.ObjectName(), "_")
 		if onCheck {
 			if radioLink != "" {
@@ -116,6 +152,7 @@ func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLi
 			}
 		}
 	})
+	log.Println(button.StyleSheet())
 	return button
 }
 
@@ -131,11 +168,13 @@ func (widget *TeamWidget) createTeamWidget(team *models.TeamData, gamecenterLink
 	teamLayout := widgets.NewQVBoxLayout2(gameWidget)
 	radioQualityLayout := widgets.NewQHBoxLayout2(gameWidget)
 	teamWidget := widgets.NewQGroupBox(gameWidget)
-	radioQualityButtonLow, radioQUalityButtonHigh := widget.createRadioQualityButtons(gameWidget)
+	audioQualityLabel := widget.createStaticDataLabel("audioQuality", "Audio Quality By Internet Quality", 8, gameWidget)
+	radioQualityButtonLow, radioQualityButtonHigh := widget.createRadioQualityButtons(gameWidget)
 	radioQualityLayout.AddWidget(radioQualityButtonLow, 0, core.Qt__AlignCenter)
-	radioQualityLayout.AddWidget(radioQUalityButtonHigh, 0, core.Qt__AlignCenter)
+	radioQualityLayout.AddWidget(radioQualityButtonHigh, 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(audioQualityLabel, 0, core.Qt__AlignLeft)
 	teamLayout.AddLayout(radioQualityLayout, 0)
-	teamLayout.AddWidget(widget.createTeamRadioStreamButton(team.Abbrev, team.RadioLink, gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(widget.createTeamRadioStreamButton(team.Abbrev, team.RadioLink, gameWidget, radioQualityButtonLow, radioQualityButtonHigh), 0, core.Qt__AlignCenter)
 	teamLayout.AddWidget(widget.createDataLabel("TeamAbbrev", team.Abbrev, gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
 	teamLayout.AddWidget(widget.createDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SCORE", "_"), strconv.Itoa(team.Score), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
 	teamLayout.AddWidget(widget.createDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SOG", "_"), "SOG: "+strconv.Itoa(team.Sog), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
