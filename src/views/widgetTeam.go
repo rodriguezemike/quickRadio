@@ -157,7 +157,6 @@ func CreateNewTeamWidget(labelTimer int, gameIndex int, homeTeam bool, controlle
 		}
 		gamecenterLink = controller.Landinglinks[gameIndex]
 	}
-	test := widgets.NewQVBoxLayout()
 	widget := TeamWidget{}
 	widget.LabelTimer = labelTimer
 	widget.gameController = controller

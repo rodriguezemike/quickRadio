@@ -78,7 +78,6 @@ jobs:
         run: |
           export QT_QPA_PLATFORM=xcb
           export DISPLAY=:99
-          Xvfb :99 &
           export QT_DEBUG_PLUGINS=1
 
       - name: Run Model Tests
@@ -94,7 +93,8 @@ jobs:
         run:  |
           echo '$QT_DEBUG_PLUGINS'
           echo '$DISPLAY'
-          go test -timeout 300s -v ./views/... -skip-for-ci
+          Xvfb :99 -screen 0 1024x768x24 & 
+          go test -timeout 300s -v ./views/... -skip-for-ci 
 
       - name: Build project
         working-directory: ./src/
