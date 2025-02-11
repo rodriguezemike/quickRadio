@@ -82,15 +82,14 @@ func (widget *TeamWidget) setTeamDataUIObjectName(teamAbbrev string, uiLabel str
 	return teamAbbrev + delimiter + uiLabel
 }
 
-func (widget *TeamWidget) createRadioQualityButtonGroup(gameWidget *widgets.QGroupBox) *widgets.QButtonGroup {
-	radioQualityButtons := widgets.NewQButtonGroup(gameWidget)
-	for index, val := range []string{"124K", "192K"} {
-		button := widgets.NewQPushButton(gameWidget)
-		button.SetText(val)
-		button.SetCheckable(true)
-		radioQualityButtons.AddButton(button, index)
-	}
-	return radioQualityButtons
+func (widget *TeamWidget) createRadioQualityButtons(gameWidget *widgets.QGroupBox) (*widgets.QPushButton, *widgets.QPushButton) {
+	buttonLow := widgets.NewQPushButton(gameWidget)
+	buttonLow.SetText("124K")
+	buttonLow.SetCheckable(true)
+	buttonHigh := widgets.NewQPushButton(gameWidget)
+	buttonHigh.SetText("192K")
+	buttonHigh.SetCheckable(true)
+	return buttonLow, buttonHigh
 
 }
 
@@ -132,9 +131,9 @@ func (widget *TeamWidget) createTeamWidget(team *models.TeamData, gamecenterLink
 	teamLayout := widgets.NewQVBoxLayout2(gameWidget)
 	radioQualityLayout := widgets.NewQHBoxLayout2(gameWidget)
 	teamWidget := widgets.NewQGroupBox(gameWidget)
-	for _, radioQualityButton := range widget.createRadioQualityButtonGroup(gameWidget).Buttons() {
-		radioQualityLayout.AddWidget(radioQualityButton, 0, core.Qt__AlignCenter)
-	}
+	radioQualityButtonLow, radioQUalityButtonHigh := widget.createRadioQualityButtons(gameWidget)
+	radioQualityLayout.AddWidget(radioQualityButtonLow, 0, core.Qt__AlignCenter)
+	radioQualityLayout.AddWidget(radioQUalityButtonHigh, 0, core.Qt__AlignCenter)
 	teamLayout.AddLayout(radioQualityLayout, 0)
 	teamLayout.AddWidget(widget.createTeamRadioStreamButton(team.Abbrev, team.RadioLink, gameWidget), 0, core.Qt__AlignCenter)
 	teamLayout.AddWidget(widget.createDataLabel("TeamAbbrev", team.Abbrev, gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
@@ -158,6 +157,7 @@ func CreateNewTeamWidget(labelTimer int, gameIndex int, homeTeam bool, controlle
 		}
 		gamecenterLink = controller.Landinglinks[gameIndex]
 	}
+	test := widgets.NewQVBoxLayout()
 	widget := TeamWidget{}
 	widget.LabelTimer = labelTimer
 	widget.gameController = controller

@@ -58,6 +58,8 @@ func TestTeamWidgetUI(t *testing.T) {
 		window.Show()
 		log.Println("59")
 		app.Exec()
+		window.Close()
+		app.Quit()
 	} else {
 		t.Skip("We are in a CI env and skipping Visual based test.")
 	}
