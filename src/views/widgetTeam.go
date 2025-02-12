@@ -62,7 +62,7 @@ func (widget *TeamWidget) createDynamicDataLabel(name string, data string, gamec
 			if !ok || !val {
 				if strings.Contains(label.ObjectName(), "SCORE") {
 					teamAbbrev, dataLabel := widget.getTeamDataFromUIObjectName(label.ObjectName(), "_")
-					label.SetText(widget.gameController.GetUIDataFromFilename(teamAbbrev, dataLabel, "0"))
+					label.SetText(teamAbbrev + "  " + widget.gameController.GetUIDataFromFilename(teamAbbrev, dataLabel, "0"))
 					label.Repaint()
 				}
 				widget.updateMap[label.ObjectName()] = true
@@ -180,8 +180,8 @@ func (widget *TeamWidget) createTeamWidget(team *models.TeamData, gamecenterLink
 	teamLayout.AddLayout(radioQualityLayout, 0)
 	//Team Radio Stream Button and Data Labels (Dynamic Labels)
 	teamLayout.AddWidget(widget.createTeamRadioStreamButton(team.Abbrev, team.RadioLink, gameWidget, radioQualityButtonLow, radioQualityButtonHigh), 0, core.Qt__AlignCenter)
-	teamLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SCORE", "_"), strconv.Itoa(team.Score), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
-	teamLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SOG", "_"), "SOG: "+strconv.Itoa(team.Sog), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SCORE", "_"), team.Abbrev+"  "+strconv.Itoa(team.Score), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SOG:", "_"), "SOG  "+strconv.Itoa(team.Sog), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
 	// Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
 	teamWidget.SetMinimumSize(core.NewQSize2(200, 354))
 	teamWidget.SetMaximumSize(core.NewQSize2(200, 354))
