@@ -5,6 +5,7 @@ import (
 	"path"
 	"quickRadio/models"
 	"quickRadio/quickio"
+	"strconv"
 )
 
 func GetPng(imageTitle string) string {
@@ -51,11 +52,11 @@ func CreateActiveRadioStreamButtonStylesheet(sweater models.Sweater) string {
 	return styleSheet
 }
 
-func CreateDynamicDataLabelStylesheet() string {
+func CreateDynamicDataLabelStylesheet(fontSize int) string {
 	stylesheet := `
 		QLabel[label-type="dynamic"] {
 			font-family: "Segoe UI", "Georgia", "Arial", sans-serif; /* Elegant font with a mix of modern and classic */
-			font-size: 32px; /* Size large enough for readability, but elegant */
+			font-size: %spx; /* Size large enough for readability, but elegant */
 			color: #839496; /* Dark grey color for a soft yet sophisticated text color */
 			background-color: transparent; /* No background, letting the label sit naturally */
 			padding: 5px 15px; /* Padding around the text to give it some space */
@@ -66,14 +67,14 @@ func CreateDynamicDataLabelStylesheet() string {
 			line-height: 1.4; /* A bit of space between lines for clarity */
 		}
 	`
-	return stylesheet
+	return fmt.Sprintf(stylesheet, strconv.Itoa(fontSize))
 }
 
-func CreateStaticDataLabelStylesheet() string {
+func CreateStaticDataLabelStylesheet(fontSize int) string {
 	stylesheet := `
 		QLabel[label-type="static"] {
 			font-family: "Segoe UI", "Georgia", "Arial", sans-serif; /* Elegant font with a mix of modern and classic */
-			font-size: 9px; /* Size large enough for readability, but elegant */
+			font-size: %spx; /* Size large enough for readability, but elegant */
 			color: #839496; /* Dark grey color for a soft yet sophisticated text color */
 			background-color: transparent; /* No background, letting the label sit naturally */
 			padding: 5px 15px; /* Padding around the text to give it some space */
@@ -84,7 +85,7 @@ func CreateStaticDataLabelStylesheet() string {
 			line-height: 1.4; /* A bit of space between lines for clarity */
 		}
 	`
-	return stylesheet
+	return fmt.Sprintf(stylesheet, strconv.Itoa(fontSize))
 
 }
 
