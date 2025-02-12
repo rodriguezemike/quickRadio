@@ -31,7 +31,7 @@ func CreateDefaultTeam() *TeamData {
 	data.Id = 0
 	data.Score = 0
 	data.Sog = 0
-	data.Abbrev = "NHLF"
+	data.Abbrev = "LAK"
 	data.RadioLink = ""
 	return &data
 }

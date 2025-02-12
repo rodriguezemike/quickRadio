@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"log"
 	"quickRadio/controllers"
 	"quickRadio/models"
@@ -40,23 +41,21 @@ func (widget *TeamWidget) getTeamDataFromUIObjectName(objectName string, delimit
 	return objectNameSplit[0], objectNameSplit[1]
 }
 
-func (widget *TeamWidget) createStaticDataLabel(name string, data string, fontSize int, gameWidget *widgets.QGroupBox) *widgets.QLabel {
+func (widget *TeamWidget) createStaticDataLabel(name string, data string, gameWidget *widgets.QGroupBox) *widgets.QLabel {
 	label := widgets.NewQLabel2(data, gameWidget, core.Qt__Widget)
 	label.SetObjectName(name)
-	font := label.Font()
-	font.SetPointSize(fontSize)
-	label.SetFont(font)
+	label.SetProperty("label-type", core.NewQVariant12("static"))
+	label.SetStyleSheet(CreateStaticDataLabelStylesheet())
+	log.Println("Static Label stylesheet", label.StyleSheet())
 	return label
 }
 
-func (widget *TeamWidget) createDataLabel(name string, data string, gamecenterLink string, gameWidget *widgets.QGroupBox) *widgets.QLabel {
+func (widget *TeamWidget) createDynamicDataLabel(name string, data string, gamecenterLink string, gameWidget *widgets.QGroupBox) *widgets.QLabel {
 	label := widgets.NewQLabel2(data, gameWidget, core.Qt__Widget)
 	label.SetObjectName(name)
 	label.SetAccessibleDescription(gamecenterLink)
-	font := label.Font()
-	font.SetPointSize(32)
-	label.SetFont(font)
-	label.SetStyleSheet(CreateLabelStylesheet())
+	label.SetProperty("label-type", core.NewQVariant12("dynamic"))
+	label.SetStyleSheet(CreateDynamicDataLabelStylesheet())
 	label.ConnectTimerEvent(func(event *core.QTimerEvent) {
 		if label.IsVisible() {
 			val, ok := widget.updateMap[label.ObjectName()]
@@ -71,6 +70,7 @@ func (widget *TeamWidget) createDataLabel(name string, data string, gamecenterLi
 		}
 	})
 	label.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
+	log.Println("Dynamic Label stylesheet", label.StyleSheet())
 	return label
 }
 
@@ -127,29 +127,33 @@ func (widget *TeamWidget) createRadioQualityButtons(gameWidget *widgets.QGroupBo
 func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLink string, gameWidget *widgets.QGroupBox, radioQualityButtonLow *widgets.QPushButton, radioQualityButtonHigh *widgets.QPushButton) *widgets.QPushButton {
 	teamIcon := widget.getTeamIcon(teamAbbrev)
 	button := widgets.NewQPushButton(gameWidget)
-	button.SetStyleSheet(CreateTeamButtonStylesheet(widget.gameController.Sweaters[teamAbbrev]))
+	button.SetToolTip(fmt.Sprintf("Play %s Radio", teamAbbrev))
+	button.SetProperty("button-type", core.NewQVariant12("radio"))
+	button.SetStyleSheet(CreateInactiveRadioStreamButtonStylesheet(widget.gameController.Sweaters[teamAbbrev]))
 	button.SetObjectName(widget.setTeamDataUIObjectName(teamAbbrev, "RADIO", "_"))
 	button.SetIcon(teamIcon)
 	button.SetIconSize(button.FrameSize())
 	button.SetCheckable(true)
 	button.ConnectToggled(func(onCheck bool) {
 		var radioSampleRate string
+		teamAbbrev, _ = widget.getTeamDataFromUIObjectName(button.ObjectName(), "_")
 		if radioQualityButtonHigh.IsChecked() {
 			radioSampleRate = radioQualityButtonHigh.ToolTip()
 		} else {
 			radioSampleRate = radioQualityButtonLow.ToolTip()
 		}
-		teamAbbrev, _ = widget.getTeamDataFromUIObjectName(button.ObjectName(), "_")
 		if onCheck {
 			if radioLink != "" {
 				widget.radioController = controllers.NewRadioControllerWithLock(radioLink, teamAbbrev, radioSampleRate, widget.radioLock)
 				go widget.radioController.PlayRadio()
 			}
+			button.SetStyleSheet(CreateActiveRadioStreamButtonStylesheet((widget.gameController.Sweaters[teamAbbrev])))
 		} else {
 			if radioLink != "" {
 				go widget.radioController.StopRadio(teamAbbrev)
 				widget.radioController = nil
 			}
+			button.SetStyleSheet(CreateInactiveRadioStreamButtonStylesheet((widget.gameController.Sweaters[teamAbbrev])))
 		}
 	})
 	log.Println(button.StyleSheet())
@@ -168,17 +172,22 @@ func (widget *TeamWidget) createTeamWidget(team *models.TeamData, gamecenterLink
 	teamLayout := widgets.NewQVBoxLayout2(gameWidget)
 	radioQualityLayout := widgets.NewQHBoxLayout2(gameWidget)
 	teamWidget := widgets.NewQGroupBox(gameWidget)
-	audioQualityLabel := widget.createStaticDataLabel("audioQuality", "Audio Quality By Internet Quality", 8, gameWidget)
+	teamWidget.SetProperty("widget-type", core.NewQVariant12("team"))
+	//Radio Quality Buttons and Label (Static label)
 	radioQualityButtonLow, radioQualityButtonHigh := widget.createRadioQualityButtons(gameWidget)
 	radioQualityLayout.AddWidget(radioQualityButtonLow, 0, core.Qt__AlignCenter)
 	radioQualityLayout.AddWidget(radioQualityButtonHigh, 0, core.Qt__AlignCenter)
-	teamLayout.AddWidget(audioQualityLabel, 0, core.Qt__AlignLeft)
 	teamLayout.AddLayout(radioQualityLayout, 0)
+	//Team Radio Stream Button and Data Labels (Dynamic Labels)
 	teamLayout.AddWidget(widget.createTeamRadioStreamButton(team.Abbrev, team.RadioLink, gameWidget, radioQualityButtonLow, radioQualityButtonHigh), 0, core.Qt__AlignCenter)
-	teamLayout.AddWidget(widget.createDataLabel("TeamAbbrev", team.Abbrev, gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
-	teamLayout.AddWidget(widget.createDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SCORE", "_"), strconv.Itoa(team.Score), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
-	teamLayout.AddWidget(widget.createDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SOG", "_"), "SOG: "+strconv.Itoa(team.Sog), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SCORE", "_"), strconv.Itoa(team.Score), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
+	teamLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName(team.Abbrev, "SOG", "_"), "SOG: "+strconv.Itoa(team.Sog), gamecenterLink, gameWidget), 0, core.Qt__AlignCenter)
+	// Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
+	teamWidget.SetMinimumSize(core.NewQSize2(200, 354))
+	teamWidget.SetMaximumSize(core.NewQSize2(200, 354))
 	teamWidget.SetLayout(teamLayout)
+	teamWidget.SetStyleSheet(CreateTeamStylesheet())
+	log.Println("Team Widget Stylesheet ", teamWidget.StyleSheet())
 	widget.UI = teamWidget
 }
 

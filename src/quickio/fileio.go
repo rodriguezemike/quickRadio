@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"quickRadio/models"
 	"quickRadio/radioErrors"
@@ -33,6 +34,12 @@ func WriteFile(path string, data string) {
 func GetProjectDir() string {
 	_, filename, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(filepath.Dir(filepath.Dir(filename)))
+	return dir
+}
+
+func GetProjectDirWithForwadSlash() string {
+	_, filename, _, _ := runtime.Caller(0)
+	dir := path.Dir(path.Dir(path.Dir(filename)))
 	return dir
 }
 
@@ -80,7 +87,6 @@ func GetActiveGameDirectory() string {
 func OpenAndGetFileHander(path string) *os.File {
 	fileObject, err := os.Open(path)
 	radioErrors.ErrorLog(err)
-	defer fileObject.Close()
 	return fileObject
 }
 
@@ -115,12 +121,12 @@ func GetSweaters() map[string]models.Sweater {
 	for scanner.Scan() {
 		var sweater models.Sweater
 		lineColors := strings.Split(scanner.Text(), ";")
-		sweater.TeamAbbrev = lineColors[0]
-		sweater.PrimaryColor = lineColors[1]
-		sweater.SecondaryColor = lineColors[2]
+		sweater.TeamAbbrev = strings.ReplaceAll(lineColors[0], " ", "")
+		sweater.PrimaryColor = strings.ReplaceAll(lineColors[1], " ", "")
+		sweater.SecondaryColor = strings.ReplaceAll(lineColors[2], " ", "")
 		sweaters[sweater.TeamAbbrev] = sweater
 	}
-
+	fileObject.Close()
 	return sweaters
 }
 
