@@ -47,12 +47,31 @@ type PlayerOnIce struct {
 	TotalSOI      int    `json:"totalSOI"`
 }
 
+func CreateDefaultPlayersOnIce() PlayerOnIce {
+	data := PlayerOnIce{}
+	data.Name.Default = "PLAYER"
+	data.SweaterNumber = 32
+	data.PositionCode = "GFD"
+	data.TotalSOI = 0
+	return data
+}
+
 type TeamOnIce struct {
 	Forwards   []PlayerOnIce `json:"forwards"`
 	Defensemen []PlayerOnIce `json:"defensemen"`
 	Goalies    []PlayerOnIce `json:"goalies"`
 	PenaltyBox []PlayerOnIce `json:"penaltyBox"`
 }
+
+func CreateDefaultTeamOnIce() *TeamOnIce {
+	teamOnIce := TeamOnIce{}
+	teamOnIce.Forwards = append(teamOnIce.Forwards, CreateDefaultPlayersOnIce(),
+		CreateDefaultPlayersOnIce(), CreateDefaultPlayersOnIce())
+	teamOnIce.Defensemen = append(teamOnIce.Defensemen, CreateDefaultPlayersOnIce(), CreateDefaultPlayersOnIce())
+	teamOnIce.Goalies = append(teamOnIce.Goalies, CreateDefaultPlayersOnIce())
+	return &teamOnIce
+}
+
 type GameVersesData struct {
 	SeasonSeries []struct {
 		Id                int    `json:"id"`
@@ -158,6 +177,10 @@ type GameVersesData struct {
 			ToiHome           string `json:"toiHome"`
 		} `json:"gameReports"`
 	} `json:"gameInfo"`
+}
+
+func CreateDefaultVersesData() *GameVersesData {
+	return &GameVersesData{}
 }
 
 type GameData struct {
@@ -321,4 +344,8 @@ type GameData struct {
 		TimeRemaining    string `json:"timeRemaining"`
 		SecondsRemaining int    `json:"secondsRemaining"`
 	}
+}
+
+func CreateDefaultGameData() *GameData {
+	return &GameData{}
 }

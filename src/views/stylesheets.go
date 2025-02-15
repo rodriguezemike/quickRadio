@@ -17,7 +17,7 @@ func GetPng(imageTitle string) string {
 //Consider creating a Single Large stylesheet functionally, by combining these func ina func
 //To generate a large stylesheet, but one that can broken up like this in funcs for ease of editing.
 
-func CreateInactiveRadioStreamButtonStylesheet(sweater models.Sweater) string {
+func CreateInactiveRadioStreamButtonStylesheet(sweater *models.Sweater) string {
 	stylesheet := `
 		QPushButton[button-type="stream"]{
 			background: qlineargradient(x1:0 y1:0, x2:1, y2:1, stop:0 %s, stop:.40 %s, stop:.60 %s, stop:1.0 %s);
@@ -39,7 +39,7 @@ func CreateInactiveRadioStreamButtonStylesheet(sweater models.Sweater) string {
 	return styleSheet
 }
 
-func CreateActiveRadioStreamButtonStylesheet(sweater models.Sweater) string {
+func CreateActiveRadioStreamButtonStylesheet(sweater *models.Sweater) string {
 	stylesheet := `
 		QPushButton[button-type="stream"]{
 			background-color:%s;
