@@ -20,6 +20,22 @@ type TeamController struct {
 	teamDirectory  string
 }
 
+func (controller *TeamController) EmptyDirectory() {
+	quickio.EmptyDirectory(controller.teamDirectory)
+}
+
+func (controller *TeamController) GetScorePath() string {
+	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_SCORE."+strconv.Itoa(controller.Team.Score))
+}
+
+func (controller *TeamController) GetStatsPath() string {
+	return filepath.Join(controller.teamDirectory, "STATS.json")
+}
+
+func (controller *TeamController) GetTeamOnIcePath() string {
+	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_TEAMONICE.json")
+}
+
 func (controller *TeamController) GetUIDataFromFilename(dataLabel string, defaultReturnValue string) string {
 	files, _ := os.ReadDir(controller.teamDirectory)
 	for _, f := range files {

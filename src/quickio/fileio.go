@@ -61,11 +61,11 @@ func CreateDirectory(directoryPath string) {
 	}
 }
 
-func EmptyActiveGameDirectory(activeGameDirectory string) {
-	files, _ := os.ReadDir(activeGameDirectory)
+func EmptyDirectory(directoryPath string) {
+	files, _ := os.ReadDir(directoryPath)
 	for _, f := range files {
 		info, _ := f.Info()
-		os.Remove(filepath.Join(activeGameDirectory, info.Name()))
+		os.Remove(filepath.Join(directoryPath, info.Name()))
 	}
 }
 

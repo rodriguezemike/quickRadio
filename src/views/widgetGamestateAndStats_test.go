@@ -1,6 +1,3 @@
-//go:build ignore
-// +build ignore
-
 package views_test
 
 import (
@@ -16,7 +13,7 @@ import (
 func createTestGamestateAndStatsWidget() (*widgets.QApplication, *controllers.GameController, int, *views.GamestateAndStatsWidget) {
 	os.Setenv("DISPLAY", ":99") //Mainly for Ubuntu CI. Theres no harm in running every time.
 	app := widgets.NewQApplication(len(os.Args), os.Args)
-	gameController := controllers.NewGameController()
+	gameController := controllers.CreateNewDefaultGameController()
 	labelTimer := 1000
 	gameWidget := widgets.NewQGroupBox(nil)
 	widget := views.CreateNewGamestateAndStatsWidget(labelTimer, 0, true, gameController, gameWidget)

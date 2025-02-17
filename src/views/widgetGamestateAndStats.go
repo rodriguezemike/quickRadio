@@ -1,6 +1,3 @@
-//go:build ignore
-// +build ignore
-
 package views
 
 import (
@@ -56,7 +53,7 @@ func (widget *GamestateAndStatsWidget) createDynamicDataLabel(name string, data 
 			val, ok := widget.updateMap[label.ObjectName()]
 			if !ok || !val {
 				if strings.Contains(label.ObjectName(), "GAMESTATE") {
-					label.SetText(widget.gameController.GetGamestateString(&widget.gameController.GetGameDataObjects()[widget.GameIndex]))
+					label.SetText(widget.gameController.GetGamestateString())
 					label.Repaint()
 					widget.updateMap[label.ObjectName()] = true
 				}
@@ -72,7 +69,7 @@ func (widget *GamestateAndStatsWidget) createGamestateLayout() *widgets.QHBoxLay
 	fontSize := 32
 	gamestateLayout := widgets.NewQHBoxLayout()
 	gamestateWidget := widgets.NewQGroupBox(widget.gameWidget)
-	gamestateLayout.AddWidget(widget.createDynamicDataLabel("GAMESTATE", widget.gameController.GetGamestateString(&widget.gameController.GetGameDataObjects()[widget.GameIndex]), widget.gameController.Landinglinks[widget.GameIndex], gamestateWidget, fontSize), 0, core.Qt__AlignCenter)
+	gamestateLayout.AddWidget(widget.createDynamicDataLabel("GAMESTATE", widget.gameController.GetGamestateString(), widget.gameController.Landinglink, gamestateWidget, fontSize), 0, core.Qt__AlignCenter)
 	gamestateWidget.SetLayout(gamestateLayout)
 	return gamestateLayout
 }
