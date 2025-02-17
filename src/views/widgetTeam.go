@@ -186,8 +186,8 @@ func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLi
 func (widget *TeamWidget) createScoreLayout(teamGroupbox *widgets.QGroupBox) *widgets.QHBoxLayout {
 	fontSize := 32
 	scoreLayout := widgets.NewQHBoxLayout()
-	scoreLayout.AddWidget(widget.createStaticDataLabel("teamAbbrev", widget.teamController.Team.Abbrev, teamGroupbox, fontSize), 1, core.Qt__AlignCenter)
-	scoreLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName(widget.teamController.Team.Abbrev, "SCORE", "_"), strconv.Itoa(widget.teamController.Team.Score), widget.teamController.Landinglink, teamGroupbox, fontSize), 2, core.Qt__AlignRight)
+	scoreLayout.AddWidget(widget.createStaticDataLabel("teamAbbrev", widget.teamController.Team.Abbrev, fontSize), 1, core.Qt__AlignCenter)
+	scoreLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName(widget.teamController.Team.Abbrev, "SCORE", "_"), strconv.Itoa(widget.teamController.Team.Score), widget.teamController.Landinglink, fontSize), 2, core.Qt__AlignRight)
 	return scoreLayout
 }
 
@@ -195,7 +195,7 @@ func (widget *TeamWidget) createShotsOnGoalLayout(teamGroupbox *widgets.QGroupBo
 	fontSize := 24
 	shotsOnGoalLayout := widgets.NewQHBoxLayout()
 	shotsOnGoalLayout.AddWidget(widget.createStaticDataLabel("sog", "SOG:", fontSize), 0, core.Qt__AlignCenter)
-	shotsOnGoalLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName(widget.teamController..Abbrev, "SOG:", "_"), strconv.Itoa(team.Sog), gamecenterLink, teamGroupbox, fontSize), 0, core.Qt__AlignCenter)
+	shotsOnGoalLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName(widget.teamController.Team.Abbrev, "SOG:", "_"), strconv.Itoa(widget.teamController.Team.Sog), widget.teamController.Landinglink, fontSize), 0, core.Qt__AlignCenter)
 	return shotsOnGoalLayout
 }
 
@@ -207,10 +207,10 @@ func (widget *TeamWidget) createRadioLayout(teamGroupbox *widgets.QGroupBox) *wi
 	radioQualityButtonsLayout.AddWidget(radioQualityButtonHigh, 0, core.Qt__AlignCenter)
 	//Radio Layout
 	radioLayout := widgets.NewQVBoxLayout()
-	internetQualityLabel := widget.createStaticDataLabel("internetQuality", fmt.Sprintf("Audio Quality - %s Radio", team.Abbrev), teamGroupbox, 9)
+	internetQualityLabel := widget.createStaticDataLabel("internetQuality", fmt.Sprintf("Audio Quality - %s Radio", widget.teamController.Team.Abbrev), 9)
 	radioLayout.AddWidget(internetQualityLabel, 0, core.Qt__AlignLeft)
 	radioLayout.AddLayout(radioQualityButtonsLayout, 0)
-	radioLayout.AddWidget(widget.createTeamRadioStreamButton(team.Abbrev, team.RadioLink, teamGroupbox, radioQualityButtonLow, radioQualityButtonHigh, internetQualityLabel), 0, core.Qt__AlignCenter)
+	radioLayout.AddWidget(widget.createTeamRadioStreamButton(widget.teamController.Team.Abbrev, widget.teamController.Team.RadioLink, teamGroupbox, radioQualityButtonLow, radioQualityButtonHigh, internetQualityLabel), 0, core.Qt__AlignCenter)
 	return radioLayout
 }
 

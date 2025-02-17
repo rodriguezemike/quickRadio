@@ -13,25 +13,25 @@ import (
 
 var flagCI = flag.Bool("skip-for-ci", false, "Skip Visual UI test for ci envs")
 
-func createTestTeamWidget() (*widgets.QApplication, *controllers.GameController, int, *sync.Mutex, *views.TeamWidget) {
+func createTestTeamWidget() (*widgets.QApplication, *controllers.TeamController, int, *sync.Mutex, *views.TeamWidget) {
 	os.Setenv("DISPLAY", ":99") //Mainly for Ubuntu CI. Theres no harm in running every time.
 	app := widgets.NewQApplication(len(os.Args), os.Args)
-	gameController := controllers.NewGameController()
+	teamController := controllers.CreateNewDefaultTeamController()
 	labelTimer := 1000
 	radioLock := sync.Mutex{}
 	gameWidget := widgets.NewQGroupBox(nil)
-	widget := views.CreateNewTeamWidget(labelTimer, -1, false, gameController, &radioLock, gameWidget)
-	return app, gameController, labelTimer, &radioLock, widget
+	widget := views.CreateNewTeamWidget(labelTimer, teamController, &radioLock, gameWidget)
+	return app, teamController, labelTimer, &radioLock, widget
 }
 
 func TestTeamWidgetConstructor(t *testing.T) {
-	_, gameController, labelTimer, radioLock, widget := createTestTeamWidget()
+	_, teamController, labelTimer, radioLock, widget := createTestTeamWidget()
 
 	if !widget.RadioLockReferenceTest(radioLock) {
-		t.Fatalf(`!widget.RadioLockReferenceTest(&radioLock) | Wanted address of Radiolock %v | check to see if pass by copy in constructor.`, radioLock)
+		t.Fatalf(`!widget.RadioLockReferenceTest(&teamController) | Wanted address of Radiolock %v | check to see if pass by copy in constructor.`, radioLock)
 	}
-	if !widget.GameControllerReferenceTest(gameController) {
-		t.Fatalf(`!widget.GameControllerReferenceTest(&gameController) | Wanted address of gameController %v | check to see if pass by copy in constructor.`, gameController)
+	if !widget.GameControllerReferenceTest(teamController) {
+		t.Fatalf(`!widget.GameControllerReferenceTest(&teamController) | Wanted address of teamController %v | check to see if pass by copy in constructor.`, teamController)
 	}
 	if !widget.LabelTimerTest(labelTimer) {
 		t.Fatalf(`!widget.LabelTimerTest(labelTimer) | Wanted Label Timer Value %v | Got %v`, labelTimer, widget.LabelTimer)

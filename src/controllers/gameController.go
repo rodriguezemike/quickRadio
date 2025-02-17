@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 package controllers
 
 import (
@@ -14,15 +17,15 @@ import (
 //Should only have 1 game in here, the Manager Controller can handle the list.
 
 type GameController struct {
-	Landinglink        string
-	Radiolink          string
-	GameIndex          int
-	dataConsumed       bool
-	GameDirectory      string
-	HomeTeamController *TeamController
-	AwayTeamController *TeamController
-	gameDataObject     *models.GameData
-	gameVersesData     *models.GameVersesData
+	Landinglink          string
+	Radiolink            string
+	GameIndex            int
+	dataConsumed         bool
+	GameDirectory        string
+	HomeTeamController   *TeamController
+	AwayTeamController   *TeamController
+	gameDataObject       *models.GameData
+	gameVersesDataObject *models.GameVersesData
 }
 
 func (controller *GameController) EmptyDirectory() {
@@ -53,11 +56,6 @@ func (controller *GameController) GetGamestateString(gameDataObject *models.Game
 			return gameDataObject.GameState
 		}
 	}
-}
-
-func (controller *GameController) getTeamOnIceJson(team models.TeamOnIce) []byte {
-	onIceJson, _ := json.MarshalIndent(team, "", " ")
-	return onIceJson
 }
 
 func (controller *GameController) getTeamGameStats() []byte {
