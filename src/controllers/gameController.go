@@ -44,14 +44,22 @@ func (controller *GameController) GetGamestateString() string {
 				controller.gameDataObject.GameDate + " - " + controller.gameDataObject.StartTimeUTC +
 				controller.gameDataObject.Venue.Default + ", " + controller.gameDataObject.VenueLocation.Default
 		} else {
-			return controller.gameDataObject.GameState
+			if controller.gameDataObject.GameState != "" {
+				return controller.gameDataObject.GameState
+			} else {
+				return models.DEFAULT_GAMESTATE_STRING
+			}
 		}
 	}
 }
 
-func (controller *GameController) getTeamGameStats() []byte {
+func (controller *GameController) GetTeamGameStats() []byte {
 	tameGameStats, _ := json.MarshalIndent(controller.gameVersesDataObject.GameInfo.TeamGameStats, "", " ")
 	return tameGameStats
+}
+
+func (controller *GameController) GetTeamGameStatsStruct() []models.TeamGameStat {
+	return controller.gameVersesDataObject.GameInfo.TeamGameStats
 }
 
 func (controller *GameController) GetGamestatePath() string {

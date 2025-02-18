@@ -28,11 +28,11 @@ type TeamData struct {
 
 func CreateDefaultTeam() *TeamData {
 	data := TeamData{}
-	data.Id = 0
-	data.Score = 0
-	data.Sog = 0
-	data.Abbrev = "NHLF"
-	data.RadioLink = ""
+	data.Id = DEFAULT_ID
+	data.Score = DEFAULT_SCORE
+	data.Sog = DEFAULT_SOG
+	data.Abbrev = DEFAULT_NHL_TEAM_ABBREV
+	data.RadioLink = DEFAULT_RADIO_LINK
 	return &data
 }
 
@@ -49,10 +49,10 @@ type PlayerOnIce struct {
 
 func CreateDefaultPlayersOnIce() PlayerOnIce {
 	data := PlayerOnIce{}
-	data.Name.Default = "PLAYER"
-	data.SweaterNumber = 32
-	data.PositionCode = "GFD"
-	data.TotalSOI = 0
+	data.Name.Default = DEFAULT_PLAYER_NAME
+	data.SweaterNumber = DEFAULT_SWEATER_NUMBER
+	data.PositionCode = DEFAULT_POSITION_CODE
+	data.TotalSOI = DEFAULT_SOI
 	return data
 }
 
@@ -70,6 +70,36 @@ func CreateDefaultTeamOnIce() *TeamOnIce {
 	teamOnIce.Defensemen = append(teamOnIce.Defensemen, CreateDefaultPlayersOnIce(), CreateDefaultPlayersOnIce())
 	teamOnIce.Goalies = append(teamOnIce.Goalies, CreateDefaultPlayersOnIce())
 	return &teamOnIce
+}
+
+type TeamGameStat struct {
+	Category  string
+	AwayValue string
+	HomeValue string
+}
+
+func CreateDefaultHomeGameWinningStat() *TeamGameStat {
+	stat := TeamGameStat{}
+	stat.Category = DEFAULT_CATEGORY + " HOME"
+	stat.HomeValue = DEFAULT_WINNING_STAT
+	stat.AwayValue = DEFAULT_LOSING_STAT
+	return &stat
+}
+
+func CreateDefaultAwayGameWinningStat() *TeamGameStat {
+	stat := TeamGameStat{}
+	stat.Category = DEFAULT_CATEGORY + " AWAY"
+	stat.HomeValue = DEFAULT_LOSING_STAT
+	stat.AwayValue = DEFAULT_WINNING_STAT
+	return &stat
+}
+
+func CreateDefaultTiedStat() *TeamGameStat {
+	stat := TeamGameStat{}
+	stat.Category = DEFAULT_CATEGORY + " TIED"
+	stat.HomeValue = DEFAULT_WINNING_STAT
+	stat.AwayValue = DEFAULT_WINNING_STAT
+	return &stat
 }
 
 type GameVersesData struct {
@@ -160,12 +190,8 @@ type GameVersesData struct {
 			Away int `json:"away"`
 			Home int `json:"home"`
 		} `json:"shotsByPeriod"`
-		TeamGameStats []struct {
-			Category  string `json:"category"`
-			AwayValue string `json:"awayValue,string"`
-			HomeValue string `json:"homeValue,string"`
-		} `json:"teamGameStats"`
-		GameReports struct {
+		TeamGameStats []TeamGameStat `json:"teamGameStats"`
+		GameReports   struct {
 			GameSummary       string `json:"gameSummary"`
 			EventSummary      string `json:"eventSummary"`
 			PlayByPlay        string `json:"playByPlay"`
@@ -180,7 +206,13 @@ type GameVersesData struct {
 }
 
 func CreateDefaultVersesData() *GameVersesData {
-	return &GameVersesData{}
+	data := GameVersesData{}
+	data.GameInfo.TeamGameStats = []TeamGameStat{
+		*CreateDefaultAwayGameWinningStat(),
+		*CreateDefaultHomeGameWinningStat(),
+		*CreateDefaultTiedStat(),
+	}
+	return &data
 }
 
 type GameData struct {

@@ -150,6 +150,51 @@ func CreateStaticDataLabelStylesheet(fontSize int) string {
 
 }
 
+// Home on left or right? Well sort that out later. Holding the idea
+func CreateSliderStylesheet(homeSweater models.Sweater, awaySweater models.Sweater, homeHandle bool) string {
+	stylesheet := `
+		QSlider:disabled {
+			background-color: #D3D3D3; /* Light grey background for the whole slider */
+		}
+		
+		QSlider:disabled::groove:horizontal {
+			background: #A9A9A9; /* Darker grey track color */
+			border-radius: 4px;
+			height: 8px;
+		}
+		
+		QSlider:disabled::handle:horizontal {
+			background: %s; /* Specific color for the handle (tomato red) */
+			border: 2px solid %s; /* Light grey border for the handle */
+			width: 20px;
+			height: 20px;
+			border-radius: 10px; /* Round shape for the handle */
+		}
+		
+		QSlider:disabled::sub-control:horizontal {
+			background: %s; /* Color of the left side of the handle */
+		}
+		
+		QSlider:disabled::sub-control:horizontal:handle {
+			background: %s; /* Color of the right side of the handle */
+		}
+	`
+	if homeHandle {
+		return fmt.Sprintf(stylesheet,
+			homeSweater.PrimaryColor, homeSweater.SecondaryColor,
+			homeSweater.PrimaryColor,
+			awaySweater.PrimaryColor,
+		)
+	} else {
+		return fmt.Sprintf(stylesheet,
+			awaySweater.PrimaryColor, awaySweater.SecondaryColor,
+			awaySweater.PrimaryColor,
+			homeSweater.PrimaryColor,
+		)
+	}
+
+}
+
 func CreateTeamStylesheet() string {
 	stylesheet := `
 		QGroupBox[widget-type="team"] {
