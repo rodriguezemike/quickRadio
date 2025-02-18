@@ -58,7 +58,7 @@ func (controller *GameController) GetTeamGameStats() []byte {
 	return tameGameStats
 }
 
-func (controller *GameController) GetTeamGameStatsStruct() []models.TeamGameStat {
+func (controller *GameController) GetTeamGameStatsObjects() []models.TeamGameStat {
 	return controller.gameVersesDataObject.GameInfo.TeamGameStats
 }
 

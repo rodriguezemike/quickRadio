@@ -100,6 +100,7 @@ func (widget *GamestateAndStatsWidget) createTeamGameStatsLayout() *widgets.QVBo
 }
 
 func (widget *GamestateAndStatsWidget) createGamestateAndStatsWidget() {
+	//Create main layout and widget
 	gamestateAndStatsLayout := widgets.NewQVBoxLayout()
 	gamestateAndStatsWidget := widgets.NewQGroupBox(widget.gameWidget)
 	//Create Child layouts
