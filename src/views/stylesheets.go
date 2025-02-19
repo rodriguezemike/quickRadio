@@ -153,6 +153,11 @@ func CreateStaticDataLabelStylesheet(fontSize int) string {
 // Home on left or right? Well sort that out later. Holding the idea
 func CreateSliderStylesheet(homeSweater models.Sweater, awaySweater models.Sweater, homeHandle bool) string {
 	stylesheet := `
+		QSlider {
+			min-width: 300px;
+			min-height: 10px;
+		}
+		
 		QSlider:disabled {
 			background-color: #D3D3D3; /* Light grey background for the whole slider */
 		}

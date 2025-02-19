@@ -75,7 +75,7 @@ func (controller *GameController) GetActiveGamestateFromFile() string {
 	return string(data)
 }
 
-func (controller *GameController) GetGameStatFromFile(categoryName string) (string, string, int, bool) {
+func (controller *GameController) GetGameStatFromFile(categoryName string) (int, int, int, bool) {
 	//Should be a file that exists in game directory that has the infor in the file name ending with gamecategorySlider
 	//Abstract this further to save a file I/O operation.
 	files, _ := os.ReadDir(controller.GameDirectory)
@@ -84,8 +84,14 @@ func (controller *GameController) GetGameStatFromFile(categoryName string) (stri
 			values := strings.Split(strings.Split(f.Name(), ".")[0], models.VALUE_DELIMITER)
 			//Shouldnt Crash? Maybe for testing but this hould have some sort default if all the values are not there.
 			//If we crash we need to have something to dump all of memories and exit gracefully avoiding mem leaks.
-			homeValue := values[0]
-			awayValue := values[1]
+			homeValue, err := strconv.Atoi(values[0])
+			radioErrors.ErrorLog(err)
+			awayValue, err := strconv.Atoi(values[0])
+			radioErrors.ErrorLog(err)
+			if homeValue-awayValue == 0 {
+				homeValue = homeValue / 2
+				awayValue = awayValue / 2
+			}
 			maxValue, err := strconv.Atoi(values[2])
 			radioErrors.ErrorLog(err)
 			homeHandle, err := strconv.ParseBool(values[3])
@@ -93,7 +99,14 @@ func (controller *GameController) GetGameStatFromFile(categoryName string) (stri
 			return homeValue, awayValue, maxValue, homeHandle
 		}
 	}
-	return models.DEFAULT_GAMESTAT_VALUE_STRING, models.DEFAULT_GAMESTAT_VALUE_STRING, models.DEFAULT_GAMESTAT_VALUE_INT, models.DEFAULT_GAMESTAT_VALUE_BOOL
+	if strings.Contains(strings.ToLower(categoryName), "home") {
+		return models.DEFAULT_WINNING_STAT_INT, models.DEFAULT_LOSTING_STAT, models.DEFAULT_TOTAL_STAT_INT, true
+	} else if strings.Contains(strings.ToLower(categoryName), "tied") {
+		return models.DEFAULT_WINNING_STAT_INT / 2, models.DEFAULT_LOSTING_STAT / 2, models.DEFAULT_TOTAL_STAT_INT, true
+	} else {
+		return models.DEFAULT_LOSTING_STAT, models.DEFAULT_WINNING_STAT_INT, models.DEFAULT_TOTAL_STAT_INT, false
+
+	}
 }
 
 // Next season : Write a Controller abst object that game controller, team controller, gamestat and game stats controller can use

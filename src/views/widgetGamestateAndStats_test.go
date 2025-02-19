@@ -24,7 +24,7 @@ func TestGamestateAndStatsUI(t *testing.T) {
 	flag.Parse()
 	if !*flagCI {
 		app, _, _, widget := createTestGamestateAndStatsWidget()
-		app.SetApplicationDisplayName("TestGamestateAndStatsUI")
+		app.SetApplicationDisplayName("TestGamestateAndStatsI")
 		window := widgets.NewQMainWindow(nil, 0)
 		window.SetCentralWidget(widget.UIWidget)
 		window.Show()
