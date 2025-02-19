@@ -3,6 +3,9 @@ package views
 import (
 	"log"
 	"quickRadio/controllers"
+	"quickRadio/models"
+	"quickRadio/radioErrors"
+	"strconv"
 	"strings"
 
 	"github.com/therecipe/qt/core"
@@ -18,6 +21,10 @@ type GamestateAndStatsWidget struct {
 	gameWidget     *widgets.QGroupBox
 	gameController *controllers.GameController
 	updateMap      map[string]bool
+}
+
+func (widget *GamestateAndStatsWidget) setDynamicUIObjectName(prefix string, suffix string, delimiter string) string {
+	return prefix + delimiter + suffix
 }
 
 func (widget *GamestateAndStatsWidget) createStaticDataLabel(name string, data string, parentWidget *widgets.QGroupBox, fontSize int) *widgets.QLabel {
@@ -59,25 +66,43 @@ func (widget *GamestateAndStatsWidget) createGamestateLayout() *widgets.QHBoxLay
 	return gamestateLayout
 }
 
-func (widget *GamestateAndStatsWidget) createTeamGameStatLayout(homeStatData string, categoryName string, awayStatData string, homeHandle bool) *widgets.QVBoxLayout {
-	//For this one we will use each of the Team Game Stats strucs and turn them into 3 lines, 1. 2 dynamic labels and 1 static labe. 2. A slider. 3. Two Dynamic labels Or a spacer that holds the idea od two dynamic labels
+func (widget *GamestateAndStatsWidget) setSliderValues(statMaxDatum int, homeStatDatum string, awayStatDatum string, homeHandle bool, slider *widgets.QSlider) {
+	if homeHandle {
+		slider.SetRange(statMaxDatum, 0)
+		position, err := strconv.Atoi(homeStatDatum)
+		radioErrors.ErrorLog(err)
+		slider.SetValue(position)
+	} else {
+		slider.SetRange(0, statMaxDatum)
+		position, err := strconv.Atoi(awayStatDatum)
+		radioErrors.ErrorLog(err)
+		slider.SetValue(position)
+	}
+	slider.SetTickInterval(1)
+	slider.SetTickPosition(widgets.QSlider__NoTicks)
+}
+
+func (widget *GamestateAndStatsWidget) createTeamGameStatLayout(homeStatDatum string, categoryName string, awayStatDatum string, statMaxDatum int, homeHandle bool) *widgets.QVBoxLayout {
 	fontSize := 12
 	gameStatLayout := widgets.NewQVBoxLayout()
 	gameStatLabelLayout := widgets.NewQHBoxLayout()
-	gameStatLabelLayout.AddWidget(widget.createDynamicDataLabel("homeStat", homeStatData, widget.gameController.Landinglink, widget.UIWidget, fontSize), 0, core.Qt__AlignLeft)
+	gameStatLabelLayout.AddWidget(widget.createDynamicDataLabel("home_"+categoryName, homeStatDatum, widget.gameController.Landinglink, widget.UIWidget, fontSize), 0, core.Qt__AlignLeft)
 	gameStatLabelLayout.AddWidget(widget.createStaticDataLabel("category", categoryName, widget.UIWidget, fontSize), 0, core.Qt__AlignCenter)
-	gameStatLabelLayout.AddWidget(widget.createDynamicDataLabel("awayStat", awayStatData, widget.gameController.Landinglink, widget.UIWidget, fontSize), 0, core.Qt__AlignCenter)
+	gameStatLabelLayout.AddWidget(widget.createDynamicDataLabel("away_"+categoryName, awayStatDatum, widget.gameController.Landinglink, widget.UIWidget, fontSize), 0, core.Qt__AlignCenter)
 	slider := widgets.NewQSlider(widget.UIWidget)
+	slider.SetObjectName(widget.setDynamicUIObjectName("slider", categoryName, models.NAME_DELIMITER))
+	widget.setSliderValues(statMaxDatum, homeStatDatum, awayStatDatum, homeHandle, slider)
 	slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, homeHandle))
 	slider.SetEnabled(false)
 	slider.ConnectTimerEvent(func(event *core.QTimerEvent) {
-		//Here every second we redraw the slider to update it from the files we have.
-		//We do this by checking which team is winning and setting the style sheet accordingly
-		//Then repaint
-		widget.updateMap[slider.ObjectName()] = true
-		homeHandle = true //Update this if some stat is greater than another. Should be a simple > or < cmp, since these are all number.
-		slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, homeHandle))
-		slider.Repaint()
+		val, ok := widget.updateMap[slider.ObjectName()]
+		if !val || !ok {
+			homeStatDatum, awayStatDatum, statMaxDatum, homeHandle = widget.gameController.GetGameStatFromFile(categoryName)
+			widget.setSliderValues(statMaxDatum, homeStatDatum, awayStatDatum, homeHandle, slider)
+			slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, homeHandle))
+			slider.Repaint()
+			widget.updateMap[slider.ObjectName()] = true
+		}
 	})
 	slider.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
 	gameStatLayout.AddLayout(gameStatLabelLayout, 0)
@@ -90,10 +115,15 @@ func (widget *GamestateAndStatsWidget) createTeamGameStatsLayout() *widgets.QVBo
 	//One where the home team is winning, one where its a tie and one where away is winning.
 	teamStatsLayout := widgets.NewQVBoxLayout()
 	for _, gameStatObject := range widget.gameController.GetTeamGameStatsObjects() {
+		awayValue, err := strconv.Atoi(gameStatObject.AwayValue)
+		radioErrors.ErrorLog(err)
+		homeValue, err := strconv.Atoi(gameStatObject.HomeValue)
+		radioErrors.ErrorLog(err)
+		maxValue := homeValue + awayValue
 		if gameStatObject.HomeValue >= gameStatObject.AwayValue { //We will need to figure out the types in a switch for proper compare
-			teamStatsLayout.AddLayout(widget.createTeamGameStatLayout(gameStatObject.HomeValue, gameStatObject.Category, gameStatObject.AwayValue, true), 0)
+			teamStatsLayout.AddLayout(widget.createTeamGameStatLayout(gameStatObject.HomeValue, gameStatObject.Category, gameStatObject.AwayValue, maxValue, true), 0)
 		} else {
-			teamStatsLayout.AddLayout(widget.createTeamGameStatLayout(gameStatObject.HomeValue, gameStatObject.Category, gameStatObject.AwayValue, false), 0)
+			teamStatsLayout.AddLayout(widget.createTeamGameStatLayout(gameStatObject.HomeValue, gameStatObject.Category, gameStatObject.AwayValue, maxValue, false), 0)
 		}
 	}
 	return teamStatsLayout

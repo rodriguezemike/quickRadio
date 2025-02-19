@@ -2,6 +2,9 @@ package models
 
 // const game controller data
 const DEFAULT_GAMESTATE_STRING = "DEFAULT GAMESTATE STRING"
+const DEFAULT_GAMESTAT_VALUE_STRING = "99"
+const DEFAULT_GAMESTAT_VALUE_INT = 32
+const DEFAULT_GAMESTAT_VALUE_BOOL = false
 
 // const team data
 const DEFAULT_NHL_TEAM_ABBREV = "NHLF"
@@ -20,3 +23,7 @@ const DEFAULT_SOI = -1
 const DEFAULT_WINNING_STAT = "100"
 const DEFAULT_LOSING_STAT = "-1"
 const DEFAULT_CATEGORY = "CATEGORY"
+
+//const Delims
+const VALUE_DELIMITER = "_"
+const NAME_DELIMITER = "_"

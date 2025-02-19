@@ -3,15 +3,17 @@ package controllers
 import (
 	"encoding/json"
 	"log"
+	"os"
 	"path/filepath"
 	"quickRadio/models"
 	"quickRadio/quickio"
+	"quickRadio/radioErrors"
 	"strconv"
+	"strings"
 	"sync"
 )
 
-//Should only have 1 game in here, the Manager Controller can handle the list.
-
+// Should only have 1 game in here, the Manager Controller can handle the list.
 type GameController struct {
 	Landinglink          string
 	GameIndex            int
@@ -73,9 +75,57 @@ func (controller *GameController) GetActiveGamestateFromFile() string {
 	return string(data)
 }
 
+func (controller *GameController) GetGameStatFromFile(categoryName string) (string, string, int, bool) {
+	//Should be a file that exists in game directory that has the infor in the file name ending with gamecategorySlider
+	//Abstract this further to save a file I/O operation.
+	files, _ := os.ReadDir(controller.GameDirectory)
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), "."+categoryName) {
+			values := strings.Split(strings.Split(f.Name(), ".")[0], models.VALUE_DELIMITER)
+			//Shouldnt Crash? Maybe for testing but this hould have some sort default if all the values are not there.
+			//If we crash we need to have something to dump all of memories and exit gracefully avoiding mem leaks.
+			homeValue := values[0]
+			awayValue := values[1]
+			maxValue, err := strconv.Atoi(values[2])
+			radioErrors.ErrorLog(err)
+			homeHandle, err := strconv.ParseBool(values[3])
+			radioErrors.ErrorLog(err)
+			return homeValue, awayValue, maxValue, homeHandle
+		}
+	}
+	return models.DEFAULT_GAMESTAT_VALUE_STRING, models.DEFAULT_GAMESTAT_VALUE_STRING, models.DEFAULT_GAMESTAT_VALUE_INT, models.DEFAULT_GAMESTAT_VALUE_BOOL
+}
+
+// Next season : Write a Controller abst object that game controller, team controller, gamestat and game stats controller can use
+// To produce data from the Game controller which calls all other controllers produce data and then this can done in parallel with a single
+// wait group at this level. this will become the standardized model for All other apps using this MVC style arch
+// Produces a path to be touched holding all necessary data for the UI to update. Avoids file opening and closing operations.
+func (controller *GameController) getGameStatPath(gameStat models.TeamGameStat) string {
+	var homeHandle string
+	awayValue, err := strconv.Atoi(gameStat.AwayValue)
+	radioErrors.ErrorLog(err)
+	homeValue, err := strconv.Atoi(gameStat.HomeValue)
+	radioErrors.ErrorLog(err)
+	maxValue := strconv.Itoa(awayValue + homeValue)
+	if homeValue > awayValue {
+		homeHandle = strconv.FormatBool(true)
+	} else {
+		homeHandle = strconv.FormatBool(false)
+	}
+	filename := gameStat.HomeValue + models.VALUE_DELIMITER +
+		gameStat.AwayValue + models.VALUE_DELIMITER +
+		maxValue + models.VALUE_DELIMITER +
+		homeHandle + "." +
+		gameStat.Category
+	path := filepath.Join(controller.GameDirectory, filename)
+	return path
+}
+
 func (controller *GameController) ProduceGameData() {
 	var workGroup sync.WaitGroup
+	var gameStatWorkGroup sync.WaitGroup
 	controllers := []TeamController{*controller.HomeTeamController, *controller.AwayTeamController}
+	teamGameStatObjects := controller.GetTeamGameStatsObjects()
 	for i := 0; i < 2; i++ {
 		workGroup.Add(i)
 		go func(teamController TeamController) {
@@ -84,11 +134,17 @@ func (controller *GameController) ProduceGameData() {
 			quickio.WriteFile(teamController.GetTeamOnIcePath(), string(teamController.getTeamOnIceJson()))
 		}(controllers[i])
 	}
+	for i := 0; i < len(teamGameStatObjects); i++ {
+		gameStatWorkGroup.Add(i)
+		go func(gameStat models.TeamGameStat) {
+			defer gameStatWorkGroup.Done()
+			quickio.TouchFile(controller.getGameStatPath(gameStat))
+		}(teamGameStatObjects[i])
+	}
 	workGroup.Wait()
+	gameStatWorkGroup.Wait()
 	gameStatePath := controller.GetGamestatePath()
-	//teamGameStatsPath := filepath.Join(controller.GameDirectory, "TEAMGAMESTATS.json")
 	quickio.WriteFile(gameStatePath, controller.GetGamestateString())
-	//quickio.WriteFile(tameGameStatsPath, string(controller.getTeamGameStats()))
 	controller.dataConsumed = false
 }
 
