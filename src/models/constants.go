@@ -28,3 +28,7 @@ const DEFAULT_CATEGORY = "CATEGORY"
 //const Delims
 const VALUE_DELIMITER = "_"
 const NAME_DELIMITER = "_"
+
+//Home and Away prefixs
+const DEFAULT_HOME_PREFIX = "home"
+const DEFAULT_AWAY_PREFIX = "away"

@@ -48,9 +48,11 @@ func (widget *GamestateAndStatsWidget) createDynamicDataLabel(name string, data 
 			if !ok || !val {
 				if strings.Contains(label.ObjectName(), "GAMESTATE") {
 					label.SetText(widget.gameController.GetGamestateString())
-					label.Repaint()
-					widget.updateMap[label.ObjectName()] = true
+				} else {
+					label.SetText(widget.gameController.GetTextFromObjectName(label.ObjectName()))
 				}
+				label.Repaint()
+				widget.updateMap[label.ObjectName()] = true
 			}
 		}
 	})
@@ -79,12 +81,26 @@ func (widget *GamestateAndStatsWidget) setSliderValues(statMaxDatum int, homeSta
 }
 
 func (widget *GamestateAndStatsWidget) createTeamGameStatLayout(homeStatDatum int, categoryName string, awayStatDatum int, statMaxDatum int, homeHandle bool) *widgets.QVBoxLayout {
+	//Horizontal and vertical 2 row layout, 1 for labels and 1 for slider.
 	fontSize := 12
 	gameStatLayout := widgets.NewQVBoxLayout()
 	gameStatLabelLayout := widgets.NewQHBoxLayout()
-	gameStatLabelLayout.AddWidget(widget.createDynamicDataLabel("home_"+categoryName, strconv.Itoa(homeStatDatum), widget.gameController.Landinglink, widget.UIWidget, fontSize), 0, core.Qt__AlignLeft)
+	//Home stat dynamic label
+	gameStatLabelLayout.AddWidget(
+		widget.createDynamicDataLabel(
+			(widget.setDynamicUIObjectName(models.DEFAULT_HOME_PREFIX, categoryName, models.NAME_DELIMITER)),
+			strconv.Itoa(homeStatDatum), widget.gameController.Landinglink, widget.UIWidget, fontSize),
+		0, core.Qt__AlignLeft,
+	)
+	//Stat categpru static label
 	gameStatLabelLayout.AddWidget(widget.createStaticDataLabel("category", categoryName, widget.UIWidget, fontSize), 0, core.Qt__AlignCenter)
-	gameStatLabelLayout.AddWidget(widget.createDynamicDataLabel("away_"+categoryName, strconv.Itoa(awayStatDatum), widget.gameController.Landinglink, widget.UIWidget, fontSize), 0, core.Qt__AlignCenter)
+	//Away stat dynamic label
+	gameStatLabelLayout.AddWidget(
+		widget.createDynamicDataLabel(
+			(widget.setDynamicUIObjectName(models.DEFAULT_AWAY_PREFIX, categoryName, models.NAME_DELIMITER)),
+			strconv.Itoa(awayStatDatum), widget.gameController.Landinglink, widget.UIWidget, fontSize),
+		0, core.Qt__AlignCenter)
+	//Stat slider
 	slider := widgets.NewQSlider2(core.Qt__Horizontal, widget.UIWidget)
 	slider.SetObjectName(widget.setDynamicUIObjectName("slider", categoryName, models.NAME_DELIMITER))
 	widget.setSliderValues(statMaxDatum, homeStatDatum, awayStatDatum, homeHandle, slider)
@@ -93,7 +109,7 @@ func (widget *GamestateAndStatsWidget) createTeamGameStatLayout(homeStatDatum in
 	slider.ConnectTimerEvent(func(event *core.QTimerEvent) {
 		val, ok := widget.updateMap[slider.ObjectName()]
 		if !val || !ok {
-			homeStatDatum, awayStatDatum, statMaxDatum, homeHandle = widget.gameController.GetGameStatFromFile(categoryName)
+			homeStatDatum, awayStatDatum, statMaxDatum, homeHandle = widget.gameController.GetGameStatFromFilepath(categoryName)
 			widget.setSliderValues(statMaxDatum, homeStatDatum, awayStatDatum, homeHandle, slider)
 			slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, homeHandle))
 			slider.Repaint()

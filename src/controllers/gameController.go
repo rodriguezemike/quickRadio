@@ -75,7 +75,26 @@ func (controller *GameController) GetActiveGamestateFromFile() string {
 	return string(data)
 }
 
-func (controller *GameController) GetGameStatFromFile(categoryName string) (int, int, int, bool) {
+func (controller *GameController) GetTextFromObjectName(objectName string) string {
+	log.Println(objectName)
+	files, _ := os.ReadDir(controller.GameDirectory)
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), "."+objectName) {
+			return strings.Split(f.Name(), ".")[0]
+		}
+	}
+	if strings.Contains(strings.ToLower(objectName), "home") {
+		return models.DEFAULT_WINNING_STAT
+	} else if strings.Contains(strings.ToLower(objectName), "tied") {
+		return models.DEFAULT_WINNING_STAT
+	} else if strings.Contains(strings.ToLower(objectName), "away") {
+		return models.DEFAULT_WINNING_STAT
+	} else {
+		return models.DEFAULT_LOSING_STAT
+	}
+}
+
+func (controller *GameController) GetGameStatFromFilepath(categoryName string) (int, int, int, bool) {
 	//Should be a file that exists in game directory that has the infor in the file name ending with gamecategorySlider
 	//Abstract this further to save a file I/O operation.
 	files, _ := os.ReadDir(controller.GameDirectory)
@@ -105,7 +124,6 @@ func (controller *GameController) GetGameStatFromFile(categoryName string) (int,
 		return models.DEFAULT_WINNING_STAT_INT / 2, models.DEFAULT_LOSTING_STAT / 2, models.DEFAULT_TOTAL_STAT_INT, true
 	} else {
 		return models.DEFAULT_LOSTING_STAT, models.DEFAULT_WINNING_STAT_INT, models.DEFAULT_TOTAL_STAT_INT, false
-
 	}
 }
 
@@ -113,7 +131,7 @@ func (controller *GameController) GetGameStatFromFile(categoryName string) (int,
 // To produce data from the Game controller which calls all other controllers produce data and then this can done in parallel with a single
 // wait group at this level. this will become the standardized model for All other apps using this MVC style arch
 // Produces a path to be touched holding all necessary data for the UI to update. Avoids file opening and closing operations.
-func (controller *GameController) getGameStatPath(gameStat models.TeamGameStat) string {
+func (controller *GameController) getGameStatPath(gameStat *models.TeamGameStat) string {
 	var homeHandle string
 	awayValue, err := strconv.Atoi(gameStat.AwayValue)
 	radioErrors.ErrorLog(err)
@@ -134,6 +152,14 @@ func (controller *GameController) getGameStatPath(gameStat models.TeamGameStat) 
 	return path
 }
 
+func (controller *GameController) getHomeStatPath(gameStat *models.TeamGameStat) string {
+	return filepath.Join(controller.GameDirectory, models.DEFAULT_HOME_PREFIX+models.VALUE_DELIMITER+gameStat.Category)
+}
+
+func (controller *GameController) getAwayStatPath(gameStat *models.TeamGameStat) string {
+	return filepath.Join(controller.GameDirectory, models.DEFAULT_AWAY_PREFIX+models.VALUE_DELIMITER+gameStat.Category)
+}
+
 func (controller *GameController) ProduceGameData() {
 	var workGroup sync.WaitGroup
 	var gameStatWorkGroup sync.WaitGroup
@@ -151,7 +177,9 @@ func (controller *GameController) ProduceGameData() {
 		gameStatWorkGroup.Add(i)
 		go func(gameStat models.TeamGameStat) {
 			defer gameStatWorkGroup.Done()
-			quickio.TouchFile(controller.getGameStatPath(gameStat))
+			quickio.TouchFile(controller.getGameStatPath(&gameStat))
+			quickio.TouchFile(controller.getHomeStatPath(&gameStat))
+			quickio.TouchFile(controller.getAwayStatPath(&gameStat))
 		}(teamGameStatObjects[i])
 	}
 	workGroup.Wait()
