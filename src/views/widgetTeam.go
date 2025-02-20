@@ -241,7 +241,7 @@ func (widget *TeamWidget) createTeamWidget() {
 	teamLayout.AddLayout(spacerLayout, 0)
 	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
 	teamGroupbox.SetMinimumSize(core.NewQSize2(200, 354))
-	teamGroupbox.SetMaximumSize(core.NewQSize2(200, 354))
+	teamGroupbox.SetMaximumSize(core.NewQSize2(500, 885))
 	teamGroupbox.SetLayout(teamLayout)
 	teamGroupbox.SetStyleSheet(CreateTeamStylesheet())
 	log.Println("Team Widget Stylesheet ", teamGroupbox.StyleSheet())

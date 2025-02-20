@@ -210,6 +210,16 @@ func CreateTeamStylesheet() string {
 	return stylesheet
 }
 
+func CreateGameStatsAndGamestateStylesheet() string {
+	stylesheet := `
+		QGroupBox[widget-type="gamestatsAndGamestate"] {
+			opacity:0.77;
+			background-color: #002b36;
+		}
+	`
+	return stylesheet
+}
+
 func CreateGameStylesheet(homeTeam string, awayTeam string) string {
 	imagePath := GetPng("puck_texture")
 	stylesheet := `

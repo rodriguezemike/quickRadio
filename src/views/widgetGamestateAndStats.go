@@ -12,6 +12,8 @@ import (
 	"github.com/therecipe/qt/widgets"
 )
 
+// We will want to collect everything that has a timer and start it in parallel
+// In attempts to reduce the latency in UI update for our various components.
 type GamestateAndStatsWidget struct {
 	LabelTimer     int
 	GameIndex      int
@@ -80,27 +82,7 @@ func (widget *GamestateAndStatsWidget) setSliderValues(statMaxDatum int, homeSta
 	slider.SetTickPosition(widgets.QSlider__NoTicks)
 }
 
-func (widget *GamestateAndStatsWidget) createTeamGameStatLayout(homeStatDatum int, categoryName string, awayStatDatum int, statMaxDatum int, homeHandle bool) *widgets.QVBoxLayout {
-	//Horizontal and vertical 2 row layout, 1 for labels and 1 for slider.
-	fontSize := 12
-	gameStatLayout := widgets.NewQVBoxLayout()
-	gameStatLabelLayout := widgets.NewQHBoxLayout()
-	//Home stat dynamic label
-	gameStatLabelLayout.AddWidget(
-		widget.createDynamicDataLabel(
-			(widget.setDynamicUIObjectName(models.DEFAULT_HOME_PREFIX, categoryName, models.NAME_DELIMITER)),
-			strconv.Itoa(homeStatDatum), widget.gameController.Landinglink, widget.UIWidget, fontSize),
-		0, core.Qt__AlignLeft,
-	)
-	//Stat categpru static label
-	gameStatLabelLayout.AddWidget(widget.createStaticDataLabel("category", categoryName, widget.UIWidget, fontSize), 0, core.Qt__AlignCenter)
-	//Away stat dynamic label
-	gameStatLabelLayout.AddWidget(
-		widget.createDynamicDataLabel(
-			(widget.setDynamicUIObjectName(models.DEFAULT_AWAY_PREFIX, categoryName, models.NAME_DELIMITER)),
-			strconv.Itoa(awayStatDatum), widget.gameController.Landinglink, widget.UIWidget, fontSize),
-		0, core.Qt__AlignCenter)
-	//Stat slider
+func (widget *GamestateAndStatsWidget) createStatSlider(categoryName string, statMaxDatum int, homeStatDatum int, awayStatDatum int, homeHandle bool) *widgets.QSlider {
 	slider := widgets.NewQSlider2(core.Qt__Horizontal, widget.UIWidget)
 	slider.SetObjectName(widget.setDynamicUIObjectName("slider", categoryName, models.NAME_DELIMITER))
 	widget.setSliderValues(statMaxDatum, homeStatDatum, awayStatDatum, homeHandle, slider)
@@ -117,6 +99,33 @@ func (widget *GamestateAndStatsWidget) createTeamGameStatLayout(homeStatDatum in
 		}
 	})
 	slider.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
+	return slider
+}
+func (widget *GamestateAndStatsWidget) createHomeAndAwayStatLabels(categoryName string, homeStatDatum int, awayStatDatum int, fontSize int) (*widgets.QLabel, *widgets.QLabel) {
+	homeStatLabel := widget.createDynamicDataLabel(
+		(widget.setDynamicUIObjectName(models.DEFAULT_HOME_PREFIX, categoryName, models.NAME_DELIMITER)),
+		strconv.Itoa(homeStatDatum), widget.gameController.Landinglink, widget.UIWidget, fontSize)
+	awayStatLabel := widget.createDynamicDataLabel(
+		(widget.setDynamicUIObjectName(models.DEFAULT_AWAY_PREFIX, categoryName, models.NAME_DELIMITER)),
+		strconv.Itoa(awayStatDatum), widget.gameController.Landinglink, widget.UIWidget, fontSize)
+	return homeStatLabel, awayStatLabel
+}
+
+func (widget *GamestateAndStatsWidget) createTeamGameStatLayout(homeStatDatum int, categoryName string, awayStatDatum int, statMaxDatum int, homeHandle bool) *widgets.QVBoxLayout {
+	//Horizontal and vertical 2 row layout, 1 for labels and 1 for slider.
+	fontSize := 12
+	gameStatLayout := widgets.NewQVBoxLayout()
+	gameStatLabelLayout := widgets.NewQHBoxLayout()
+	homeStatLabel, awayStatLabel := widget.createHomeAndAwayStatLabels(categoryName, homeStatDatum, awayStatDatum, fontSize)
+	//Home stat dynamic label
+	gameStatLabelLayout.AddWidget(homeStatLabel, 0, core.Qt__AlignLeft)
+	//Stat category static label
+	gameStatLabelLayout.AddWidget(widget.createStaticDataLabel("category", categoryName, widget.UIWidget, fontSize), 0, core.Qt__AlignCenter)
+	//Away stat dynamic label
+	gameStatLabelLayout.AddWidget(awayStatLabel, 0, core.Qt__AlignCenter)
+	//Stat slider
+	slider := widget.createStatSlider(categoryName, statMaxDatum, homeStatDatum, awayStatDatum, homeHandle)
+	//Add label layout and slider widget
 	gameStatLayout.AddLayout(gameStatLabelLayout, 0)
 	gameStatLayout.AddWidget(slider, 0, core.Qt__AlignCenter)
 	return gameStatLayout
@@ -145,6 +154,7 @@ func (widget *GamestateAndStatsWidget) createGamestateAndStatsWidget() {
 	//Create main layout and widget
 	gamestateAndStatsLayout := widgets.NewQVBoxLayout()
 	gamestateAndStatsWidget := widgets.NewQGroupBox(widget.gameWidget)
+	gamestateAndStatsWidget.SetProperty("widget-type", core.NewQVariant12("gamestatsAndGamestate"))
 	//Create Child layouts
 	gamestateLayout := widget.createGamestateLayout()
 	teamGameStatsLayout := widget.createTeamGameStatsLayout()
@@ -153,6 +163,9 @@ func (widget *GamestateAndStatsWidget) createGamestateAndStatsWidget() {
 	gamestateAndStatsLayout.AddLayout(teamGameStatsLayout, 0)
 	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
 	gamestateAndStatsWidget.SetLayout(gamestateAndStatsLayout)
+	gamestateAndStatsWidget.SetMinimumSize(core.NewQSize2(354, 200))
+	gamestateAndStatsWidget.SetMaximumSize(core.NewQSize2(885, 500))
+	gamestateAndStatsWidget.SetStyleSheet(CreateGameStatsAndGamestateStylesheet())
 	//Set widget UI
 	widget.UILayout = gamestateAndStatsLayout
 	widget.UIWidget = gamestateAndStatsWidget
