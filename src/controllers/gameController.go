@@ -16,7 +16,6 @@ import (
 // Should only have 1 game in here, the Manager Controller can handle the list.
 type GameController struct {
 	Landinglink          string
-	GameIndex            int
 	dataConsumed         bool
 	GameDirectory        string
 	HomeTeamController   *TeamController
@@ -219,20 +218,18 @@ func CreateNewDefaultGameController() *GameController {
 	controller.gameDataObject = models.CreateDefaultGameData()
 	controller.gameVersesDataObject = models.CreateDefaultVersesData()
 	controller.Landinglink = ""
-	controller.GameIndex = 0
 	controller.GameDirectory = filepath.Join(quickio.GetQuickTmpFolder(), "GAME")
 	controller.HomeTeamController = CreateNewDefaultTeamController()
 	controller.AwayTeamController = CreateNewDefaultTeamController()
 	return &controller
 }
 
-func CreateNewGameController(landingLink string, gameIndex int) *GameController {
+func CreateNewGameController(landingLink string) *GameController {
 	var controller GameController
 	gdo := quickio.GetGameDataObject(landingLink)
 	gvd := quickio.GetGameVersesData(landingLink)
 	sweaters := quickio.GetSweaters()
 	controller.Landinglink = landingLink
-	controller.GameIndex = gameIndex
 	controller.GameDirectory = filepath.Join(quickio.GetQuickTmpFolder(), strconv.Itoa(gdo.Id))
 	controller.HomeTeamController = CreateNewTeamController(sweaters, landingLink, &gdo, &gvd, true, controller.GameDirectory)
 	controller.AwayTeamController = CreateNewTeamController(sweaters, landingLink, &gdo, &gvd, true, controller.GameDirectory)

@@ -16,7 +16,6 @@ import (
 // In attempts to reduce the latency in UI update for our various components.
 type GamestateAndStatsWidget struct {
 	LabelTimer     int
-	IsActive       bool
 	UIWidget       *widgets.QGroupBox
 	UILayout       *widgets.QVBoxLayout
 	gameWidget     *widgets.QGroupBox
@@ -172,7 +171,7 @@ func (widget *GamestateAndStatsWidget) createGamestateAndStatsWidget() {
 	widget.UIWidget = gamestateAndStatsWidget
 }
 
-func CreateNewGamestateAndStatsWidget(labelTimer int, IsActive bool, controller *controllers.GameController, gameWidget *widgets.QGroupBox) *GamestateAndStatsWidget {
+func CreateNewGamestateAndStatsWidget(labelTimer int, controller *controllers.GameController, gameWidget *widgets.QGroupBox) *GamestateAndStatsWidget {
 	widget := GamestateAndStatsWidget{}
 	widget.updateMap = map[string]bool{}
 	widget.LabelTimer = labelTimer

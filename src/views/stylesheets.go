@@ -220,15 +220,14 @@ func CreateGameStatsAndGamestateStylesheet() string {
 	return stylesheet
 }
 
-func CreateGameStylesheet(homeTeam string, awayTeam string) string {
-	imagePath := GetPng("puck_texture")
+func CreateGameStylesheet() string {
 	stylesheet := `
-		background-image: url(%s);
-		background-repeat: no-repeat;
-		background-position: center;
+		QGroupBox[view-type="gameView"] {
+			opacity:0.77;
+			background-color: #002b36;
+		}
 	`
-	styleSheet := fmt.Sprintf(stylesheet, imagePath)
-	return styleSheet
+	return stylesheet
 }
 func CreateDropdownStyleSheet() string {
 	styleSheet := `

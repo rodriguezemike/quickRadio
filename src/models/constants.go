@@ -8,7 +8,7 @@ const DEFAULT_NHL_TEAM_ABBREV = "NHLF"
 const DEFAULT_ID = -1
 const DEFAULT_SCORE = -1
 const DEFAULT_SOG = -1
-const DEFAULT_RADIO_LINK = "DEFAULT RADIO LINK"
+const DEFAULT_RADIO_LINK = ""
 
 // Const player data
 const DEFAULT_PLAYER_NAME = "PLAYER"

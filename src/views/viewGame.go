@@ -1,41 +1,86 @@
 package views
 
 import (
+	"quickRadio/controllers"
+	"sync"
+
+	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/widgets"
 )
 
-//This a Link and creates two team widgies and 1 gamestate and stats widgie
-//Then drops em in a HBOX Layout, this calls produce data in the game controller and calls conume data
-//After checking all the update maps for the various widgies
-//If we have to we can add the players on ice widget or add em under the team
-//Currents players on ICe with a timer for time spent on ice.
-
 type GameView struct {
 	LabelTimer              int
+	GamecenterLink          string
 	UIWidget                *widgets.QGroupBox
 	UILayout                *widgets.QHBoxLayout
 	AwayTeamWidget          *TeamWidget
 	HomeTeamWidget          *TeamWidget
 	GamestateAndStatsWidget *GamestateAndStatsWidget
 	parentWidget            *widgets.QGroupBox
+	radioLock               *sync.Mutex
+	gameController          *controllers.GameController
 }
 
-func (view *GameView) createGameView(gamecenterLink string, parentWidget *widgets.QGroupBox) {
-	view.parentWidget = parentWidget
+func (view *GameView) createGameView() {
+	view.gameController = controllers.CreateNewGameController(view.GamecenterLink)
 	//Set UI widget and Layout
 	viewLayout := widgets.NewQHBoxLayout()
 	viewGroupBox := widgets.NewQGroupBox(view.parentWidget)
 	view.UILayout = viewLayout
 	view.UIWidget = viewGroupBox
 	//Create Child layouts
+	view.AwayTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.HomeTeamController, view.radioLock, view.UIWidget)
+	view.HomeTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.AwayTeamController, view.radioLock, view.UIWidget)
+	view.GamestateAndStatsWidget = CreateNewGamestateAndStatsWidget(view.LabelTimer, view.gameController, view.UIWidget)
 	//Add Child Layouts
+	view.UILayout.AddLayout(view.HomeTeamWidget.UILayout, 0)
+	view.UILayout.AddLayout(view.GamestateAndStatsWidget.UILayout, 0)
+	view.UILayout.AddLayout(view.AwayTeamWidget.UILayout, 0)
 	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
+	view.UIWidget.SetLayout(view.UILayout)
 }
 
-func CreateNewGameView(gamecenterLink string, parentWidget *widgets.QGroupBox) *GameView {
-	//Create team layout, groupbox and set custom properties
+func (view *GameView) createDefaultGameView() {
+	view.gameController = controllers.CreateNewDefaultGameController()
+	//Set UI widget and Layout
+	viewLayout := widgets.NewQHBoxLayout()
+	viewGroupBox := widgets.NewQGroupBox(view.parentWidget)
+	viewGroupBox.SetProperty("view-type", core.NewQVariant12("gameView"))
+	view.UILayout = viewLayout
+	view.UIWidget = viewGroupBox
+	//Create Child layouts
+	view.AwayTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.HomeTeamController, view.radioLock, view.UIWidget)
+	view.HomeTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.AwayTeamController, view.radioLock, view.UIWidget)
+	view.GamestateAndStatsWidget = CreateNewGamestateAndStatsWidget(view.LabelTimer, view.gameController, view.UIWidget)
+	//Add Widgets
+	view.UILayout.AddWidget(view.HomeTeamWidget.UIWidget, 0, core.Qt__AlignTop)
+	view.UILayout.AddWidget(view.GamestateAndStatsWidget.UIWidget, 0, core.Qt__AlignTop)
+	view.UILayout.AddWidget(view.AwayTeamWidget.UIWidget, 0, core.Qt__AlignTop)
+	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
+	view.parentWidget.SetMinimumSize(core.NewQSize2(1920, 1080))
+	view.parentWidget.SetMaximumSize(core.NewQSize2(1920, 1080))
+	view.UIWidget.SetLayout(view.UILayout)
+	view.UIWidget.SetStyleSheet(CreateGameStylesheet())
+}
 
-	GameView := GameView{}
-	GameView.createGameView(gamecenterLink, parentWidget)
-	return &GameView
+func CreateNewGameView(gamecenterLink string, parentWidget *widgets.QGroupBox, radioLock *sync.Mutex, labelTimer int) *GameView {
+	//Create team layout, groupbox and set custom properties
+	gameView := GameView{}
+	gameView.LabelTimer = labelTimer
+	gameView.parentWidget = parentWidget
+	gameView.GamecenterLink = gamecenterLink
+	gameView.radioLock = radioLock
+	gameView.createGameView()
+	return &gameView
+}
+
+// Mainly for testing purposes
+func CreateNewDefaultGameView() *GameView {
+	gameView := GameView{}
+	gameView.LabelTimer = 1000
+	gameView.parentWidget = widgets.NewQGroupBox(nil)
+	gameView.GamecenterLink = ""
+	gameView.radioLock = &sync.Mutex{}
+	gameView.createDefaultGameView()
+	return &gameView
 }
