@@ -49,7 +49,7 @@ func (widget *GamestateAndStatsWidget) createDynamicDataLabel(name string, data 
 				if strings.Contains(label.ObjectName(), "GAMESTATE") {
 					label.SetText(widget.gameController.GetGamestateString())
 				} else {
-					label.SetText(widget.gameController.GetTextFromObjectName(label.ObjectName()))
+					label.SetText(widget.gameController.GetTextFromObjectNameFilepath(label.ObjectName()))
 				}
 				label.Repaint()
 				widget.updateMap[label.ObjectName()] = true

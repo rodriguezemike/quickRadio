@@ -32,3 +32,6 @@ const NAME_DELIMITER = "_"
 //Home and Away prefixs
 const DEFAULT_HOME_PREFIX = "home"
 const DEFAULT_AWAY_PREFIX = "away"
+
+//Tied prefix
+const DEFAULT_TIED_PREFIX = "tied"

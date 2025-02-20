@@ -75,7 +75,27 @@ func (controller *GameController) GetActiveGamestateFromFile() string {
 	return string(data)
 }
 
-func (controller *GameController) GetTextFromObjectName(objectName string) string {
+func (controller *GameController) getDefaultValueFromObjectName(objectName string) string {
+	if strings.Contains(strings.ToLower(objectName), models.DEFAULT_HOME_PREFIX) {
+		if strings.Contains(strings.Split(strings.ToLower(objectName), models.VALUE_DELIMITER)[1], models.DEFAULT_HOME_PREFIX) {
+			return models.DEFAULT_WINNING_STAT
+		} else {
+			return models.DEFAULT_LOSING_STAT
+		}
+	} else if strings.Contains(strings.ToLower(objectName), models.DEFAULT_TIED_PREFIX) {
+		return models.DEFAULT_WINNING_STAT
+	} else if strings.Contains(strings.ToLower(objectName), models.DEFAULT_AWAY_PREFIX) {
+		if strings.Contains(strings.Split(strings.ToLower(objectName), models.VALUE_DELIMITER)[1], models.DEFAULT_AWAY_PREFIX) {
+			return models.DEFAULT_WINNING_STAT
+		} else {
+			return models.DEFAULT_LOSING_STAT
+		}
+	} else {
+		return models.DEFAULT_LOSING_STAT
+	}
+}
+
+func (controller *GameController) GetTextFromObjectNameFilepath(objectName string) string {
 	log.Println(objectName)
 	files, _ := os.ReadDir(controller.GameDirectory)
 	for _, f := range files {
@@ -83,17 +103,8 @@ func (controller *GameController) GetTextFromObjectName(objectName string) strin
 			return strings.Split(f.Name(), ".")[0]
 		}
 	}
-	if strings.Contains(strings.ToLower(objectName), "home") {
-		return models.DEFAULT_WINNING_STAT
-	} else if strings.Contains(strings.ToLower(objectName), "tied") {
-		return models.DEFAULT_WINNING_STAT
-	} else if strings.Contains(strings.ToLower(objectName), "away") {
-		return models.DEFAULT_WINNING_STAT
-	} else {
-		return models.DEFAULT_LOSING_STAT
-	}
+	return controller.getDefaultValueFromObjectName(objectName)
 }
-
 func (controller *GameController) GetGameStatFromFilepath(categoryName string) (int, int, int, bool) {
 	//Should be a file that exists in game directory that has the infor in the file name ending with gamecategorySlider
 	//Abstract this further to save a file I/O operation.
@@ -118,9 +129,9 @@ func (controller *GameController) GetGameStatFromFilepath(categoryName string) (
 			return homeValue, awayValue, maxValue, homeHandle
 		}
 	}
-	if strings.Contains(strings.ToLower(categoryName), "home") {
+	if strings.Contains(strings.ToLower(categoryName), models.DEFAULT_HOME_PREFIX) {
 		return models.DEFAULT_WINNING_STAT_INT, models.DEFAULT_LOSTING_STAT, models.DEFAULT_TOTAL_STAT_INT, true
-	} else if strings.Contains(strings.ToLower(categoryName), "tied") {
+	} else if strings.Contains(strings.ToLower(categoryName), models.DEFAULT_AWAY_PREFIX) {
 		return models.DEFAULT_WINNING_STAT_INT / 2, models.DEFAULT_LOSTING_STAT / 2, models.DEFAULT_TOTAL_STAT_INT, true
 	} else {
 		return models.DEFAULT_LOSTING_STAT, models.DEFAULT_WINNING_STAT_INT, models.DEFAULT_TOTAL_STAT_INT, false
