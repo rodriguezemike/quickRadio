@@ -16,7 +16,6 @@ import (
 // In attempts to reduce the latency in UI update for our various components.
 type GamestateAndStatsWidget struct {
 	LabelTimer     int
-	GameIndex      int
 	IsActive       bool
 	UIWidget       *widgets.QGroupBox
 	UILayout       *widgets.QVBoxLayout
@@ -24,6 +23,8 @@ type GamestateAndStatsWidget struct {
 	gameController *controllers.GameController
 	updateMap      map[string]bool
 }
+
+//All updated func needs to be added
 
 func (widget *GamestateAndStatsWidget) setDynamicUIObjectName(prefix string, suffix string, delimiter string) string {
 	return prefix + delimiter + suffix
@@ -171,7 +172,7 @@ func (widget *GamestateAndStatsWidget) createGamestateAndStatsWidget() {
 	widget.UIWidget = gamestateAndStatsWidget
 }
 
-func CreateNewGamestateAndStatsWidget(labelTimer int, gameIndex int, IsActive bool, controller *controllers.GameController, gameWidget *widgets.QGroupBox) *GamestateAndStatsWidget {
+func CreateNewGamestateAndStatsWidget(labelTimer int, IsActive bool, controller *controllers.GameController, gameWidget *widgets.QGroupBox) *GamestateAndStatsWidget {
 	widget := GamestateAndStatsWidget{}
 	widget.updateMap = map[string]bool{}
 	widget.LabelTimer = labelTimer

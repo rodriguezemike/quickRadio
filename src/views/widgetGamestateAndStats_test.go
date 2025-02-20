@@ -16,7 +16,7 @@ func createTestGamestateAndStatsWidget() (*widgets.QApplication, *controllers.Ga
 	gameController := controllers.CreateNewDefaultGameController()
 	labelTimer := 1000
 	gameWidget := widgets.NewQGroupBox(nil)
-	widget := views.CreateNewGamestateAndStatsWidget(labelTimer, 0, true, gameController, gameWidget)
+	widget := views.CreateNewGamestateAndStatsWidget(labelTimer, true, gameController, gameWidget)
 	return app, gameController, labelTimer, widget
 }
 

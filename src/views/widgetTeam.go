@@ -25,6 +25,8 @@ type TeamWidget struct {
 	updateMap       map[string]bool
 }
 
+//All updated func needs to be added
+
 func (widget *TeamWidget) RadioLockReferenceTest(lock *sync.Mutex) bool {
 	return lock == widget.radioLock
 }
