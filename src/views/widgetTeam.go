@@ -25,7 +25,11 @@ type TeamWidget struct {
 	updateMap       map[string]bool
 }
 
-//All updated func needs to be added
+// All updated func needs to be added
+func (widget *TeamWidget) ClearUpdateMap() {
+	widget.updateMap = nil
+	widget.updateMap = map[string]bool{}
+}
 
 func (widget *TeamWidget) RadioLockReferenceTest(lock *sync.Mutex) bool {
 	return lock == widget.radioLock
@@ -60,11 +64,6 @@ func (widget *TeamWidget) getTeamIcon(teamAbbrev string) *gui.QIcon {
 
 func (widget *TeamWidget) setTeamDataUIObjectName(teamAbbrev string, uiLabel string, delimiter string) string {
 	return teamAbbrev + delimiter + uiLabel
-}
-
-func (widget *TeamWidget) ClearUpdateMap() {
-	widget.updateMap = nil
-	widget.updateMap = map[string]bool{}
 }
 
 func (widget *TeamWidget) createStaticDataLabel(name string, data string, fontSize int) *widgets.QLabel {

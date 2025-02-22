@@ -1,6 +1,3 @@
-//go:build ignore
-// +build ignore
-
 package views
 
 import (
@@ -8,19 +5,43 @@ import (
 	"github.com/therecipe/qt/widgets"
 )
 
-func (view *QuickRadioView) CreateGameManagerWidget() *widgets.QGroupBox {
-	gameManager := widgets.NewQGroupBox(nil)
-	topbarLayout := widgets.NewQVBoxLayout()
-	gameStackLayout := widgets.NewQStackedLayout()
-	gameManagerLayout := widgets.NewQVBoxLayout2(gameManager)
+type GameManagerView struct {
+	DropdownWidth int
+	UIWidget      *widgets.QGroupBox
+	UILayout      *widgets.QVBoxLayout
+	gamesDropdown *GamesDropdownWidget
+	gamesStack    *widgets.QStackedWidget
+	games         []*GameView
+	parentWidget  *widgets.QGroupBox
+}
 
-	gameManagerLayout.AddLayout(topbarLayout, 1)
-	gameManagerLayout.AddLayout(gameStackLayout, 1)
-	view.gamesStackWidget = view.CreateGamesWidget()
-	gameDropdown := view.CreateGameDropdownsWidget()
+func (view *GameManagerView) createGamesWidget() *widgets.QStackedWidget {
+	gamesStack := widgets.NewQStackedWidget(view.UIWidget)
+	for _, gameView := range view.games {
+		view.gamesStack.AddWidget(gameView.UIWidget)
+	}
+	return gamesStack
+}
 
-	topbarLayout.AddWidget(gameDropdown, 1, core.Qt__AlignAbsolute)
-	gameStackLayout.AddWidget(view.gamesStackWidget)
-	gameManager.SetStyleSheet(CreateGameManagerStyleSheet())
-	return gameManager
+func (view *GameManagerView) createGameManagerView() {
+	//Set UI widget and Layout
+	view.UILayout = widgets.NewQVBoxLayout()
+	view.UIWidget = widgets.NewQGroupBox(view.parentWidget)
+	//Create Child Widgets
+	view.gamesStack = view.createGamesWidget()
+	view.gamesDropdown = CreateNewGamesDropdownWidget(view.DropdownWidth, view.games)
+	//Add Child Widget
+	view.UILayout.AddWidget(view.gamesDropdown.UIWidget, 0, core.Qt__AlignTop)
+	view.UILayout.AddWidget(view.gamesStack, 0, core.Qt__AlignTop)
+	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
+	view.UIWidget.SetLayout(view.UILayout)
+}
+
+func CreateNewGameManagerView(dropdownWidth int, games []*GameView, parentWidget *widgets.QGroupBox) *GameManagerView {
+	view := GameManagerView{}
+	view.DropdownWidth = dropdownWidth
+	view.games = games
+	view.parentWidget = parentWidget
+	view.createGameManagerView()
+	return &view
 }

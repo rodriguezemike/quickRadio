@@ -35,3 +35,6 @@ const DEFAULT_AWAY_PREFIX = "away"
 
 //Tied prefix
 const DEFAULT_TIED_PREFIX = "tied"
+
+//Verses Consts
+const DEFAULT_VERSES_STRING = " VS "

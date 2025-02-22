@@ -23,7 +23,11 @@ type GamestateAndStatsWidget struct {
 	updateMap      map[string]bool
 }
 
-//All updated func needs to be added
+// All updated func needs to be added
+func (widget *GamestateAndStatsWidget) ClearUpdateMap() {
+	widget.updateMap = nil
+	widget.updateMap = map[string]bool{}
+}
 
 func (widget *GamestateAndStatsWidget) setDynamicUIObjectName(prefix string, suffix string, delimiter string) string {
 	return prefix + delimiter + suffix

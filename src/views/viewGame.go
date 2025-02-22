@@ -2,6 +2,7 @@ package views
 
 import (
 	"quickRadio/controllers"
+	"quickRadio/models"
 	"sync"
 
 	"github.com/therecipe/qt/core"
@@ -19,6 +20,16 @@ type GameView struct {
 	parentWidget            *widgets.QGroupBox
 	radioLock               *sync.Mutex
 	gameController          *controllers.GameController
+}
+
+func (view *GameView) ClearUpdateMaps() {
+	view.AwayTeamWidget.ClearUpdateMap()
+	view.HomeTeamWidget.ClearUpdateMap()
+	view.GamestateAndStatsWidget.ClearUpdateMap()
+}
+
+func (view *GameView) GetGameName() string {
+	return view.gameController.HomeTeamController.Team.Abbrev + models.DEFAULT_VERSES_STRING + view.gameController.AwayTeamController.Team.Abbrev
 }
 
 func (view *GameView) createGameView() {
@@ -40,6 +51,7 @@ func (view *GameView) createGameView() {
 	view.UIWidget.SetLayout(view.UILayout)
 }
 
+// Mainly for testing purposes
 func (view *GameView) createDefaultGameView() {
 	view.gameController = controllers.CreateNewDefaultGameController()
 	//Set UI widget and Layout
