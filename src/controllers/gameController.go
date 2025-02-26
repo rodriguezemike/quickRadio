@@ -28,6 +28,14 @@ func (controller *GameController) EmptyDirectory() {
 	quickio.EmptyDirectory(controller.GameDirectory)
 }
 
+func (controller *GameController) IsLive() bool {
+	return controller.gameDataObject.GameState == "LIVE"
+}
+
+func (controller *GameController) IsFuture() bool {
+	return controller.gameDataObject.GameState == "FUT"
+}
+
 func (controller *GameController) GetGamestateString() string {
 	if controller.gameDataObject.GameState == "LIVE" || controller.gameDataObject.GameState == "CRIT" {
 		if controller.gameDataObject.Clock.InIntermission {
@@ -210,6 +218,7 @@ func (controller *GameController) ConsumeGameData() {
 		}(controllers[i])
 	}
 	workGroup.Wait()
+	controller.EmptyDirectory()
 	controller.dataConsumed = true
 }
 

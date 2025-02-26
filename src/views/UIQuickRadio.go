@@ -1,121 +1,88 @@
-//go:build ignore
-// +build ignore
-
 package views
 
 import (
+	"context"
 	"os"
-	"quickRadio/controllers"
 	"quickRadio/quickio"
-	"strings"
+	"sync"
 
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/widgets"
 )
 
-type QuickRadioView struct {
-	LabelTimer              int
-	activeGameDataUpdateMap map[string]bool
-	gameController          *controllers.GameController
-	radioController         *controllers.RadioController
-	app                     *widgets.QApplication
-	window                  *widgets.QMainWindow
-	gameManagerWidget       *widgets.QGroupBox
-	gamesStackWidget        *widgets.QStackedWidget
-	activeGameWidget        *widgets.QWidget
-	activeGameIndex         int
+type QuickRadioUI struct {
+	CentralWidget   *widgets.QGroupBox
+	CentralLayout   *widgets.QVBoxLayout
+	LandingLinks    []string
+	LabelTimer      int
+	DropdownWidth   int
+	app             *widgets.QApplication
+	window          *widgets.QMainWindow
+	gameManagerView *GameManagerView
+	radioLock       *sync.Mutex
+	ctx             context.Context
+	cancelCallback  context.CancelFunc
 }
 
-func (view *QuickRadioView) GetTeamDataFromUIObjectName(objectName string, delimiter string) (string, string) {
-	objectNameSplit := strings.Split(objectName, delimiter)
-	return objectNameSplit[0], objectNameSplit[1]
-}
-
-func (view *QuickRadioView) CreateDataLabel(name string, data string, genercenterLink string, gameWidget *widgets.QGroupBox) *widgets.QLabel {
-	label := widgets.NewQLabel2(data, gameWidget, core.Qt__Widget)
-	label.SetObjectName(name)
-	label.SetAccessibleDescription(genercenterLink)
-	font := label.Font()
-	font.SetPointSize(32)
-	label.SetFont(font)
-	label.SetStyleSheet(CreateLabelStylesheet())
-	label.ConnectTimerEvent(func(event *core.QTimerEvent) {
-		if label.IsVisible() {
-			val, ok := view.activeGameDataUpdateMap[label.ObjectName()]
-			if !ok || !val {
-				if strings.Contains(label.ObjectName(), "SCORE") {
-					teamAbbrev, dataLabel := view.GetTeamDataFromUIObjectName(label.ObjectName(), "_")
-					label.SetText(view.gameController.GetUIDataFromFilename(teamAbbrev, dataLabel, "0"))
-				} else if strings.Contains(label.ObjectName(), "GAMESTATE") {
-					label.SetText(view.gameController.GetActiveGamestateFromFile())
-				}
-				label.Repaint()
-				view.activeGameDataUpdateMap[label.ObjectName()] = true
-			}
-		}
-	})
-	label.StartTimer(view.LabelTimer, core.Qt__PreciseTimer)
-	return label
-}
-
-func (view *QuickRadioView) CreateGamesWidget() *widgets.QStackedWidget {
-	gameStackWidget := widgets.NewQStackedWidget(view.gameManagerWidget)
-	for i, gameDataObject := range view.gameController.GetGameDataObjects() {
-		gameWidget := view.CreateGameWidgetFromGameDataObject(gameDataObject, view.gameController.Landinglinks[i])
-		gameStackWidget.AddWidget(gameWidget)
-	}
-	gameStackWidget.SetCurrentIndex(view.activeGameIndex)
-	return gameStackWidget
-}
-
-func (view *QuickRadioView) CreateLoadingScreen() *widgets.QSplashScreen {
-	pixmap := view.getTeamPixmap("NHL")
+func (ui *QuickRadioUI) CreateLoadingScreen() *widgets.QSplashScreen {
+	pixmap := GetTeamPixmap("NHL")
 	splash := widgets.NewQSplashScreen(pixmap, core.Qt__Widget)
 	return splash
 }
 
-func (view *QuickRadioView) RunLoadingScream() {
-	loadingScreen := view.CreateLoadingScreen()
+func (ui *QuickRadioUI) KillAllTheFun() {
+	//Here we want to ensure the producer gorountine is canceled
+	ui.cancelCallback()
+	//Call all views deconstructors - For now just set to nil.
+	//Empty all tmp directories
+	quickio.EmptyTmpFolder()
+	//Exit and set all pointers to nil
+	ui.app.CloseAllWindows()
+	ui.app.Exit(0)
+	//Set to nil and deconstruct any qt objects due to bindings
+	ui.app = nil
+	ui.window = nil
+	ui.CentralLayout = nil
+	ui.CentralWidget = nil
+	ui.gameManagerView = nil
+	ui.radioLock = nil
+}
+
+func (ui *QuickRadioUI) CreateAndRunApp() {
+	var gameViews []*GameView
+	ui.radioLock = &sync.Mutex{}
+	quickio.EmptyTmpFolder()
+	ui.app = widgets.NewQApplication(len(os.Args), os.Args)
+	ui.CentralLayout = widgets.NewQVBoxLayout()
+	ui.CentralWidget = widgets.NewQGroupBox(nil)
+	ui.app.SetWindowIcon(GetTeamIcon("NHLF"))
+	ui.window = widgets.NewQMainWindow(nil, 0)
+	loadingScreen := ui.CreateLoadingScreen()
 	loadingScreen.Show()
-	view.gameController = controllers.NewGameController()
-	view.gameManagerWidget = view.CreateGameManagerWidget()
-	view.window.SetCentralWidget(view.gameManagerWidget)
+	for _, link := range ui.LandingLinks {
+		gameViews = append(gameViews, CreateNewGameView(link, ui.CentralWidget, ui.radioLock, ui.LabelTimer))
+	}
+	ui.ctx, ui.cancelCallback = context.WithCancel(context.Background())
+	ui.gameManagerView = CreateNewGameManagerView(ui.DropdownWidth, gameViews, ui.CentralWidget)
+	//ui.gameManagerView.GoUpdateGames(ui.ctx)
+	ui.app.SetApplicationDisplayName("QuickRadio")
+	ui.app.ConnectAboutToQuit(func() {
+		ui.KillAllTheFun()
+	})
+	ui.app.ConnectDestroyQApplication(func() {
+		ui.KillAllTheFun()
+	})
+	ui.CentralLayout.AddWidget(ui.gameManagerView.UIWidget, 0, core.Qt__AlignTop)
+	ui.CentralWidget.SetLayout(ui.CentralLayout)
+	ui.window.SetCentralWidget(ui.CentralWidget)
 	loadingScreen.Finish(nil)
+	ui.window.Show()
+	ui.app.Exec()
 }
 
-func (view *QuickRadioView) KillAllTheFun() {
-	//Kill ALL THE FUN.
-	view.gameController.KillFun()
-	view.radioController.KillFun()
-	view.gameController = nil
-	view.radioController = nil
-	quickio.EmptyTmpFolder()
-	//Stop all go rountines
-	//Delete All the things
-	//Close.
-}
-
-func (view *QuickRadioView) CreateAndRunApp() {
-	quickio.EmptyTmpFolder()
-	view.app = widgets.NewQApplication(len(os.Args), os.Args)
-	view.app.SetApplicationDisplayName("QuickRadio")
-	view.app.ConnectAboutToQuit(func() {
-		view.KillAllTheFun()
-	})
-	view.app.ConnectDestroyQApplication(func() {
-		view.KillAllTheFun()
-	})
-	view.app.SetWindowIcon(view.GetTeamIcon("NHLF"))
-	view.window = widgets.NewQMainWindow(nil, 0)
-	view.RunLoadingScream()
-
-	view.window.Show()
-	view.app.Exec()
-}
-
-func NewQuickRadioView() *QuickRadioView {
-	var view QuickRadioView
-	view.LabelTimer = 3000
-	view.activeGameDataUpdateMap = map[string]bool{}
-	return &view
+func CreateNewQuckRadioUI() *QuickRadioUI {
+	var ui QuickRadioUI
+	ui.LabelTimer = 3000
+	ui.LandingLinks = quickio.GetGameLandingLinks()
+	return &ui
 }

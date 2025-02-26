@@ -22,6 +22,7 @@ func (widget *GamesDropdownWidget) createGamesDropdownWidget() {
 	widget.UIWidget.AddItems(widget.gameNames)
 	widget.UIWidget.ConnectCurrentIndexChanged(func(index int) {
 		//Sort out update maps.
+		go widget.games[index].gameController.ProduceGameData()
 		widget.games[index].ClearUpdateMaps()
 		widget.parentWidget.SetCurrentIndex(index)
 	})

@@ -25,6 +25,20 @@ type TeamWidget struct {
 	updateMap       map[string]bool
 }
 
+func GetTeamPixmap(teamAbbrev string) *gui.QPixmap {
+	teamStringSlice := []string{teamAbbrev, "light.svg"}
+	teamLogoFilename := strings.Join(teamStringSlice, "_")
+	teamLogoPath := quickio.GetLogoPath(teamLogoFilename)
+	teamPixmap := gui.NewQPixmap3(teamLogoPath, "svg", core.Qt__AutoColor)
+	return teamPixmap
+}
+
+func GetTeamIcon(teamAbbrev string) *gui.QIcon {
+	teamPixmap := GetTeamPixmap(teamAbbrev)
+	teamIcon := gui.NewQIcon2(teamPixmap)
+	return teamIcon
+}
+
 // All updated func needs to be added
 func (widget *TeamWidget) ClearUpdateMap() {
 	widget.updateMap = nil

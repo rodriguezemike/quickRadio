@@ -1,12 +1,17 @@
 package views
 
 import (
+	"context"
+	"sync"
+	"time"
+
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/widgets"
 )
 
 type GameManagerView struct {
 	DropdownWidth int
+	LabelTimer    int
 	UIWidget      *widgets.QGroupBox
 	UILayout      *widgets.QVBoxLayout
 	gamesDropdown *GamesDropdownWidget
@@ -15,10 +20,37 @@ type GameManagerView struct {
 	parentWidget  *widgets.QGroupBox
 }
 
+func (view *GameManagerView) GoUpdateGames(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			var gamesToUpdate []*GameView
+			for _, game := range view.games {
+				if game.gameController.IsLive() || game.gameController.IsFuture() {
+					gamesToUpdate = append(gamesToUpdate, game)
+				}
+			}
+			var workGroup sync.WaitGroup
+			for i := range view.games {
+				workGroup.Add(i)
+				go func(game *GameView) {
+					defer workGroup.Done()
+					game.gameController.ProduceGameData()
+					game.ClearUpdateMaps()
+				}(gamesToUpdate[i])
+			}
+			workGroup.Wait()
+			time.Sleep(time.Duration(view.LabelTimer-1000) * time.Second)
+		}
+	}
+}
+
 func (view *GameManagerView) createGamesWidget() *widgets.QStackedWidget {
 	gamesStack := widgets.NewQStackedWidget(view.UIWidget)
 	for _, gameView := range view.games {
-		view.gamesStack.AddWidget(gameView.UIWidget)
+		gamesStack.AddWidget(gameView.UIWidget)
 	}
 	return gamesStack
 }
