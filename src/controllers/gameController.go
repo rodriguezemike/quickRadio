@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Should only have 1 game in here, the Manager Controller can handle the list.
@@ -49,9 +51,10 @@ func (controller *GameController) GetGamestateString() string {
 		}
 	} else {
 		if controller.gameDataObject.GameState == "FUT" {
-			return controller.gameDataObject.GameState + " - " +
-				controller.gameDataObject.GameDate + " - " + controller.gameDataObject.StartTimeUTC +
-				controller.gameDataObject.Venue.Default + ", " + controller.gameDataObject.VenueLocation.Default
+			startTime, err := time.Parse(time.RFC3339, controller.gameDataObject.StartTimeUTC)
+			radioErrors.ErrorLog(err)
+			return "Upcoming" + "\n" + "Game Time: " + controller.gameDataObject.GameDate + " @ " + fmt.Sprint(startTime.UTC().Local().Format("03:04PM")) + "\n" +
+				"Live from " + controller.gameDataObject.Venue.Default + ", " + controller.gameDataObject.VenueLocation.Default
 		} else {
 			if controller.gameDataObject.GameState != "" {
 				return controller.gameDataObject.GameState
@@ -63,12 +66,26 @@ func (controller *GameController) GetGamestateString() string {
 }
 
 func (controller *GameController) GetTeamGameStats() []byte {
-	tameGameStats, _ := json.MarshalIndent(controller.gameVersesDataObject.GameInfo.TeamGameStats, "", " ")
-	return tameGameStats
+	teamGameStats, _ := json.MarshalIndent(controller.gameVersesDataObject.GameInfo.TeamGameStats, "", " ")
+	return teamGameStats
+}
+
+func (controller *GameController) GetTeamSeasonStat() []byte {
+	teamSeasonStats, _ := json.MarshalIndent(controller.gameVersesDataObject.GameInfo.TeamSeasonStats, "", " ")
+	return teamSeasonStats
+}
+
+func (controller *GameController) GetSeriesWinsStats() []byte {
+	seriesWins, _ := json.MarshalIndent(controller.gameVersesDataObject.SeasonSeriesWins, "", " ")
+	return seriesWins
 }
 
 func (controller *GameController) GetTeamGameStatsObjects() []models.TeamGameStat {
 	return controller.gameVersesDataObject.GameInfo.TeamGameStats
+}
+
+func (controller *GameController) GetTeamSeasonStatObject() models.TeamSeasonStats {
+	return controller.gameVersesDataObject.GameInfo.TeamSeasonStats
 }
 
 func (controller *GameController) GetGamestatePath() string {
@@ -181,18 +198,23 @@ func (controller *GameController) getAwayStatPath(gameStat *models.TeamGameStat)
 func (controller *GameController) ProduceGameData() {
 	var workGroup sync.WaitGroup
 	var gameStatWorkGroup sync.WaitGroup
+	workGroupCounter := 0
+	gameStatWorkGroupCounter := 0
 	controllers := []TeamController{*controller.HomeTeamController, *controller.AwayTeamController}
 	teamGameStatObjects := controller.GetTeamGameStatsObjects()
-	for i := 0; i < 2; i++ {
-		workGroup.Add(i)
+	for i := range controllers {
+		workGroup.Add(1)
+		workGroupCounter += 1
 		go func(teamController TeamController) {
 			defer workGroup.Done()
 			quickio.TouchFile(teamController.GetScorePath())
+			quickio.TouchFile(teamController.GetSOGPath())
 			quickio.WriteFile(teamController.GetTeamOnIcePath(), string(teamController.getTeamOnIceJson()))
 		}(controllers[i])
 	}
-	for i := 0; i < len(teamGameStatObjects); i++ {
-		gameStatWorkGroup.Add(i)
+	for i := range teamGameStatObjects {
+		gameStatWorkGroup.Add(1)
+		gameStatWorkGroupCounter += 1
 		go func(gameStat models.TeamGameStat) {
 			defer gameStatWorkGroup.Done()
 			quickio.TouchFile(controller.getGameStatPath(&gameStat))
@@ -200,8 +222,12 @@ func (controller *GameController) ProduceGameData() {
 			quickio.TouchFile(controller.getAwayStatPath(&gameStat))
 		}(teamGameStatObjects[i])
 	}
-	workGroup.Wait()
-	gameStatWorkGroup.Wait()
+	if workGroupCounter > 0 {
+		workGroup.Wait()
+	}
+	if gameStatWorkGroupCounter > 0 {
+		gameStatWorkGroup.Wait()
+	}
 	gameStatePath := controller.GetGamestatePath()
 	quickio.WriteFile(gameStatePath, controller.GetGamestateString())
 	controller.dataConsumed = false
@@ -241,7 +267,7 @@ func CreateNewGameController(landingLink string) *GameController {
 	controller.Landinglink = landingLink
 	controller.GameDirectory = filepath.Join(quickio.GetQuickTmpFolder(), strconv.Itoa(gdo.Id))
 	controller.HomeTeamController = CreateNewTeamController(sweaters, landingLink, &gdo, &gvd, true, controller.GameDirectory)
-	controller.AwayTeamController = CreateNewTeamController(sweaters, landingLink, &gdo, &gvd, true, controller.GameDirectory)
+	controller.AwayTeamController = CreateNewTeamController(sweaters, landingLink, &gdo, &gvd, false, controller.GameDirectory)
 	controller.gameDataObject = &gdo
 	controller.gameVersesDataObject = &gvd
 	controller.dataConsumed = false

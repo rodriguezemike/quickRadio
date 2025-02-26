@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"path/filepath"
 	"quickRadio/models"
@@ -28,6 +29,10 @@ func (controller *TeamController) GetScorePath() string {
 	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_SCORE."+strconv.Itoa(controller.Team.Score))
 }
 
+func (controller *TeamController) GetSOGPath() string {
+	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_SOG."+strconv.Itoa(controller.Team.Sog))
+}
+
 func (controller *TeamController) GetStatsPath() string {
 	return filepath.Join(controller.teamDirectory, "STATS.json")
 }
@@ -40,6 +45,7 @@ func (controller *TeamController) GetUIDataFromFilename(dataLabel string, defaul
 	files, _ := os.ReadDir(controller.teamDirectory)
 	for _, f := range files {
 		info, _ := f.Info()
+		log.Println("dataLabel", dataLabel)
 		if strings.Contains(info.Name(), controller.Team.Abbrev) && strings.Contains(info.Name(), dataLabel) {
 			return strings.Split(info.Name(), ".")[1]
 		}
@@ -80,7 +86,7 @@ func CreateNewTeamController(sweaters map[string]models.Sweater, landingLink str
 		controller.teamDirectory = filepath.Join(gameDirectory, gdo.HomeTeam.Abbrev)
 		controller.Team = &gdo.HomeTeam
 	} else {
-		sweater := sweaters[gdo.HomeTeam.Abbrev]
+		sweater := sweaters[gdo.AwayTeam.Abbrev]
 		controller.Sweater = &sweater
 		controller.TeamOnIce = &gdo.Summary.IceSurface.AwayTeam
 		controller.teamDirectory = filepath.Join(gameDirectory, gdo.AwayTeam.Abbrev)

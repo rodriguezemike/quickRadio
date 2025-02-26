@@ -27,14 +27,14 @@ func (view *GameManagerView) GoUpdateGames(ctx context.Context) {
 			return
 		default:
 			var gamesToUpdate []*GameView
+			var workGroup sync.WaitGroup
 			for _, game := range view.games {
 				if game.gameController.IsLive() || game.gameController.IsFuture() {
 					gamesToUpdate = append(gamesToUpdate, game)
 				}
 			}
-			var workGroup sync.WaitGroup
 			for i := range view.games {
-				workGroup.Add(i)
+				workGroup.Add(1)
 				go func(game *GameView) {
 					defer workGroup.Done()
 					game.gameController.ProduceGameData()
@@ -42,7 +42,7 @@ func (view *GameManagerView) GoUpdateGames(ctx context.Context) {
 				}(gamesToUpdate[i])
 			}
 			workGroup.Wait()
-			time.Sleep(time.Duration(view.LabelTimer-1000) * time.Second)
+			time.Sleep(time.Duration(view.LabelTimer-1000) * time.Millisecond)
 		}
 	}
 }
@@ -61,7 +61,7 @@ func (view *GameManagerView) createGameManagerView() {
 	view.UIWidget = widgets.NewQGroupBox(view.parentWidget)
 	//Create Child Widgets
 	view.gamesStack = view.createGamesWidget()
-	view.gamesDropdown = CreateNewGamesDropdownWidget(view.DropdownWidth, view.games)
+	view.gamesDropdown = CreateNewGamesDropdownWidget(view.DropdownWidth, view.games, view.gamesStack)
 	//Add Child Widget
 	view.UILayout.AddWidget(view.gamesDropdown.UIWidget, 0, core.Qt__AlignTop)
 	view.UILayout.AddWidget(view.gamesStack, 0, core.Qt__AlignTop)
@@ -69,11 +69,12 @@ func (view *GameManagerView) createGameManagerView() {
 	view.UIWidget.SetLayout(view.UILayout)
 }
 
-func CreateNewGameManagerView(dropdownWidth int, games []*GameView, parentWidget *widgets.QGroupBox) *GameManagerView {
+func CreateNewGameManagerView(dropdownWidth int, games []*GameView, parentWidget *widgets.QGroupBox, labelTimer int) *GameManagerView {
 	view := GameManagerView{}
 	view.DropdownWidth = dropdownWidth
 	view.games = games
 	view.parentWidget = parentWidget
+	view.LabelTimer = labelTimer
 	view.createGameManagerView()
 	return &view
 }

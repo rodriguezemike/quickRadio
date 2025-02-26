@@ -63,8 +63,7 @@ func (ui *QuickRadioUI) CreateAndRunApp() {
 		gameViews = append(gameViews, CreateNewGameView(link, ui.CentralWidget, ui.radioLock, ui.LabelTimer))
 	}
 	ui.ctx, ui.cancelCallback = context.WithCancel(context.Background())
-	ui.gameManagerView = CreateNewGameManagerView(ui.DropdownWidth, gameViews, ui.CentralWidget)
-	//ui.gameManagerView.GoUpdateGames(ui.ctx)
+	ui.gameManagerView = CreateNewGameManagerView(ui.DropdownWidth, gameViews, ui.CentralWidget, ui.LabelTimer)
 	ui.app.SetApplicationDisplayName("QuickRadio")
 	ui.app.ConnectAboutToQuit(func() {
 		ui.KillAllTheFun()
@@ -77,12 +76,14 @@ func (ui *QuickRadioUI) CreateAndRunApp() {
 	ui.window.SetCentralWidget(ui.CentralWidget)
 	loadingScreen.Finish(nil)
 	ui.window.Show()
+	go ui.gameManagerView.GoUpdateGames(ui.ctx)
 	ui.app.Exec()
 }
 
 func CreateNewQuckRadioUI() *QuickRadioUI {
 	var ui QuickRadioUI
-	ui.LabelTimer = 3000
+	ui.LabelTimer = 5000
+	ui.DropdownWidth = 600
 	ui.LandingLinks = quickio.GetGameLandingLinks()
 	return &ui
 }

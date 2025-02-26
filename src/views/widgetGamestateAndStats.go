@@ -48,6 +48,7 @@ func (widget *GamestateAndStatsWidget) createDynamicDataLabel(name string, data 
 	label.SetAccessibleDescription(gamecenterLink)
 	label.SetProperty("label-type", core.NewQVariant12("dynamic"))
 	label.SetStyleSheet(CreateDynamicDataLabelStylesheet(fontSize))
+	label.SetWordWrap(true)
 	label.ConnectTimerEvent(func(event *core.QTimerEvent) {
 		if label.IsVisible() {
 			val, ok := widget.updateMap[label.ObjectName()]

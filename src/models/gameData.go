@@ -102,6 +102,25 @@ func CreateDefaultTiedStat() *TeamGameStat {
 	return &stat
 }
 
+type TeamSeasonData struct {
+	PpPctg                    float32 `json:"ppPctg"`
+	PkPctg                    float32 `json:"pkPctg"`
+	FaceoffWinningPctg        float32 `json:"faceoffWinningPctg"`
+	GoalsForPerGamePlayed     float32 `json:"goalsAgainstPerGamePlayed"`
+	PpPctgRank                int     `json:"ppPctgRank"`
+	PkPctgRank                int     `json:"pkPctgRank"`
+	FaceoffWinningPctgRank    int     `json:"faceoffWinningPctgRank"`
+	GoalsForPerGamePlayedRank int     `json:"goalsForPerGamePlayedRank"`
+	GoalsAgainstAverageRank   int     `json:"goalsAgainstAverageRank"`
+}
+
+type TeamSeasonStats struct {
+	ContextLabel  string         `json:"contextLabel"`
+	ContextSeason string         `json:"contextSeason"`
+	AwayTeam      TeamSeasonData `json:"awayTeam"`
+	HomeTeam      TeamSeasonData `json:"homeTeam"`
+}
+
 type GameVersesData struct {
 	SeasonSeries []struct {
 		Id                int    `json:"id"`
@@ -190,8 +209,9 @@ type GameVersesData struct {
 			Away int `json:"away"`
 			Home int `json:"home"`
 		} `json:"shotsByPeriod"`
-		TeamGameStats []TeamGameStat `json:"teamGameStats"`
-		GameReports   struct {
+		TeamGameStats   []TeamGameStat  `json:"teamGameStats"`
+		TeamSeasonStats TeamSeasonStats `json:"teamSeasonStats"`
+		GameReports     struct {
 			GameSummary       string `json:"gameSummary"`
 			EventSummary      string `json:"eventSummary"`
 			PlayByPlay        string `json:"playByPlay"`
