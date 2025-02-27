@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"log"
 	"os"
 	"path/filepath"
 	"quickRadio/models"
@@ -55,7 +54,6 @@ func (controller *TeamController) GetUIDataFromFilename(dataLabel string, defaul
 	files, _ := os.ReadDir(controller.teamDirectory)
 	for _, f := range files {
 		info, _ := f.Info()
-		log.Println("dataLabel", dataLabel)
 		if strings.Contains(info.Name(), controller.Team.Abbrev) && strings.Contains(info.Name(), dataLabel) {
 			return strings.Split(info.Name(), ".")[1]
 		}

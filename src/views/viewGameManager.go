@@ -2,7 +2,6 @@ package views
 
 import (
 	"context"
-	"log"
 	"sync"
 	"time"
 
@@ -34,7 +33,6 @@ func (view *GameManagerView) GoUpdateGames(ctx context.Context) {
 					gamesToUpdate = append(gamesToUpdate, game)
 				}
 			}
-			log.Println(view.games)
 			for i := range gamesToUpdate {
 				workGroup.Add(1)
 				go func(game *GameView) {

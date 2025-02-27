@@ -39,10 +39,19 @@ func GetTeamIcon(teamAbbrev string) *gui.QIcon {
 	return teamIcon
 }
 
-// All updated func needs to be added
 func (widget *TeamWidget) ClearUpdateMap() {
-	widget.updateMap = nil
-	widget.updateMap = map[string]bool{}
+	for key, _ := range widget.updateMap {
+		widget.updateMap[key] = false
+	}
+}
+
+func (widget *TeamWidget) IsUpdated() bool {
+	for _, v := range widget.updateMap {
+		if !v {
+			return false
+		}
+	}
+	return true
 }
 
 func (widget *TeamWidget) RadioLockReferenceTest(lock *sync.Mutex) bool {
@@ -112,6 +121,7 @@ func (widget *TeamWidget) createDynamicDataLabel(name string, data string, gamec
 			}
 		}
 	})
+	widget.updateMap[label.ObjectName()] = false
 	label.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
 	log.Println("Dynamic Label stylesheet", label.StyleSheet())
 	return label
@@ -172,6 +182,7 @@ func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLi
 		}
 		if onCheck {
 			if radioLink != "" {
+				//Move to a single RadioController and not set it to nil.
 				widget.radioController = controllers.NewRadioControllerWithLock(radioLink, teamAbbrev, radioSampleRate, widget.radioLock)
 				go widget.radioController.PlayRadio()
 			}

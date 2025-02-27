@@ -200,7 +200,6 @@ func (controller *GameController) getAwayStatPath(gameStat *models.TeamGameStat)
 }
 
 func (controller *GameController) updateGameData() {
-	log.Println("UPDATING ", controller.Landinglink)
 	gdo := quickio.GetGameDataObject(controller.Landinglink)
 	gvd := quickio.GetGameVersesData(controller.Landinglink)
 	controller.gameDataObject = nil
@@ -214,6 +213,7 @@ func (controller *GameController) updateGameData() {
 }
 
 func (controller *GameController) ProduceGameData() {
+	log.Println("GameController::ProduceGameData::", controller.HomeTeamController.Team.Abbrev, " VS ", controller.AwayTeamController.Team.Abbrev)
 	var workGroup sync.WaitGroup
 	var gameStatWorkGroup sync.WaitGroup
 	workGroupCounter := 0
@@ -225,6 +225,7 @@ func (controller *GameController) ProduceGameData() {
 		workGroupCounter += 1
 		go func(teamController TeamController) {
 			defer workGroup.Done()
+			teamController.EmptyDirectory()
 			quickio.TouchFile(teamController.GetScorePath())
 			quickio.TouchFile(teamController.GetSOGPath())
 			quickio.WriteFile(teamController.GetTeamOnIcePath(), string(teamController.getTeamOnIceJson()))
@@ -254,10 +255,10 @@ func (controller *GameController) ProduceGameData() {
 
 func (controller *GameController) ConsumeGameData() {
 	var workGroup sync.WaitGroup
-	log.Println("In consumed Game Data")
+	log.Println("GameController::ConsumeGameData::", controller.HomeTeamController.Team.Abbrev, " VS ", controller.AwayTeamController.Team.Abbrev)
 	controllers := []TeamController{*controller.HomeTeamController, *controller.AwayTeamController}
 	for i := range controllers {
-		workGroup.Add(i)
+		workGroup.Add(1)
 		go func(teamController TeamController) {
 			defer workGroup.Done()
 			teamController.EmptyDirectory()
@@ -291,6 +292,5 @@ func CreateNewGameController(landingLink string) *GameController {
 	controller.gameDataObject = &gdo
 	controller.gameVersesDataObject = &gvd
 	controller.dataConsumed = false
-	log.Println("gameController::NewGameController::controller ", controller)
 	return &controller
 }

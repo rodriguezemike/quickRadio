@@ -18,15 +18,24 @@ type GamestateAndStatsWidget struct {
 	LabelTimer     int
 	UIWidget       *widgets.QGroupBox
 	UILayout       *widgets.QVBoxLayout
-	gameWidget     *widgets.QGroupBox
+	parentWidget   *widgets.QGroupBox
 	gameController *controllers.GameController
 	updateMap      map[string]bool
 }
 
-// All updated func needs to be added
 func (widget *GamestateAndStatsWidget) ClearUpdateMap() {
-	widget.updateMap = nil
-	widget.updateMap = map[string]bool{}
+	for key, _ := range widget.updateMap {
+		widget.updateMap[key] = false
+	}
+}
+
+func (widget *GamestateAndStatsWidget) IsUpdated() bool {
+	for _, v := range widget.updateMap {
+		if !v {
+			return false
+		}
+	}
+	return true
 }
 
 func (widget *GamestateAndStatsWidget) setDynamicUIObjectName(prefix string, suffix string, delimiter string) string {
@@ -158,7 +167,7 @@ func (widget *GamestateAndStatsWidget) createTeamGameStatsLayout() *widgets.QVBo
 func (widget *GamestateAndStatsWidget) createGamestateAndStatsWidget() {
 	//Create main layout and widget
 	gamestateAndStatsLayout := widgets.NewQVBoxLayout()
-	gamestateAndStatsWidget := widgets.NewQGroupBox(widget.gameWidget)
+	gamestateAndStatsWidget := widgets.NewQGroupBox(widget.parentWidget)
 	gamestateAndStatsWidget.SetProperty("widget-type", core.NewQVariant12("gamestatsAndGamestate"))
 	//Create Child layouts
 	gamestateLayout := widget.createGamestateLayout()
@@ -181,7 +190,7 @@ func CreateNewGamestateAndStatsWidget(labelTimer int, controller *controllers.Ga
 	widget.updateMap = map[string]bool{}
 	widget.LabelTimer = labelTimer
 	widget.gameController = controller
-	widget.gameWidget = gameWidget
+	widget.parentWidget = gameWidget
 	widget.createGamestateAndStatsWidget()
 	return &widget
 }
