@@ -122,7 +122,9 @@ func (controller *RadioController) StopRadio(teamAbbrev string) {
 }
 
 func (controller *RadioController) PlayRadio() {
+	log.Println("TRY LOCK OUT OF IF ", controller.radiolock.TryLock())
 	if controller.radiolock.TryLock() {
+		log.Println("TRY LOCK IN IF ", controller.radiolock.TryLock())
 		controller.initalPlayback()
 		time.Sleep(time.Duration(controller.NormalSleepInterval) * time.Second)
 		for {

@@ -38,19 +38,23 @@ func (controller *GameController) IsFuture() bool {
 	return controller.gameDataObject.GameState == "FUT"
 }
 
+func (controller *GameController) IsPregame() bool {
+	return controller.gameDataObject.GameState == "PRE"
+}
+
 func (controller *GameController) GetGamestateString() string {
 	if controller.gameDataObject.GameState == "LIVE" || controller.gameDataObject.GameState == "CRIT" {
-		if controller.gameDataObject.Clock.InIntermission {
+		if !controller.gameDataObject.Clock.InIntermission {
 			return controller.gameDataObject.GameState + " - " +
 				controller.gameDataObject.Venue.Default + ", " + controller.gameDataObject.VenueLocation.Default +
-				" - " + "P" + strconv.Itoa(controller.gameDataObject.PeriodDescriptor.Number) + " " + controller.gameDataObject.Clock.TimeRemaining
+				"\n" + "P" + strconv.Itoa(controller.gameDataObject.PeriodDescriptor.Number) + " " + controller.gameDataObject.Clock.TimeRemaining
 		} else {
 			return controller.gameDataObject.GameState + " - " +
 				controller.gameDataObject.Venue.Default + ", " + controller.gameDataObject.VenueLocation.Default +
 				" INT " + strconv.Itoa(controller.gameDataObject.PeriodDescriptor.Number) + " " + controller.gameDataObject.Clock.TimeRemaining
 		}
 	} else {
-		if controller.gameDataObject.GameState == "FUT" {
+		if controller.IsFuture() || controller.IsPregame() {
 			startTime, err := time.Parse(time.RFC3339, controller.gameDataObject.StartTimeUTC)
 			radioErrors.ErrorLog(err)
 			return "Upcoming" + "\n" + "Game Time: " + controller.gameDataObject.GameDate + " @ " + fmt.Sprint(startTime.UTC().Local().Format("03:04PM")) + "\n" +
@@ -195,13 +199,27 @@ func (controller *GameController) getAwayStatPath(gameStat *models.TeamGameStat)
 	return filepath.Join(controller.GameDirectory, models.DEFAULT_AWAY_PREFIX+models.VALUE_DELIMITER+gameStat.Category)
 }
 
+func (controller *GameController) updateGameData() {
+	log.Println("UPDATING ", controller.Landinglink)
+	gdo := quickio.GetGameDataObject(controller.Landinglink)
+	gvd := quickio.GetGameVersesData(controller.Landinglink)
+	controller.gameDataObject = nil
+	controller.gameVersesDataObject = nil
+	controller.gameDataObject = &gdo
+	controller.gameVersesDataObject = &gvd
+	go controller.AwayTeamController.UpdateGameData(controller.gameDataObject)
+	go controller.AwayTeamController.UpdateGameVersesData(controller.gameVersesDataObject)
+	go controller.HomeTeamController.UpdateGameData(controller.gameDataObject)
+	go controller.AwayTeamController.UpdateGameVersesData(controller.gameVersesDataObject)
+}
+
 func (controller *GameController) ProduceGameData() {
 	var workGroup sync.WaitGroup
 	var gameStatWorkGroup sync.WaitGroup
 	workGroupCounter := 0
 	gameStatWorkGroupCounter := 0
+	controller.updateGameData()
 	controllers := []TeamController{*controller.HomeTeamController, *controller.AwayTeamController}
-	teamGameStatObjects := controller.GetTeamGameStatsObjects()
 	for i := range controllers {
 		workGroup.Add(1)
 		workGroupCounter += 1
@@ -212,6 +230,7 @@ func (controller *GameController) ProduceGameData() {
 			quickio.WriteFile(teamController.GetTeamOnIcePath(), string(teamController.getTeamOnIceJson()))
 		}(controllers[i])
 	}
+	teamGameStatObjects := controller.GetTeamGameStatsObjects()
 	for i := range teamGameStatObjects {
 		gameStatWorkGroup.Add(1)
 		gameStatWorkGroupCounter += 1
@@ -235,8 +254,9 @@ func (controller *GameController) ProduceGameData() {
 
 func (controller *GameController) ConsumeGameData() {
 	var workGroup sync.WaitGroup
+	log.Println("In consumed Game Data")
 	controllers := []TeamController{*controller.HomeTeamController, *controller.AwayTeamController}
-	for i := 0; i < 2; i++ {
+	for i := range controllers {
 		workGroup.Add(i)
 		go func(teamController TeamController) {
 			defer workGroup.Done()

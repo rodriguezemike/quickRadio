@@ -2,6 +2,7 @@ package views
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 
@@ -29,11 +30,12 @@ func (view *GameManagerView) GoUpdateGames(ctx context.Context) {
 			var gamesToUpdate []*GameView
 			var workGroup sync.WaitGroup
 			for _, game := range view.games {
-				if game.gameController.IsLive() || game.gameController.IsFuture() {
+				if game.gameController.IsLive() || game.gameController.IsFuture() || game.gameController.IsPregame() {
 					gamesToUpdate = append(gamesToUpdate, game)
 				}
 			}
-			for i := range view.games {
+			log.Println(view.games)
+			for i := range gamesToUpdate {
 				workGroup.Add(1)
 				go func(game *GameView) {
 					defer workGroup.Done()

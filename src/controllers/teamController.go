@@ -21,6 +21,16 @@ type TeamController struct {
 	teamDirectory  string
 }
 
+func (controller *TeamController) UpdateGameData(gdo *models.GameData) {
+	controller.gameDataObject = nil
+	controller.gameDataObject = gdo
+}
+
+func (controller *TeamController) UpdateGameVersesData(gvd *models.GameVersesData) {
+	controller.gameVersesData = nil
+	controller.gameVersesData = gvd
+}
+
 func (controller *TeamController) EmptyDirectory() {
 	quickio.EmptyDirectory(controller.teamDirectory)
 }

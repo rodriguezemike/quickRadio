@@ -64,6 +64,13 @@ func (view *GameView) createDefaultGameView() {
 	viewGroupBox.SetProperty("view-type", core.NewQVariant12("gameView"))
 	view.UILayout = viewLayout
 	view.UIWidget = viewGroupBox
+	/*
+		view.UIWidget.ConnectTimerEvent(func(event *core.QTimerEvent) {
+			//Run consume data here.
+			go view.AwayTeamWidget.C
+			go view.gameController.ConsumeGameData()
+		})
+	*/
 	//Create Child layouts
 	view.AwayTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.AwayTeamController, view.radioLock, view.UIWidget)
 	view.HomeTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.HomeTeamController, view.radioLock, view.UIWidget)
