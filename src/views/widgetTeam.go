@@ -15,14 +15,19 @@ import (
 )
 
 type TeamWidget struct {
-	LabelTimer      int
-	UIWidget        *widgets.QGroupBox
-	UILayout        *widgets.QVBoxLayout
-	parentWidget    *widgets.QGroupBox
-	teamController  *controllers.TeamController
-	radioController *controllers.RadioController
-	radioLock       *sync.Mutex
-	updateMap       map[string]bool
+	LabelTimer             int
+	QuickRadioGameView     *GameView
+	UIWidget               *widgets.QGroupBox
+	UILayout               *widgets.QVBoxLayout
+	highQualityAudioButton *widgets.QPushButton
+	lowQualityAudioButton  *widgets.QPushButton
+	radioStreamButton      *widgets.QPushButton
+	parentWidget           *widgets.QGroupBox
+	teamController         *controllers.TeamController
+	radioController        *controllers.RadioController
+	radioLock              *sync.Mutex
+	isPlaying              bool
+	updateMap              map[string]bool
 }
 
 func GetTeamPixmap(teamAbbrev string) *gui.QPixmap {
@@ -40,7 +45,7 @@ func GetTeamIcon(teamAbbrev string) *gui.QIcon {
 }
 
 func (widget *TeamWidget) ClearUpdateMap() {
-	for key, _ := range widget.updateMap {
+	for key := range widget.updateMap {
 		widget.updateMap[key] = false
 	}
 }
@@ -105,20 +110,18 @@ func (widget *TeamWidget) createDynamicDataLabel(name string, data string, gamec
 	label.SetProperty("label-type", core.NewQVariant12("dynamic"))
 	label.SetStyleSheet(CreateDynamicDataLabelStylesheet(fontSize))
 	label.ConnectTimerEvent(func(event *core.QTimerEvent) {
-		if label.IsVisible() {
-			val, ok := widget.updateMap[label.ObjectName()]
-			if !ok || !val {
-				if strings.Contains(label.ObjectName(), "SCORE") {
-					_, dataLabel := widget.getTeamDataFromUIObjectName(label.ObjectName(), "_")
-					label.SetText(widget.teamController.GetUIDataFromFilename(dataLabel, "-10"))
-					label.Repaint()
-				} else if strings.Contains(label.ObjectName(), "SOG") {
-					_, dataLabel := widget.getTeamDataFromUIObjectName(label.ObjectName(), "_")
-					label.SetText(widget.teamController.GetUIDataFromFilename(dataLabel, "-10"))
-					label.Repaint()
-				}
-				widget.updateMap[label.ObjectName()] = true
+		val, ok := widget.updateMap[label.ObjectName()]
+		if !ok || !val {
+			if strings.Contains(label.ObjectName(), "SCORE") {
+				_, dataLabel := widget.getTeamDataFromUIObjectName(label.ObjectName(), "_")
+				label.SetText(widget.teamController.GetUIDataFromFilename(dataLabel, label.Text()))
+				label.Repaint()
+			} else if strings.Contains(label.ObjectName(), "SOG") {
+				_, dataLabel := widget.getTeamDataFromUIObjectName(label.ObjectName(), "_")
+				label.SetText(widget.teamController.GetUIDataFromFilename(dataLabel, label.Text()))
+				label.Repaint()
 			}
+			widget.updateMap[label.ObjectName()] = true
 		}
 	})
 	widget.updateMap[label.ObjectName()] = false
@@ -171,38 +174,48 @@ func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLi
 	button.SetIconSize(button.FrameSize())
 	button.SetCheckable(true)
 	button.ConnectToggled(func(onCheck bool) {
-		var radioSampleRate string
-		teamAbbrev, _ = widget.getTeamDataFromUIObjectName(button.ObjectName(), "_")
-		if radioQualityButtonLow.IsChecked() {
-			radioSampleRate = strings.Split(radioQualityButtonLow.ToolTip(), " ")[0]
-		} else {
-			radioQualityButtonHigh.SetChecked(true)
-			radioQualityButtonLow.SetChecked(false)
-			radioSampleRate = strings.Split(radioQualityButtonHigh.ToolTip(), " ")[0]
-		}
-		if onCheck {
-			if radioLink != "" {
-				//Move to a single RadioController and not set it to nil.
-				widget.radioController = controllers.NewRadioControllerWithLock(radioLink, teamAbbrev, radioSampleRate, widget.radioLock)
-				go widget.radioController.PlayRadio()
+		if widget.radioLock.TryLock() {
+			var radioSampleRate string
+			teamAbbrev, _ = widget.getTeamDataFromUIObjectName(button.ObjectName(), "_")
+			if radioQualityButtonLow.IsChecked() {
+				radioSampleRate = strings.Split(radioQualityButtonLow.ToolTip(), " ")[0]
+			} else {
+				radioQualityButtonHigh.SetChecked(true)
+				radioQualityButtonLow.SetChecked(false)
+				radioSampleRate = strings.Split(radioQualityButtonHigh.ToolTip(), " ")[0]
 			}
-			button.SetStyleSheet(CreateActiveRadioStreamButtonStylesheet((widget.teamController.Sweater)))
-			radioQualityButtonHigh.SetEnabled(false)
-			radioQualityButtonLow.SetEnabled(false)
-			button.SetToolTip(fmt.Sprintf("Stop %s Radio", teamAbbrev))
-			radioQualityLabel.SetText(fmt.Sprintf("Playing - %s Radio", teamAbbrev))
-			radioQualityLabel.Repaint()
-		} else {
-			if radioLink != "" {
-				go widget.radioController.StopRadio(teamAbbrev)
-				widget.radioController = nil
+			if onCheck {
+				if radioLink != "" {
+					button.SetStyleSheet(CreateActiveRadioStreamButtonStylesheet((widget.teamController.Sweater)))
+					radioQualityButtonHigh.SetEnabled(false)
+					radioQualityButtonLow.SetEnabled(false)
+					button.SetToolTip(fmt.Sprintf("Stop %s Radio", teamAbbrev))
+					radioQualityLabel.SetText(fmt.Sprintf("Playing - %s Radio", teamAbbrev))
+					radioQualityLabel.Repaint()
+					go widget.radioController.PlayRadio(radioSampleRate)
+					widget.isPlaying = true
+					if widget.QuickRadioGameView != nil {
+						widget.QuickRadioGameView.PlayRadioMode(widget)
+					}
+				}
 			}
-			button.SetStyleSheet(CreateInactiveRadioStreamButtonStylesheet((widget.teamController.Sweater)))
-			radioQualityButtonHigh.SetEnabled(true)
-			radioQualityButtonLow.SetEnabled(true)
-			button.SetToolTip(fmt.Sprintf("Play %s Radio", teamAbbrev))
-			radioQualityLabel.SetText(fmt.Sprintf("Audio Quality - %s Radio", teamAbbrev))
-			radioQualityLabel.Repaint()
+		} else {
+			if widget.isPlaying {
+				if radioLink != "" {
+					widget.radioController.StopRadio()
+					widget.isPlaying = false
+					widget.radioLock.Unlock()
+					button.SetStyleSheet(CreateInactiveRadioStreamButtonStylesheet((widget.teamController.Sweater)))
+					radioQualityButtonHigh.SetEnabled(true)
+					radioQualityButtonLow.SetEnabled(true)
+					button.SetToolTip(fmt.Sprintf("Play %s Radio", teamAbbrev))
+					radioQualityLabel.SetText(fmt.Sprintf("Audio Quality - %s Radio", teamAbbrev))
+					radioQualityLabel.Repaint()
+					if widget.QuickRadioGameView != nil {
+						widget.QuickRadioGameView.StopRadioMode(widget)
+					}
+				}
+			}
 		}
 	})
 	log.Println(button.StyleSheet())
@@ -236,7 +249,12 @@ func (widget *TeamWidget) createRadioLayout() *widgets.QVBoxLayout {
 	internetQualityLabel := widget.createStaticDataLabel("internetQuality", fmt.Sprintf("Audio Quality - %s Radio", widget.teamController.Team.Abbrev), 9)
 	radioLayout.AddWidget(internetQualityLabel, 0, core.Qt__AlignLeft)
 	radioLayout.AddLayout(radioQualityButtonsLayout, 0)
-	radioLayout.AddWidget(widget.createTeamRadioStreamButton(widget.teamController.Team.Abbrev, widget.teamController.Team.RadioLink, radioQualityButtonLow, radioQualityButtonHigh, internetQualityLabel), 0, core.Qt__AlignCenter)
+	//create radiostrteam button
+	radioStreamButton := widget.createTeamRadioStreamButton(widget.teamController.Team.Abbrev, widget.teamController.Team.RadioLink, radioQualityButtonLow, radioQualityButtonHigh, internetQualityLabel)
+	radioLayout.AddWidget(radioStreamButton, 0, core.Qt__AlignCenter)
+	widget.highQualityAudioButton = radioQualityButtonHigh
+	widget.lowQualityAudioButton = radioQualityButtonLow
+	widget.radioStreamButton = radioStreamButton
 	return radioLayout
 }
 
@@ -273,13 +291,29 @@ func (widget *TeamWidget) createTeamWidget() {
 	log.Println("Team Widget Stylesheet ", teamGroupbox.StyleSheet())
 }
 
-func CreateNewTeamWidget(labelTimer int, controller *controllers.TeamController, radioLock *sync.Mutex, gameWidget *widgets.QGroupBox) *TeamWidget {
+func (widget *TeamWidget) DisableButtons() {
+	widget.highQualityAudioButton.SetEnabled(false)
+	widget.highQualityAudioButton.SetChecked(false)
+	widget.lowQualityAudioButton.SetEnabled(false)
+	widget.lowQualityAudioButton.SetChecked(false)
+	widget.radioStreamButton.SetEnabled(false)
+}
+
+func (widget *TeamWidget) EnableButtons() {
+	widget.highQualityAudioButton.SetEnabled(true)
+	widget.lowQualityAudioButton.SetEnabled(true)
+	widget.radioStreamButton.SetEnabled(true)
+}
+
+func CreateNewTeamWidget(labelTimer int, teamController *controllers.TeamController, radioLock *sync.Mutex, parentWidget *widgets.QGroupBox, quickRadioGameView *GameView) *TeamWidget {
 	widget := TeamWidget{}
+	widget.QuickRadioGameView = quickRadioGameView
 	widget.LabelTimer = labelTimer
-	widget.teamController = controller
+	widget.teamController = teamController
 	widget.radioLock = radioLock
 	widget.updateMap = map[string]bool{}
-	widget.parentWidget = gameWidget
+	widget.parentWidget = parentWidget
+	widget.radioController = controllers.NewRadioController(widget.teamController.Team.RadioLink, widget.teamController.Team.Abbrev)
 	widget.createTeamWidget()
 	return &widget
 }

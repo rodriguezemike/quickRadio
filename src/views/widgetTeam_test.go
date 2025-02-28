@@ -20,7 +20,7 @@ func createTestTeamWidget() (*widgets.QApplication, *controllers.TeamController,
 	labelTimer := 1000
 	radioLock := sync.Mutex{}
 	gameWidget := widgets.NewQGroupBox(nil)
-	widget := views.CreateNewTeamWidget(labelTimer, teamController, &radioLock, gameWidget)
+	widget := views.CreateNewTeamWidget(labelTimer, teamController, &radioLock, gameWidget, nil)
 	return app, teamController, labelTimer, &radioLock, widget
 }
 

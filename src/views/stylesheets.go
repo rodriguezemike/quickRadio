@@ -32,9 +32,16 @@ func CreateInactiveRadioStreamButtonStylesheet(sweater *models.Sweater) string {
 		QPushButton[button-type="stream"]:hover{
 			background: qlineargradient(x1:0 y1:0, x2:1, y2:1, stop:0 %s, stop:.40 %s, stop:.60 %s, stop:1.0 %s);
 		}
+		QPushButton[button-type="stream"]:disabled{
+			background-color: %s;
+			color-adjust: grayscale;
+			border: none;
+			cursor: not-allowed;
+		}
 	`
 	styleSheet := fmt.Sprintf(stylesheet, sweater.PrimaryColor, sweater.PrimaryColor, sweater.SecondaryColor, sweater.SecondaryColor, sweater.PrimaryColor, sweater.PrimaryColor, //Default
 		sweater.SecondaryColor, sweater.SecondaryColor, sweater.PrimaryColor, sweater.PrimaryColor, //hover
+		sweater.SecondaryColor, //disabled
 	)
 	return styleSheet
 }
@@ -53,13 +60,20 @@ func CreateActiveRadioStreamButtonStylesheet(sweater *models.Sweater) string {
 		}
 		QPushButton[button-type="stream"]:hover{
 			background-color:%s;
-			border: 2px solid %s; /* Subtle border color to match the button */
+			border: 2px solid %s; 
+		}
+		QPushButton[button-type="stream"]:disabled{
+			background-color: %s;
+			color-adjust: grayscale;
+			border: none;
+			cursor: not-allowed;
 
 		}
 	`
 	styleSheet := fmt.Sprintf(stylesheet,
 		sweater.PrimaryColor, sweater.SecondaryColor, sweater.PrimaryColor, //Default
 		sweater.SecondaryColor, sweater.PrimaryColor, //Hover
+		sweater.SecondaryColor, //disabled
 	)
 	return styleSheet
 }

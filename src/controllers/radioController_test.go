@@ -10,8 +10,7 @@ import (
 func GetTestRadioController() *RadioController {
 	radioLink := "https://d2igy0yla8zi0u.cloudfront.net/lak/20242025/lak-radio.m3u8"
 	teamAbbrev := "LAK"
-	sampleRate := "192K"
-	controller := NewRadioController(radioLink, teamAbbrev, sampleRate)
+	controller := NewRadioController(radioLink, teamAbbrev)
 	return controller
 }
 

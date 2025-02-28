@@ -1,8 +1,6 @@
 package views
 
 import (
-	"log"
-
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/widgets"
 )
@@ -28,13 +26,9 @@ func (widget *GamesDropdownWidget) createGamesDropdownWidget() {
 	widget.dropdown.SetFixedWidth(widget.Width)
 	widget.dropdown.AddItems(widget.gameNames)
 	widget.dropdown.ConnectCurrentIndexChanged(func(index int) {
-		log.Println("Index", index)
 		go widget.games[index].gameController.ProduceGameData()
-		log.Println("Clearing Update Maps")
 		widget.games[index].ClearUpdateMaps()
-		log.Println("Setting Index on parent widget which should be a qstack widget")
 		widget.parentWidget.SetCurrentIndex(index)
-		log.Println("Did it.")
 	})
 	widget.UILayout.AddWidget(widget.dropdown, 0, core.Qt__AlignTop)
 	widget.UIWidget.SetLayout(widget.UILayout)

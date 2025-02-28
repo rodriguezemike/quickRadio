@@ -65,7 +65,9 @@ func EmptyDirectory(directoryPath string) {
 	files, _ := os.ReadDir(directoryPath)
 	for _, f := range files {
 		info, _ := f.Info()
-		os.Remove(filepath.Join(directoryPath, info.Name()))
+		if !info.IsDir() {
+			os.Remove(filepath.Join(directoryPath, info.Name()))
+		}
 	}
 }
 

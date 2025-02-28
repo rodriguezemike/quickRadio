@@ -22,6 +22,22 @@ type GameView struct {
 	gameController          *controllers.GameController
 }
 
+func (view *GameView) PlayRadioMode(widget *TeamWidget) {
+	if widget != view.AwayTeamWidget {
+		view.AwayTeamWidget.DisableButtons()
+	} else {
+		view.HomeTeamWidget.DisableButtons()
+	}
+}
+
+func (view *GameView) StopRadioMode(widget *TeamWidget) {
+	if widget != view.AwayTeamWidget {
+		view.AwayTeamWidget.EnableButtons()
+	} else {
+		view.HomeTeamWidget.EnableButtons()
+	}
+}
+
 func (view *GameView) ClearUpdateMaps() {
 	view.AwayTeamWidget.ClearUpdateMap()
 	view.HomeTeamWidget.ClearUpdateMap()
@@ -45,15 +61,14 @@ func (view *GameView) createGameView() {
 	view.UILayout = viewLayout
 	view.UIWidget = viewGroupBox
 	view.UIWidget.ConnectTimerEvent(func(event *core.QTimerEvent) {
-		//Run consume data here.
 		if view.gameIsUpdated() {
 			view.ClearUpdateMaps()
 			view.gameController.ConsumeGameData()
 		}
 	})
 	//Create Child layouts
-	view.AwayTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.AwayTeamController, view.radioLock, view.UIWidget)
-	view.HomeTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.HomeTeamController, view.radioLock, view.UIWidget)
+	view.AwayTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.AwayTeamController, view.radioLock, view.UIWidget, view)
+	view.HomeTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.HomeTeamController, view.radioLock, view.UIWidget, view)
 	view.GamestateAndStatsWidget = CreateNewGamestateAndStatsWidget(view.LabelTimer, view.gameController, view.UIWidget)
 	//Add Child Layouts
 	view.UILayout.AddWidget(view.HomeTeamWidget.UIWidget, 0, core.Qt__AlignTop)
@@ -85,8 +100,8 @@ func (view *GameView) createDefaultGameView() {
 		}
 	})
 	//Create Child layouts
-	view.AwayTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.AwayTeamController, view.radioLock, view.UIWidget)
-	view.HomeTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.HomeTeamController, view.radioLock, view.UIWidget)
+	view.AwayTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.AwayTeamController, view.radioLock, view.UIWidget, view)
+	view.HomeTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.HomeTeamController, view.radioLock, view.UIWidget, view)
 	view.GamestateAndStatsWidget = CreateNewGamestateAndStatsWidget(view.LabelTimer, view.gameController, view.UIWidget)
 	//Add Widgets
 	view.UILayout.AddWidget(view.HomeTeamWidget.UIWidget, 0, core.Qt__AlignTop)

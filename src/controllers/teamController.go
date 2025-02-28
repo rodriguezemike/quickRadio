@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"path/filepath"
 	"quickRadio/models"
@@ -17,17 +18,23 @@ type TeamController struct {
 	TeamOnIce      *models.TeamOnIce
 	gameDataObject *models.GameData
 	gameVersesData *models.GameVersesData
+	home           bool
 	teamDirectory  string
 }
 
-func (controller *TeamController) UpdateGameData(gdo *models.GameData) {
+func (controller *TeamController) UpdateTeamController(gdo *models.GameData, gvd *models.GameVersesData) {
 	controller.gameDataObject = nil
-	controller.gameDataObject = gdo
-}
-
-func (controller *TeamController) UpdateGameVersesData(gvd *models.GameVersesData) {
 	controller.gameVersesData = nil
+	controller.Team = nil
+	controller.gameDataObject = gdo
 	controller.gameVersesData = gvd
+	if controller.home {
+		controller.Team = &gdo.HomeTeam
+		controller.TeamOnIce = &gdo.Summary.IceSurface.HomeTeam
+	} else {
+		controller.Team = &gdo.AwayTeam
+		controller.TeamOnIce = &gdo.Summary.IceSurface.AwayTeam
+	}
 }
 
 func (controller *TeamController) EmptyDirectory() {
@@ -39,6 +46,7 @@ func (controller *TeamController) GetScorePath() string {
 }
 
 func (controller *TeamController) GetSOGPath() string {
+	log.Println("SOG PATH ->", controller.teamDirectory, controller.Team.Abbrev+"_SOG."+strconv.Itoa(controller.Team.Sog))
 	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_SOG."+strconv.Itoa(controller.Team.Sog))
 }
 
@@ -87,6 +95,7 @@ func CreateNewTeamController(sweaters map[string]models.Sweater, landingLink str
 	controller.Landinglink = landingLink
 	controller.gameDataObject = gdo
 	controller.gameVersesData = gvd
+	controller.home = home
 	if home {
 		sweater := sweaters[gdo.HomeTeam.Abbrev]
 		controller.Sweater = &sweater

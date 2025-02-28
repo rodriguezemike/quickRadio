@@ -31,7 +31,7 @@ func (controller *GameController) EmptyDirectory() {
 }
 
 func (controller *GameController) IsLive() bool {
-	return controller.gameDataObject.GameState == "LIVE"
+	return controller.gameDataObject.GameState == "LIVE" || controller.gameDataObject.GameState == "CRIT"
 }
 
 func (controller *GameController) IsFuture() bool {
@@ -40,6 +40,10 @@ func (controller *GameController) IsFuture() bool {
 
 func (controller *GameController) IsPregame() bool {
 	return controller.gameDataObject.GameState == "PRE"
+}
+
+func (controller *GameController) IsDone() bool {
+	return controller.gameDataObject.GameState == "FINAL" || controller.gameDataObject.GameState == "OFF"
 }
 
 func (controller *GameController) GetGamestateString() string {
@@ -206,14 +210,11 @@ func (controller *GameController) updateGameData() {
 	controller.gameVersesDataObject = nil
 	controller.gameDataObject = &gdo
 	controller.gameVersesDataObject = &gvd
-	go controller.AwayTeamController.UpdateGameData(controller.gameDataObject)
-	go controller.AwayTeamController.UpdateGameVersesData(controller.gameVersesDataObject)
-	go controller.HomeTeamController.UpdateGameData(controller.gameDataObject)
-	go controller.AwayTeamController.UpdateGameVersesData(controller.gameVersesDataObject)
+	go controller.AwayTeamController.UpdateTeamController(&gdo, &gvd)
+	go controller.HomeTeamController.UpdateTeamController(&gdo, &gvd)
 }
 
 func (controller *GameController) ProduceGameData() {
-	log.Println("GameController::ProduceGameData::", controller.HomeTeamController.Team.Abbrev, " VS ", controller.AwayTeamController.Team.Abbrev)
 	var workGroup sync.WaitGroup
 	var gameStatWorkGroup sync.WaitGroup
 	workGroupCounter := 0
@@ -225,7 +226,6 @@ func (controller *GameController) ProduceGameData() {
 		workGroupCounter += 1
 		go func(teamController TeamController) {
 			defer workGroup.Done()
-			teamController.EmptyDirectory()
 			quickio.TouchFile(teamController.GetScorePath())
 			quickio.TouchFile(teamController.GetSOGPath())
 			quickio.WriteFile(teamController.GetTeamOnIcePath(), string(teamController.getTeamOnIceJson()))
@@ -255,7 +255,6 @@ func (controller *GameController) ProduceGameData() {
 
 func (controller *GameController) ConsumeGameData() {
 	var workGroup sync.WaitGroup
-	log.Println("GameController::ConsumeGameData::", controller.HomeTeamController.Team.Abbrev, " VS ", controller.AwayTeamController.Team.Abbrev)
 	controllers := []TeamController{*controller.HomeTeamController, *controller.AwayTeamController}
 	for i := range controllers {
 		workGroup.Add(1)

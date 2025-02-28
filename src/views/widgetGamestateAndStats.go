@@ -12,8 +12,6 @@ import (
 	"github.com/therecipe/qt/widgets"
 )
 
-// We will want to collect everything that has a timer and start it in parallel
-// In attempts to reduce the latency in UI update for our various components.
 type GamestateAndStatsWidget struct {
 	LabelTimer     int
 	UIWidget       *widgets.QGroupBox
@@ -24,7 +22,7 @@ type GamestateAndStatsWidget struct {
 }
 
 func (widget *GamestateAndStatsWidget) ClearUpdateMap() {
-	for key, _ := range widget.updateMap {
+	for key := range widget.updateMap {
 		widget.updateMap[key] = false
 	}
 }
@@ -59,17 +57,15 @@ func (widget *GamestateAndStatsWidget) createDynamicDataLabel(name string, data 
 	label.SetStyleSheet(CreateDynamicDataLabelStylesheet(fontSize))
 	label.SetWordWrap(true)
 	label.ConnectTimerEvent(func(event *core.QTimerEvent) {
-		if label.IsVisible() {
-			val, ok := widget.updateMap[label.ObjectName()]
-			if !ok || !val {
-				if strings.Contains(label.ObjectName(), "GAMESTATE") {
-					label.SetText(widget.gameController.GetGamestateString())
-				} else {
-					label.SetText(widget.gameController.GetTextFromObjectNameFilepath(label.ObjectName()))
-				}
-				label.Repaint()
-				widget.updateMap[label.ObjectName()] = true
+		val, ok := widget.updateMap[label.ObjectName()]
+		if !ok || !val {
+			if strings.Contains(label.ObjectName(), "GAMESTATE") {
+				label.SetText(widget.gameController.GetGamestateString())
+			} else {
+				label.SetText(widget.gameController.GetTextFromObjectNameFilepath(label.ObjectName()))
 			}
+			label.Repaint()
+			widget.updateMap[label.ObjectName()] = true
 		}
 	})
 	label.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
