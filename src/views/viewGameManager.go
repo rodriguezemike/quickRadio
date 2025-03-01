@@ -67,6 +67,7 @@ func (view *GameManagerView) createGameManagerView() {
 	view.UILayout.AddWidget(view.gamesStack, 0, core.Qt__AlignTop)
 	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
 	view.UIWidget.SetLayout(view.UILayout)
+	view.UIWidget.SetStyleSheet(CreateGameManagerStyleSheet())
 }
 
 func CreateNewGameManagerView(dropdownWidth int, games []*GameView, parentWidget *widgets.QGroupBox, labelTimer int) *GameManagerView {

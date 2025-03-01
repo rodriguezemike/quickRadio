@@ -251,7 +251,7 @@ func CreateDropdownStyleSheet() string {
 }
 func CreateGameManagerStyleSheet() string {
 	styleSheet := `
-		background-color :rgb(29, 29, 29)
+		background-color : #002b36
 	`
 	return styleSheet
 }

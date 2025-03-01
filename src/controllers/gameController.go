@@ -216,28 +216,12 @@ func (controller *GameController) updateGameData() {
 	go controller.HomeTeamController.UpdateTeamController(&gdo, &gvd)
 }
 
-func (controller *GameController) ProduceGameData() {
-	var workGroup sync.WaitGroup
+func (controller *GameController) ProduceTeamGameStats() {
 	var gameStatWorkGroup sync.WaitGroup
-	workGroupCounter := 0
-	gameStatWorkGroupCounter := 0
-	controller.updateGameData()
-	controllers := []TeamController{*controller.HomeTeamController, *controller.AwayTeamController}
-	for i := range controllers {
-		workGroup.Add(1)
-		workGroupCounter += 1
-		go func(teamController TeamController) {
-			defer workGroup.Done()
-			quickio.TouchFile(teamController.GetScorePath())
-			quickio.TouchFile(teamController.GetSOGPath())
-			quickio.WriteFile(teamController.GetTeamOnIcePath(), string(teamController.getTeamOnIceJson()))
-		}(controllers[i])
-	}
 	teamGameStatObjects := controller.GetTeamGameStatsObjects()
 	log.Println("TeameVerses Gamedata Object - Team Game Stats Objects", teamGameStatObjects)
 	for i := range teamGameStatObjects {
 		gameStatWorkGroup.Add(1)
-		gameStatWorkGroupCounter += 1
 		go func(gameStat models.TeamGameStat) {
 			defer gameStatWorkGroup.Done()
 			quickio.TouchFile(controller.getGameStatPath(&gameStat))
@@ -245,12 +229,23 @@ func (controller *GameController) ProduceGameData() {
 			quickio.TouchFile(controller.getAwayStatPath(&gameStat))
 		}(teamGameStatObjects[i])
 	}
-	if workGroupCounter > 0 {
-		workGroup.Wait()
+	gameStatWorkGroup.Wait()
+}
+
+func (controller *GameController) ProduceGameData() {
+	var workGroup sync.WaitGroup
+	controller.updateGameData()
+	controllers := []TeamController{*controller.HomeTeamController, *controller.AwayTeamController}
+	for i := range controllers {
+		workGroup.Add(1)
+		go func(teamController TeamController) {
+			defer workGroup.Done()
+			quickio.TouchFile(teamController.GetScorePath())
+			quickio.TouchFile(teamController.GetSOGPath())
+			quickio.WriteFile(teamController.GetTeamOnIcePath(), string(teamController.getTeamOnIceJson()))
+		}(controllers[i])
 	}
-	if gameStatWorkGroupCounter > 0 {
-		gameStatWorkGroup.Wait()
-	}
+	workGroup.Wait()
 	gameStatePath := controller.GetGamestatePath()
 	quickio.WriteFile(gameStatePath, controller.GetGamestateString())
 	controller.dataConsumed = false

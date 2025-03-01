@@ -169,10 +169,10 @@ func (widget *GamestateAndStatsWidget) createGamestateAndStatsWidget() {
 	gamestateAndStatsWidget.SetProperty("widget-type", core.NewQVariant12("gamestatsAndGamestate"))
 	//Create Child layouts
 	gamestateLayout := widget.createGamestateLayout()
-	teamGameStatsLayout := widget.createTeamGameStatsLayout()
+	//teamGameStatsLayout := widget.createTeamGameStatsLayout() For next Version
 	//Add Child Layouts
 	gamestateAndStatsLayout.AddLayout(gamestateLayout, 0)
-	gamestateAndStatsLayout.AddLayout(teamGameStatsLayout, 0)
+	//gamestateAndStatsLayout.AddLayout(teamGameStatsLayout, 0) For next Version
 	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
 	gamestateAndStatsWidget.SetLayout(gamestateAndStatsLayout)
 	gamestateAndStatsWidget.SetMinimumSize(core.NewQSize2(354, 200))
