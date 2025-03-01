@@ -146,12 +146,14 @@ func (widget *GamestateAndStatsWidget) createTeamGameStatsLayout() *widgets.QVBo
 	//One where the home team is winning, one where its a tie and one where away is winning.
 	teamStatsLayout := widgets.NewQVBoxLayout()
 	for _, gameStatObject := range widget.gameController.GetTeamGameStatsObjects() {
-		awayValue, err := strconv.Atoi(gameStatObject.AwayValue)
+		anyAwayValue, _ := gameStatObject.AwayValue.(string)
+		anyHomeValue, _ := gameStatObject.HomeValue.(string)
+		awayValue, err := strconv.Atoi(anyAwayValue)
 		radioErrors.ErrorLog(err)
-		homeValue, err := strconv.Atoi(gameStatObject.HomeValue)
+		homeValue, err := strconv.Atoi(anyHomeValue)
 		radioErrors.ErrorLog(err)
 		maxValue := homeValue + awayValue
-		if gameStatObject.HomeValue >= gameStatObject.AwayValue { //We will need to figure out the types in a switch for proper compare
+		if anyHomeValue >= anyAwayValue { //We will need to figure out the types in a switch for proper compare
 			teamStatsLayout.AddLayout(widget.createTeamGameStatLayout(homeValue, gameStatObject.Category, awayValue, maxValue, true), 0)
 		} else {
 			teamStatsLayout.AddLayout(widget.createTeamGameStatLayout(homeValue, gameStatObject.Category, awayValue, maxValue, false), 0)

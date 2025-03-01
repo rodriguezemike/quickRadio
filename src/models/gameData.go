@@ -73,9 +73,9 @@ func CreateDefaultTeamOnIce() *TeamOnIce {
 }
 
 type TeamGameStat struct {
-	Category  string
-	AwayValue string
-	HomeValue string
+	Category  string `json:"category"`
+	AwayValue any    `json:"awayValue"`
+	HomeValue any    `json:"homeValue"`
 }
 
 func CreateDefaultHomeGameWinningStat() *TeamGameStat {
@@ -169,7 +169,7 @@ type GameVersesData struct {
 				LastName struct {
 					Default string `json:"default"`
 				} `json:"lastName"`
-			}
+			} `json:"scratches"`
 		} `json:"awayTeam"`
 		HomeTeam struct {
 			HeadCoach struct {
@@ -183,51 +183,51 @@ type GameVersesData struct {
 				LastName struct {
 					Default string `json:"default"`
 				} `json:"lastName"`
-			}
+			} `json:"scratches"`
 		} `json:"homeTeam"`
-		Linescore struct {
-			ByPeriod []struct {
-				PeriodDescriptor struct {
-					Number               int    `json:"number"`
-					PeriodType           string `json:"periodType"`
-					MaxRegulationPeriods int    `json:"maxRegulationPeriods"`
-				} `json:"PeriodDescriptor"`
-				Away int `json:"away"`
-				Home int `json:"home"`
-			} `json:"byPeriod"`
-			Totals struct {
-				Away int `json:"away"`
-				Home int `json:"home"`
-			} `json:"totals"`
-		} `json:"linescore"`
-		ShotsByPeriod []struct {
+	} `json:"gameInfo"`
+	Linescore struct {
+		ByPeriod []struct {
 			PeriodDescriptor struct {
 				Number               int    `json:"number"`
 				PeriodType           string `json:"periodType"`
 				MaxRegulationPeriods int    `json:"maxRegulationPeriods"`
-			} `json:"PeriodDescriptor"`
+			} `json:"periodDescriptor"`
 			Away int `json:"away"`
 			Home int `json:"home"`
-		} `json:"shotsByPeriod"`
-		TeamGameStats   []TeamGameStat  `json:"teamGameStats"`
-		TeamSeasonStats TeamSeasonStats `json:"teamSeasonStats"`
-		GameReports     struct {
-			GameSummary       string `json:"gameSummary"`
-			EventSummary      string `json:"eventSummary"`
-			PlayByPlay        string `json:"playByPlay"`
-			FaceoffSummary    string `json:"faceoffSummary"`
-			FaceoffComparison string `json:"faceoffComparison"`
-			Rosters           string `json:"rosters"`
-			ShotSummary       string `json:"shotSummary"`
-			ToiAway           string `json:"toiAway"`
-			ToiHome           string `json:"toiHome"`
-		} `json:"gameReports"`
-	} `json:"gameInfo"`
+		} `json:"byPeriod"`
+		Totals struct {
+			Away int `json:"away"`
+			Home int `json:"home"`
+		} `json:"totals"`
+	} `json:"linescore"`
+	ShotsByPeriod []struct {
+		PeriodDescriptor struct {
+			Number               int    `json:"number"`
+			PeriodType           string `json:"periodType"`
+			MaxRegulationPeriods int    `json:"maxRegulationPeriods"`
+		} `json:"periodDescriptor"`
+		Away int `json:"away"`
+		Home int `json:"home"`
+	} `json:"shotsByPeriod"`
+	TeamGameStats   []TeamGameStat  `json:"teamGameStats"`
+	TeamSeasonStats TeamSeasonStats `json:"teamSeasonStats"`
+	GameReports     struct {
+		GameSummary       string `json:"gameSummary"`
+		EventSummary      string `json:"eventSummary"`
+		PlayByPlay        string `json:"playByPlay"`
+		FaceoffSummary    string `json:"faceoffSummary"`
+		FaceoffComparison string `json:"faceoffComparison"`
+		Rosters           string `json:"rosters"`
+		ShotSummary       string `json:"shotSummary"`
+		ToiAway           string `json:"toiAway"`
+		ToiHome           string `json:"toiHome"`
+	} `json:"gameReports"`
 }
 
 func CreateDefaultVersesData() *GameVersesData {
 	data := GameVersesData{}
-	data.GameInfo.TeamGameStats = []TeamGameStat{
+	data.TeamGameStats = []TeamGameStat{
 		*CreateDefaultAwayGameWinningStat(),
 		*CreateDefaultHomeGameWinningStat(),
 		*CreateDefaultTiedStat(),

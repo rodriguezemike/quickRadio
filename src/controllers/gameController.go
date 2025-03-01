@@ -74,12 +74,12 @@ func (controller *GameController) GetGamestateString() string {
 }
 
 func (controller *GameController) GetTeamGameStats() []byte {
-	teamGameStats, _ := json.MarshalIndent(controller.gameVersesDataObject.GameInfo.TeamGameStats, "", " ")
+	teamGameStats, _ := json.MarshalIndent(controller.gameVersesDataObject.TeamGameStats, "", " ")
 	return teamGameStats
 }
 
 func (controller *GameController) GetTeamSeasonStat() []byte {
-	teamSeasonStats, _ := json.MarshalIndent(controller.gameVersesDataObject.GameInfo.TeamSeasonStats, "", " ")
+	teamSeasonStats, _ := json.MarshalIndent(controller.gameVersesDataObject.TeamSeasonStats, "", " ")
 	return teamSeasonStats
 }
 
@@ -89,11 +89,11 @@ func (controller *GameController) GetSeriesWinsStats() []byte {
 }
 
 func (controller *GameController) GetTeamGameStatsObjects() []models.TeamGameStat {
-	return controller.gameVersesDataObject.GameInfo.TeamGameStats
+	return controller.gameVersesDataObject.TeamGameStats
 }
 
 func (controller *GameController) GetTeamSeasonStatObject() models.TeamSeasonStats {
-	return controller.gameVersesDataObject.GameInfo.TeamSeasonStats
+	return controller.gameVersesDataObject.TeamSeasonStats
 }
 
 func (controller *GameController) GetGamestatePath() string {
@@ -176,9 +176,11 @@ func (controller *GameController) GetGameStatFromFilepath(categoryName string) (
 // Produces a path to be touched holding all necessary data for the UI to update. Avoids file opening and closing operations.
 func (controller *GameController) getGameStatPath(gameStat *models.TeamGameStat) string {
 	var homeHandle string
-	awayValue, err := strconv.Atoi(gameStat.AwayValue)
+	anyAwayValue, _ := gameStat.AwayValue.(string)
+	anyHomeValue, _ := gameStat.HomeValue.(string)
+	awayValue, err := strconv.Atoi(anyAwayValue)
 	radioErrors.ErrorLog(err)
-	homeValue, err := strconv.Atoi(gameStat.HomeValue)
+	homeValue, err := strconv.Atoi(anyHomeValue)
 	radioErrors.ErrorLog(err)
 	maxValue := strconv.Itoa(awayValue + homeValue)
 	if homeValue > awayValue {
@@ -186,8 +188,8 @@ func (controller *GameController) getGameStatPath(gameStat *models.TeamGameStat)
 	} else {
 		homeHandle = strconv.FormatBool(false)
 	}
-	filename := gameStat.HomeValue + models.VALUE_DELIMITER +
-		gameStat.AwayValue + models.VALUE_DELIMITER +
+	filename := anyHomeValue + models.VALUE_DELIMITER +
+		anyAwayValue + models.VALUE_DELIMITER +
 		maxValue + models.VALUE_DELIMITER +
 		homeHandle + "." +
 		gameStat.Category
@@ -232,6 +234,7 @@ func (controller *GameController) ProduceGameData() {
 		}(controllers[i])
 	}
 	teamGameStatObjects := controller.GetTeamGameStatsObjects()
+	log.Println("TeameVerses Gamedata Object - Team Game Stats Objects", teamGameStatObjects)
 	for i := range teamGameStatObjects {
 		gameStatWorkGroup.Add(1)
 		gameStatWorkGroupCounter += 1

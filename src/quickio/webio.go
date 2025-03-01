@@ -183,7 +183,9 @@ func GetGameDataObject(gameLandingLink string) models.GameData {
 
 func GetGameVersesData(gameLandingLink string) models.GameVersesData {
 	var versesData = &models.GameVersesData{}
+	log.Println(gameLandingLink)
 	gameLandingLink = strings.Replace(gameLandingLink, "landing", "right-rail", 1)
+	log.Println(gameLandingLink)
 	byteValue, bodyCloser := GetDataFromResponse(gameLandingLink)
 	err := json.Unmarshal(byteValue, versesData)
 	radioErrors.ErrorLog(err)
