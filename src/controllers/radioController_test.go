@@ -11,6 +11,8 @@ func GetTestRadioController() *RadioController {
 	radioLink := "https://d2igy0yla8zi0u.cloudfront.net/lak/20242025/lak-radio.m3u8"
 	teamAbbrev := "LAK"
 	controller := NewRadioController(radioLink, teamAbbrev)
+	sampleRate := "192K"
+	controller.RadioFormatLink, controller.RadioDirectory, controller.WavPaths = quickio.GetRadioFormatLinkAndDirectory(controller.RadioLink, sampleRate)
 	return controller
 }
 
