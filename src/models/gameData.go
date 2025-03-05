@@ -69,6 +69,7 @@ func CreateDefaultTeamOnIce() *TeamOnIce {
 		CreateDefaultPlayersOnIce(), CreateDefaultPlayersOnIce())
 	teamOnIce.Defensemen = append(teamOnIce.Defensemen, CreateDefaultPlayersOnIce(), CreateDefaultPlayersOnIce())
 	teamOnIce.Goalies = append(teamOnIce.Goalies, CreateDefaultPlayersOnIce())
+	teamOnIce.PenaltyBox = append(teamOnIce.PenaltyBox, CreateDefaultPlayersOnIce())
 	return &teamOnIce
 }
 

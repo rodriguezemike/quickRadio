@@ -39,10 +39,6 @@ func TestTeamWidgetConstructor(t *testing.T) {
 
 }
 
-// Here we can automate the UI visual test with a image compare of the widget with some design expectation image.
-// Functionality of the button can be tested with UI automation, but if the radio controller is working then we have already isolated the test
-// That needs to be ran. Unless we do this in parallel to test multiple tonditions it dont make that much of a diff compared to just manually testing the UI.
-// Plus we need eyes on our UI for this level.
 func TestTeamWidgetUI(t *testing.T) {
 	flag.Parse()
 	if !*flagCI {

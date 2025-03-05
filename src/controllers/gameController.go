@@ -232,6 +232,8 @@ func (controller *GameController) ProduceTeamGameStats() {
 	gameStatWorkGroup.Wait()
 }
 
+// We want a Go Update Players func that updates players on ice in parallel.
+// Each Label per Player also needs to be in parallel
 func (controller *GameController) ProduceGameData() {
 	var workGroup sync.WaitGroup
 	controller.updateGameData()
@@ -242,7 +244,20 @@ func (controller *GameController) ProduceGameData() {
 			defer workGroup.Done()
 			quickio.TouchFile(teamController.GetScorePath())
 			quickio.TouchFile(teamController.GetSOGPath())
-			quickio.WriteFile(teamController.GetTeamOnIcePath(), string(teamController.getTeamOnIceJson()))
+			for index, player := range teamController.GetAllPlayersOnIce() {
+				quickio.TouchFile(teamController.GetSweaterNumberPath(index, player))
+				quickio.TouchFile(teamController.GetPlayerNamePath(index, player))
+				quickio.TouchFile(teamController.GetPositioncodePath(index, player))
+				quickio.TouchFile(teamController.GetSOIPath(index, player))
+			}
+			for index, player := range teamController.TeamOnIce.PenaltyBox {
+				pentalyBoxIndex := index + 10
+				quickio.TouchFile(teamController.GetSweaterNumberPath(pentalyBoxIndex, player))
+				quickio.TouchFile(teamController.GetPlayerNamePath(pentalyBoxIndex, player))
+				quickio.TouchFile(teamController.GetPositioncodePath(pentalyBoxIndex, player))
+				quickio.TouchFile(teamController.GetSOIPath(pentalyBoxIndex, player))
+
+			}
 		}(controllers[i])
 	}
 	workGroup.Wait()
