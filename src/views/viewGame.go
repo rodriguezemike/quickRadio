@@ -91,14 +91,6 @@ func (view *GameView) createDefaultGameView() {
 	viewGroupBox.SetProperty("view-type", core.NewQVariant12("gameView"))
 	view.UILayout = viewLayout
 	view.UIWidget = viewGroupBox
-	view.UIWidget.ConnectTimerEvent(func(event *core.QTimerEvent) {
-		//Run consume data here.
-
-		if view.gameIsUpdated() {
-			view.ClearUpdateMaps()
-			view.gameController.ConsumeGameData()
-		}
-	})
 	//Create Child layouts
 	view.AwayTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.AwayTeamController, view.radioLock, view.UIWidget, view)
 	view.HomeTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.HomeTeamController, view.radioLock, view.UIWidget, view)
@@ -108,7 +100,7 @@ func (view *GameView) createDefaultGameView() {
 	view.UILayout.AddWidget(view.GamestateAndStatsWidget.UIWidget, 0, core.Qt__AlignTop)
 	view.UILayout.AddWidget(view.AwayTeamWidget.UIWidget, 0, core.Qt__AlignTop)
 	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
-	view.UIWidget.SetMinimumSize(core.NewQSize2(1920, 1080))
+	view.UIWidget.SetMinimumSize(core.NewQSize2(960, 650))
 	view.UIWidget.SetMaximumSize(core.NewQSize2(1920, 1080))
 	view.UIWidget.SetLayout(view.UILayout)
 	view.UIWidget.SetStyleSheet(CreateGameStylesheet())
