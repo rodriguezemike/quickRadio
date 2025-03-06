@@ -46,6 +46,10 @@ func (controller *GameController) IsDone() bool {
 	return controller.gameDataObject.GameState == "FINAL" || controller.gameDataObject.GameState == "OFF"
 }
 
+func (controller *GameController) IsInIntermission() bool {
+	return controller.gameDataObject.GameState == "INT"
+}
+
 func (controller *GameController) GetGamestateString() string {
 	if controller.gameDataObject.GameState == "LIVE" || controller.gameDataObject.GameState == "CRIT" {
 		if !controller.gameDataObject.Clock.InIntermission {

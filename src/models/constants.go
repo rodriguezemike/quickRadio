@@ -11,10 +11,10 @@ const DEFAULT_SOG = -1
 const DEFAULT_RADIO_LINK = ""
 
 // Const player data
-const DEFAULT_PLAYER_NAME = "PLAYER"
-const DEFAULT_POSITION_CODE = "GFD"
-const DEFAULT_SWEATER_NUMBER = 32
-const DEFAULT_SOI = -1
+const DEFAULT_PLAYER_NAME = " "
+const DEFAULT_POSITION_CODE = " "
+const DEFAULT_SWEATER_NUMBER = 0
+const DEFAULT_SOI = 0
 
 //Const Stat data
 const DEFAULT_TOTAL_STAT = "100"

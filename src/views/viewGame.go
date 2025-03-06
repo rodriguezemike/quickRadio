@@ -65,6 +65,15 @@ func (view *GameView) createGameView() {
 			view.ClearUpdateMaps()
 			view.gameController.ConsumeGameData()
 		}
+		if view.gameController.IsLive() && !view.gameController.IsInIntermission() {
+			if !view.HomeTeamWidget.AreStaticLabelsVisible() {
+				view.HomeTeamWidget.SetStaticLabelVisibility(true)
+				view.AwayTeamWidget.SetStaticLabelVisibility(false)
+			}
+		} else {
+			view.HomeTeamWidget.SetStaticLabelVisibility(false)
+			view.AwayTeamWidget.SetStaticLabelVisibility(false)
+		}
 	})
 	//Create Child layouts
 	view.AwayTeamWidget = CreateNewTeamWidget(view.LabelTimer, view.gameController.AwayTeamController, view.radioLock, view.UIWidget, view)
@@ -75,6 +84,7 @@ func (view *GameView) createGameView() {
 	view.UILayout.AddWidget(view.GamestateAndStatsWidget.UIWidget, 0, core.Qt__AlignTop)
 	view.UILayout.AddWidget(view.AwayTeamWidget.UIWidget, 0, core.Qt__AlignTop)
 	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
+	view.UIWidget.SetMinimumSize(core.NewQSize2(900, 800))
 	view.UIWidget.SetMaximumSize(core.NewQSize2(1920, 1080))
 	view.UIWidget.SetLayout(view.UILayout)
 	view.UIWidget.SetStyleSheet(CreateGameStylesheet())
@@ -100,8 +110,8 @@ func (view *GameView) createDefaultGameView() {
 	view.UILayout.AddWidget(view.GamestateAndStatsWidget.UIWidget, 0, core.Qt__AlignTop)
 	view.UILayout.AddWidget(view.AwayTeamWidget.UIWidget, 0, core.Qt__AlignTop)
 	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
-	view.UIWidget.SetMinimumSize(core.NewQSize2(960, 650))
-	view.UIWidget.SetMaximumSize(core.NewQSize2(1920, 1080))
+	view.UIWidget.SetMinimumSize(core.NewQSize2(500, 1080))
+	view.UIWidget.SetMaximumSize(core.NewQSize2(1280, 1080))
 	view.UIWidget.SetLayout(view.UILayout)
 	view.UIWidget.SetStyleSheet(CreateGameStylesheet())
 	view.UIWidget.StartTimer(view.LabelTimer, core.Qt__CoarseTimer)

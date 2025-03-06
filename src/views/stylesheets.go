@@ -157,7 +157,7 @@ func CreateStaticDataLabelStylesheet(fontSize int) string {
 			border-radius: 10px; /* Slightly rounded corners for the label */
 			text-align: center; /* Centered text */
 			letter-spacing: 0.5px; /* Slight spacing between characters for an elegant look */
-			line-height: 1.3; /* A bit of space between lines for clarity */
+			line-height: 2.0; /* A bit of space between lines for clarity */
 		}
 	`
 	return fmt.Sprintf(stylesheet, strconv.Itoa(fontSize))
@@ -229,6 +229,7 @@ func CreateGameStatsAndGamestateStylesheet() string {
 		QGroupBox[widget-type="gamestatsAndGamestate"] {
 			opacity:0.77;
 			background-color: #002b36;
+			border:none;
 		}
 	`
 	return stylesheet

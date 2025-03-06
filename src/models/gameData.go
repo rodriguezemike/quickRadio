@@ -47,7 +47,7 @@ type PlayerOnIce struct {
 	TotalSOI      int    `json:"totalSOI"`
 }
 
-func CreateDefaultPlayersOnIce() PlayerOnIce {
+func CreateDefaultPlayerOnIce() PlayerOnIce {
 	data := PlayerOnIce{}
 	data.Name.Default = DEFAULT_PLAYER_NAME
 	data.SweaterNumber = DEFAULT_SWEATER_NUMBER
@@ -65,11 +65,11 @@ type TeamOnIce struct {
 
 func CreateDefaultTeamOnIce() *TeamOnIce {
 	teamOnIce := TeamOnIce{}
-	teamOnIce.Forwards = append(teamOnIce.Forwards, CreateDefaultPlayersOnIce(),
-		CreateDefaultPlayersOnIce(), CreateDefaultPlayersOnIce())
-	teamOnIce.Defensemen = append(teamOnIce.Defensemen, CreateDefaultPlayersOnIce(), CreateDefaultPlayersOnIce())
-	teamOnIce.Goalies = append(teamOnIce.Goalies, CreateDefaultPlayersOnIce())
-	teamOnIce.PenaltyBox = append(teamOnIce.PenaltyBox, CreateDefaultPlayersOnIce())
+	teamOnIce.Forwards = append(teamOnIce.Forwards, CreateDefaultPlayerOnIce(),
+		CreateDefaultPlayerOnIce(), CreateDefaultPlayerOnIce(), CreateDefaultPlayerOnIce())
+	teamOnIce.Defensemen = append(teamOnIce.Defensemen, CreateDefaultPlayerOnIce(), CreateDefaultPlayerOnIce())
+	teamOnIce.Goalies = append(teamOnIce.Goalies, CreateDefaultPlayerOnIce())
+	teamOnIce.PenaltyBox = append(teamOnIce.PenaltyBox, CreateDefaultPlayerOnIce(), CreateDefaultPlayerOnIce(), CreateDefaultPlayerOnIce())
 	return &teamOnIce
 }
 

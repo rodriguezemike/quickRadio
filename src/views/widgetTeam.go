@@ -23,6 +23,8 @@ type TeamWidget struct {
 	highQualityAudioButton *widgets.QPushButton
 	lowQualityAudioButton  *widgets.QPushButton
 	radioStreamButton      *widgets.QPushButton
+	onIceStaticLabel       *widgets.QLabel
+	sinBinStaticLabel      *widgets.QLabel
 	parentWidget           *widgets.QGroupBox
 	teamController         *controllers.TeamController
 	radioController        *controllers.RadioController
@@ -43,6 +45,15 @@ func GetTeamIcon(teamAbbrev string) *gui.QIcon {
 	teamPixmap := GetTeamPixmap(teamAbbrev)
 	teamIcon := gui.NewQIcon2(teamPixmap)
 	return teamIcon
+}
+
+func (widget *TeamWidget) AreStaticLabelsVisible() bool {
+	return widget.onIceStaticLabel.IsVisible() && widget.sinBinStaticLabel.IsVisible()
+}
+
+func (widget *TeamWidget) SetStaticLabelVisibility(vis bool) {
+	widget.onIceStaticLabel.SetVisible(vis)
+	widget.sinBinStaticLabel.SetVisible(vis)
 }
 
 func (widget *TeamWidget) ClearUpdateMap() {
@@ -98,13 +109,14 @@ func (widget *TeamWidget) setTeamDataUIObjectName(uiLabel string, delimiter stri
 func (widget *TeamWidget) createStaticDataLabel(name string, data string, fontSize int) *widgets.QLabel {
 	label := widgets.NewQLabel2(data, widget.UIWidget, core.Qt__Widget)
 	label.SetObjectName(name)
+	label.SetAlignment(core.Qt__AlignTop)
 	label.SetProperty("label-type", core.NewQVariant12("static"))
 	label.SetStyleSheet(CreateStaticDataLabelStylesheet(fontSize))
 	log.Println("Static Label stylesheet", label.StyleSheet())
 	return label
 }
 
-func (widget *TeamWidget) createDynamicDataLabel(name string, data string, gamecenterLink string, fontSize int) *widgets.QLabel {
+func (widget *TeamWidget) createDynamicDataLabel(name string, data string, gamecenterLink string, fontSize int, defaultString *string) *widgets.QLabel {
 	label := widgets.NewQLabel2(data, widget.UIWidget, core.Qt__Widget)
 	label.SetObjectName(name)
 	label.SetAccessibleDescription(gamecenterLink)
@@ -115,7 +127,11 @@ func (widget *TeamWidget) createDynamicDataLabel(name string, data string, gamec
 		val, ok := widget.updateMap[label.ObjectName()]
 		if !ok || !val {
 			_, dataLabel := widget.getTeamDataFromUIObjectName(label.ObjectName(), "_")
-			label.SetText(widget.teamController.GetUIDataFromFilename(dataLabel, label.Text()))
+			if defaultString == nil {
+				label.SetText(widget.teamController.GetUIDataFromFilename(dataLabel, label.Text()))
+			} else {
+				label.SetText(widget.teamController.GetUIDataFromFilename(dataLabel, *defaultString))
+			}
 			label.Repaint()
 			widget.updateMap[label.ObjectName()] = true
 		}
@@ -222,7 +238,7 @@ func (widget *TeamWidget) createScoreLayout() *widgets.QHBoxLayout {
 	fontSize := 32
 	scoreLayout := widgets.NewQHBoxLayout()
 	scoreLayout.AddWidget(widget.createStaticDataLabel("teamAbbrev", widget.teamController.Team.Abbrev, fontSize), 1, core.Qt__AlignCenter)
-	scoreLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName("SCORE", "_"), strconv.Itoa(widget.teamController.Team.Score), widget.teamController.Landinglink, fontSize), 2, core.Qt__AlignRight)
+	scoreLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName("SCORE", "_"), strconv.Itoa(widget.teamController.Team.Score), widget.teamController.Landinglink, fontSize, nil), 2, core.Qt__AlignRight)
 	scoreLayout.SetSizeConstraint(widgets.QLayout__SetFixedSize)
 	return scoreLayout
 }
@@ -231,7 +247,7 @@ func (widget *TeamWidget) createShotsOnGoalLayout() *widgets.QHBoxLayout {
 	fontSize := 24
 	shotsOnGoalLayout := widgets.NewQHBoxLayout()
 	shotsOnGoalLayout.AddWidget(widget.createStaticDataLabel("sog", "SOG:", fontSize), 0, core.Qt__AlignCenter)
-	shotsOnGoalLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName("SOG", "_"), strconv.Itoa(widget.teamController.Team.Sog), widget.teamController.Landinglink, fontSize), 0, core.Qt__AlignCenter)
+	shotsOnGoalLayout.AddWidget(widget.createDynamicDataLabel(widget.setTeamDataUIObjectName("SOG", "_"), strconv.Itoa(widget.teamController.Team.Sog), widget.teamController.Landinglink, fontSize, nil), 0, core.Qt__AlignCenter)
 	shotsOnGoalLayout.SetSizeConstraint(widgets.QLayout__SetFixedSize)
 	return shotsOnGoalLayout
 }
@@ -256,22 +272,23 @@ func (widget *TeamWidget) createRadioLayout() *widgets.QVBoxLayout {
 	return radioLayout
 }
 
-func (widget *TeamWidget) createSpacerLayout() *widgets.QVBoxLayout {
+func (widget *TeamWidget) createSpacerLayout(spacerUnits int) *widgets.QVBoxLayout {
 	verticalLayout := widgets.NewQVBoxLayout()
-	verticalLayout.AddSpacerItem(widgets.NewQSpacerItem(20, 20, widgets.QSizePolicy__Minimum, widgets.QSizePolicy__Expanding))
+	verticalLayout.AddSpacerItem(widgets.NewQSpacerItem(spacerUnits, spacerUnits, widgets.QSizePolicy__Minimum, widgets.QSizePolicy__Expanding))
 	return verticalLayout
 }
 
 func (widget *TeamWidget) CreatePlayerOnIceLayout(player *models.PlayerOnIce, labelIndex int, fontSize int) *widgets.QHBoxLayout {
 	//Number (May need a stylesheet for this)
 	playerLayout := widgets.NewQHBoxLayout()
-	sweaterNumberWidget := widget.createDynamicDataLabel(widget.setTeamDataUIObjectName("SWEATERNUMBER_"+strconv.Itoa(labelIndex), "_"), strconv.Itoa(player.SweaterNumber), widget.teamController.Landinglink, fontSize)
+	defaultString := " "
+	sweaterNumberWidget := widget.createDynamicDataLabel(widget.setTeamDataUIObjectName("SWEATERNUMBER_"+strconv.Itoa(labelIndex), "_"), " ", widget.teamController.Landinglink, fontSize, &defaultString)
 	playerLayout.AddWidget(sweaterNumberWidget, 0, core.Qt__AlignLeft)
 	//FullName
-	nameWidget := widget.createDynamicDataLabel(widget.setTeamDataUIObjectName("PLAYERNAME_"+strconv.Itoa(labelIndex), "_"), player.Name.Default, widget.teamController.Landinglink, fontSize)
+	nameWidget := widget.createDynamicDataLabel(widget.setTeamDataUIObjectName("PLAYERNAME_"+strconv.Itoa(labelIndex), "_"), player.Name.Default, widget.teamController.Landinglink, fontSize, &defaultString)
 	playerLayout.AddWidget(nameWidget, 0, core.Qt__AlignLeft)
 	//Position
-	positionWidget := widget.createDynamicDataLabel(widget.setTeamDataUIObjectName("POSITIONCODE_"+strconv.Itoa(labelIndex), "_"), player.PositionCode, widget.teamController.Landinglink, fontSize)
+	positionWidget := widget.createDynamicDataLabel(widget.setTeamDataUIObjectName("POSITIONCODE_"+strconv.Itoa(labelIndex), "_"), player.PositionCode, widget.teamController.Landinglink, fontSize, &defaultString)
 	playerLayout.AddWidget(positionWidget, 0, core.Qt__AlignRight)
 	return playerLayout
 }
@@ -279,18 +296,20 @@ func (widget *TeamWidget) CreatePlayerOnIceLayout(player *models.PlayerOnIce, la
 func (widget *TeamWidget) createTeamOnIceLayout() *widgets.QVBoxLayout {
 	verticalLayout := widgets.NewQVBoxLayout()
 	labelIndex := 0
-	POIFontSize := 24
+	POIFontSize := 20
 	playerFontSize := 14
-	verticalLayout.AddWidget(widget.createStaticDataLabel("Players On Ice", "Players On Ice", POIFontSize), 0, core.Qt__AlignLeft)
-	for _, player := range widget.teamController.TeamOnIce.Forwards {
+	widget.onIceStaticLabel = widget.createStaticDataLabel("playersOnIce", "On Ice", POIFontSize)
+	verticalLayout.AddWidget(widget.onIceStaticLabel, 10, core.Qt__AlignLeft)
+	defaultTeam := models.CreateDefaultTeamOnIce()
+	for _, player := range defaultTeam.Forwards {
 		verticalLayout.AddLayout(widget.CreatePlayerOnIceLayout(&player, labelIndex, playerFontSize), 0)
 		labelIndex += 1
 	}
-	for _, player := range widget.teamController.TeamOnIce.Defensemen {
+	for _, player := range defaultTeam.Defensemen {
 		verticalLayout.AddLayout(widget.CreatePlayerOnIceLayout(&player, labelIndex, playerFontSize), 0)
 		labelIndex += 1
 	}
-	for _, player := range widget.teamController.TeamOnIce.Goalies {
+	for _, player := range defaultTeam.Goalies {
 		verticalLayout.AddLayout(widget.CreatePlayerOnIceLayout(&player, labelIndex, playerFontSize), 0)
 		labelIndex += 1
 	}
@@ -302,10 +321,12 @@ func (widget *TeamWidget) createTeamOnIceLayout() *widgets.QVBoxLayout {
 func (widget *TeamWidget) createSinBinLayout() *widgets.QVBoxLayout {
 	verticalLayout := widgets.NewQVBoxLayout()
 	labelIndex := 10
-	peanlityBoxFontSize := 24
+	peanlityBoxFontSize := 20
 	playerFontSize := 14
-	verticalLayout.AddWidget(widget.createStaticDataLabel("penalityBox", "Penality Box", peanlityBoxFontSize), 3, core.Qt__AlignLeft)
-	for _, player := range widget.teamController.TeamOnIce.PenaltyBox {
+	widget.sinBinStaticLabel = widget.createStaticDataLabel("penalityBox", "Penality Box", peanlityBoxFontSize)
+	verticalLayout.AddWidget(widget.sinBinStaticLabel, 0, core.Qt__AlignLeft)
+	defaultTeam := models.CreateDefaultTeamOnIce()
+	for _, player := range defaultTeam.PenaltyBox {
 		verticalLayout.AddLayout(widget.CreatePlayerOnIceLayout(&player, labelIndex, playerFontSize), 0)
 		labelIndex += 1
 	}
@@ -326,11 +347,9 @@ func (widget *TeamWidget) createTeamWidget() {
 	scoreLayout := widget.createScoreLayout()
 	shotsOnGoalLayout := widget.createShotsOnGoalLayout()
 	radioLayout := widget.createRadioLayout()
-	//On Creation we want 7 slots on Ice (1 to handle bug?) all Invisible but with defaults Use first 6 as possible
-	//In Penality Box we want 2 slots with visibility toggles.
 	teamOnIceLayout := widget.createTeamOnIceLayout()
 	sinBinLayout := widget.createSinBinLayout()
-	spacerLayout := widget.createSpacerLayout()
+	spacerLayout := widget.createSpacerLayout(20)
 	//Add Child Layouts
 	teamLayout.AddLayout(radioLayout, 0)
 	teamLayout.AddLayout(scoreLayout, 0)
@@ -339,8 +358,8 @@ func (widget *TeamWidget) createTeamWidget() {
 	teamLayout.AddLayout(sinBinLayout, 0)
 	teamLayout.AddLayout(spacerLayout, 0)
 	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
-	teamGroupbox.SetMinimumSize(core.NewQSize2(350, 620))
-	teamGroupbox.SetMaximumSize(core.NewQSize2(350, 620))
+	teamGroupbox.SetMinimumSize(core.NewQSize2(300, 770))
+	teamGroupbox.SetMaximumSize(core.NewQSize2(500, 1080))
 	teamGroupbox.SetLayout(teamLayout)
 	teamGroupbox.SetStyleSheet(CreateTeamStylesheet())
 	log.Println("Team Widget Stylesheet ", teamGroupbox.StyleSheet())

@@ -175,12 +175,13 @@ func (widget *GamestateAndStatsWidget) createGamestateAndStatsWidget() {
 	gamestateAndStatsLayout.AddLayout(teamGameStatsLayout, 0)
 	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
 	gamestateAndStatsWidget.SetLayout(gamestateAndStatsLayout)
-	gamestateAndStatsWidget.SetMinimumSize(core.NewQSize2(354, 200))
-	gamestateAndStatsWidget.SetMaximumSize(core.NewQSize2(885, 500))
 	gamestateAndStatsWidget.SetStyleSheet(CreateGameStatsAndGamestateStylesheet())
 	//Set widget UI
 	widget.UILayout = gamestateAndStatsLayout
 	widget.UIWidget = gamestateAndStatsWidget
+	widget.UIWidget.SetMinimumSize(core.NewQSize2(100, 770))
+	widget.UIWidget.SetMaximumSize(core.NewQSize2(500, 1080))
+
 }
 
 func CreateNewGamestateAndStatsWidget(labelTimer int, controller *controllers.GameController, gameWidget *widgets.QGroupBox) *GamestateAndStatsWidget {

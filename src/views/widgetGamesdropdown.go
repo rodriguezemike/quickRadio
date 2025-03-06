@@ -32,6 +32,7 @@ func (widget *GamesDropdownWidget) createGamesDropdownWidget() {
 	})
 	widget.UILayout.AddWidget(widget.dropdown, 0, core.Qt__AlignTop)
 	widget.UIWidget.SetLayout(widget.UILayout)
+	widget.UIWidget.SetMaximumWidth(1920)
 }
 
 func CreateNewGamesDropdownWidget(width int, games []*GameView, parentWidget *widgets.QStackedWidget) *GamesDropdownWidget {

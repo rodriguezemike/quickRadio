@@ -43,7 +43,7 @@ func TestTeamWidgetUI(t *testing.T) {
 	flag.Parse()
 	if !*flagCI {
 		app, _, _, _, widget := createTestTeamWidget()
-		app.SetApplicationDisplayName("TestTeamWidgetUI")
+		app.SetApplicationDisplayName("TestTeamWidgetU")
 		window := widgets.NewQMainWindow(nil, 0)
 		window.SetCentralWidget(widget.UIWidget)
 		window.Show()
