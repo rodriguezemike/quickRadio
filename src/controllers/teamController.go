@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"quickRadio/models"
@@ -45,7 +44,6 @@ func (controller *TeamController) GetScorePath() string {
 }
 
 func (controller *TeamController) GetSOGPath() string {
-	log.Println("SOG PATH ->", controller.teamDirectory, controller.Team.Abbrev+"_SOG."+strconv.Itoa(controller.Team.Sog))
 	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_SOG."+strconv.Itoa(controller.Team.Sog))
 }
 
@@ -74,7 +72,7 @@ func (controller *TeamController) GetUIDataFromFilename(dataLabel string, defaul
 	for _, f := range files {
 		info, _ := f.Info()
 		if strings.Contains(info.Name(), controller.Team.Abbrev) && strings.Contains(info.Name(), dataLabel) {
-			return strings.Split(info.Name(), ".")[1]
+			return strings.Join(strings.Split(info.Name(), ".")[1:], ".")
 		}
 	}
 	return defaultReturnValue

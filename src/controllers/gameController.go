@@ -128,7 +128,6 @@ func (controller *GameController) getDefaultValueFromObjectName(objectName strin
 }
 
 func (controller *GameController) GetTextFromObjectNameFilepath(objectName string) string {
-	log.Println(objectName)
 	files, _ := os.ReadDir(controller.GameDirectory)
 	for _, f := range files {
 		if strings.HasSuffix(f.Name(), "."+objectName) {
@@ -170,29 +169,69 @@ func (controller *GameController) GetGameStatFromFilepath(categoryName string) (
 	}
 }
 
+func (controller *GameController) convertAnyStatToGameStatFilename(gameStat *models.TeamGameStat) string {
+	var homeHandle string
+	switch homeValue := gameStat.HomeValue.(type) {
+	case string:
+		//Here were gonna get things like powerplay fractions
+		//Were gonna wana parse that into floats and then replace the / with a - and then set it
+		//Back on the UI side.
+		/*
+			filename := anyHomeValue + models.VALUE_DELIMITER +
+				anyAwayValue + models.VALUE_DELIMITER +
+				maxValue + models.VALUE_DELIMITER +
+				homeHandle + "." +
+				gameStat.Category
+			filename pattern must be held. Maybe even having a type in the name so
+			  string_1-3_2-4_7_true.ppFraction
+			Save the floats for conversion and slider quantization for later
+		*/
+		return homeValue
+	case int:
+		awayValue := gameStat.AwayValue.(int)
+		if homeValue > awayValue {
+			homeHandle = strconv.FormatBool(true)
+		} else {
+			homeHandle = strconv.FormatBool(false)
+		}
+		maxValue := strconv.Itoa(homeValue + homeValue)
+		filename := strconv.Itoa(homeValue) + models.VALUE_DELIMITER +
+			strconv.Itoa(awayValue) + models.VALUE_DELIMITER +
+			maxValue + models.VALUE_DELIMITER +
+			homeHandle + "." + gameStat.Category
+		return filename
+	case float64:
+		awayValue := gameStat.AwayValue.(float64)
+		if homeValue > awayValue {
+			homeHandle = strconv.FormatBool(true)
+		} else {
+			homeHandle = strconv.FormatBool(false)
+		}
+		homeValueString := strconv.FormatFloat(homeValue, 'G', 10, 64)
+		awayValueString := strconv.FormatFloat(awayValue, 'G', 10, 64)
+		maxValueString := strconv.FormatFloat(homeValue+homeValue, 'G', 10, 64)
+		filename := homeValueString + models.VALUE_DELIMITER +
+			awayValueString + models.VALUE_DELIMITER +
+			maxValueString + models.VALUE_DELIMITER +
+			homeHandle + "." + gameStat.Category
+		return filename
+
+	case bool:
+		return strconv.FormatBool(homeValue)
+	case nil:
+		return "nil"
+	default:
+		return fmt.Sprintf("%v", homeValue)
+	}
+
+}
+
 // Next season : Write a Controller abst object that game controller, team controller, gamestat and game stats controller can use
 // To produce data from the Game controller which calls all other controllers produce data and then this can done in parallel with a single
 // wait group at this level. this will become the standardized model for All other apps using this MVC style arch
 // Produces a path to be touched holding all necessary data for the UI to update. Avoids file opening and closing operations.
 func (controller *GameController) getGameStatPath(gameStat *models.TeamGameStat) string {
-	var homeHandle string
-	anyAwayValue, _ := gameStat.AwayValue.(string)
-	anyHomeValue, _ := gameStat.HomeValue.(string)
-	awayValue, err := strconv.Atoi(anyAwayValue)
-	radioErrors.ErrorLog(err)
-	homeValue, err := strconv.Atoi(anyHomeValue)
-	radioErrors.ErrorLog(err)
-	maxValue := strconv.Itoa(awayValue + homeValue)
-	if homeValue > awayValue {
-		homeHandle = strconv.FormatBool(true)
-	} else {
-		homeHandle = strconv.FormatBool(false)
-	}
-	filename := anyHomeValue + models.VALUE_DELIMITER +
-		anyAwayValue + models.VALUE_DELIMITER +
-		maxValue + models.VALUE_DELIMITER +
-		homeHandle + "." +
-		gameStat.Category
+	filename := controller.convertAnyStatToGameStatFilename(gameStat)
 	path := filepath.Join(controller.GameDirectory, filename)
 	return path
 }
@@ -248,15 +287,12 @@ func (controller *GameController) ProduceGameData() {
 				quickio.TouchFile(teamController.GetSweaterNumberPath(index, player))
 				quickio.TouchFile(teamController.GetPlayerNamePath(index, player))
 				quickio.TouchFile(teamController.GetPositioncodePath(index, player))
-				quickio.TouchFile(teamController.GetSOIPath(index, player))
 			}
 			for index, player := range teamController.TeamOnIce.PenaltyBox {
 				pentalyBoxIndex := index + 10
 				quickio.TouchFile(teamController.GetSweaterNumberPath(pentalyBoxIndex, player))
 				quickio.TouchFile(teamController.GetPlayerNamePath(pentalyBoxIndex, player))
 				quickio.TouchFile(teamController.GetPositioncodePath(pentalyBoxIndex, player))
-				quickio.TouchFile(teamController.GetSOIPath(pentalyBoxIndex, player))
-
 			}
 		}(controllers[i])
 	}

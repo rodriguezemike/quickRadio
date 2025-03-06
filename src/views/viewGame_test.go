@@ -20,7 +20,7 @@ func TestGameViewUI(t *testing.T) {
 	flag.Parse()
 	if !*flagCI {
 		app, view := createTestGameView()
-		app.SetApplicationDisplayName("TestGameView")
+		app.SetApplicationDisplayName("TestGameViewUI")
 		window := widgets.NewQMainWindow(nil, 0)
 		window.SetCentralWidget(view.UIWidget)
 		window.Show()
