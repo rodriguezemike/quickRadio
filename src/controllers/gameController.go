@@ -47,7 +47,7 @@ func (controller *GameController) IsDone() bool {
 }
 
 func (controller *GameController) IsInIntermission() bool {
-	return controller.gameDataObject.GameState == "INT"
+	return controller.gameDataObject.GameState == "LIVE" && controller.gameDataObject.Clock.InIntermission
 }
 
 func (controller *GameController) GetGamestateString() string {
@@ -59,7 +59,7 @@ func (controller *GameController) GetGamestateString() string {
 		} else {
 			return controller.gameDataObject.GameState + " - " +
 				controller.gameDataObject.Venue.Default + ", " + controller.gameDataObject.VenueLocation.Default +
-				" INT " + strconv.Itoa(controller.gameDataObject.PeriodDescriptor.Number) + " " + controller.gameDataObject.Clock.TimeRemaining
+				"\n" + "INT " + strconv.Itoa(controller.gameDataObject.PeriodDescriptor.Number) + " " + controller.gameDataObject.Clock.TimeRemaining
 		}
 	} else {
 		if controller.IsFuture() || controller.IsPregame() {
@@ -134,8 +134,8 @@ func (controller *GameController) getDefaultValueFromObjectName(objectName strin
 func (controller *GameController) GetTextFromObjectNameFilepath(objectName string) string {
 	files, _ := os.ReadDir(controller.GameDirectory)
 	for _, f := range files {
-		if strings.HasSuffix(f.Name(), "."+objectName) {
-			return strings.Split(f.Name(), ".")[0]
+		if strings.HasPrefix(f.Name(), objectName) {
+			return strings.ReplaceAll(strings.ReplaceAll(strings.Split(f.Name(), ".")[1], "-", "/"), "#", ".")
 		}
 	}
 	return controller.getDefaultValueFromObjectName(objectName)
@@ -149,6 +149,7 @@ func (controller *GameController) GetGameStatFromFilepath(categoryName string) (
 			values := strings.Split(strings.Split(f.Name(), ".")[0], models.VALUE_DELIMITER)
 			//Shouldnt Crash? Maybe for testing but this hould have some sort default if all the values are not there.
 			//If we crash we need to have something to dump all of memories and exit gracefully avoiding mem leaks.
+			log.Println("GameController::GetGameStatFromFilepath ", values)
 			homeValue, err := strconv.Atoi(values[0])
 			radioErrors.ErrorLog(err)
 			awayValue, err := strconv.Atoi(values[0])
@@ -157,11 +158,20 @@ func (controller *GameController) GetGameStatFromFilepath(categoryName string) (
 				homeValue = homeValue / 2
 				awayValue = awayValue / 2
 			}
-			maxValue, err := strconv.Atoi(values[2])
-			radioErrors.ErrorLog(err)
-			homeHandle, err := strconv.ParseBool(values[3])
-			radioErrors.ErrorLog(err)
-			return homeValue, awayValue, maxValue, homeHandle
+			if len(values) > 1 {
+				maxValue, err := strconv.Atoi(values[2])
+				radioErrors.ErrorLog(err)
+				homeHandle, err := strconv.ParseBool(values[3])
+				radioErrors.ErrorLog(err)
+				log.Println("GameController::GetGameStatFromFilepath::homeValue, awayValue, maxValue, homeHandle ", homeValue, awayValue, maxValue, homeHandle)
+				return homeValue, awayValue, maxValue, homeHandle
+			} else {
+				maxValue := 1
+				homeHandle := true
+				log.Println("GameController::GetGameStatFromFilepath::homeValue, awayValue, maxValue, homeHandle ", homeValue, awayValue, maxValue, homeHandle)
+				return homeValue, awayValue, maxValue, homeHandle
+			}
+
 		}
 	}
 	if strings.Contains(strings.ToLower(categoryName), models.DEFAULT_HOME_PREFIX) {
@@ -170,6 +180,40 @@ func (controller *GameController) GetGameStatFromFilepath(categoryName string) (
 		return models.DEFAULT_WINNING_STAT_INT / 2, models.DEFAULT_LOSTING_STAT / 2, models.DEFAULT_TOTAL_STAT_INT, true
 	} else {
 		return models.DEFAULT_LOSTING_STAT, models.DEFAULT_WINNING_STAT_INT, models.DEFAULT_TOTAL_STAT_INT, false
+	}
+}
+
+func (controller *GameController) convertAnyStatToGameStatString(gameStat *models.TeamGameStat, home bool) string {
+	if home {
+		switch value := gameStat.HomeValue.(type) {
+		case string:
+			return strings.ReplaceAll(value, "/", "-")
+		case int:
+			return strconv.Itoa(value)
+		case float64:
+			return strings.ReplaceAll(strconv.FormatFloat(value, 'G', 10, 64), ".", "#")
+		case bool:
+			return strconv.FormatBool(value)
+		case nil:
+			return "nil"
+		default:
+			return fmt.Sprintf("%v", value)
+		}
+	} else {
+		switch value := gameStat.AwayValue.(type) {
+		case string:
+			return strings.ReplaceAll(value, "/", "-")
+		case int:
+			return strconv.Itoa(value)
+		case float64:
+			return strings.ReplaceAll(strconv.FormatFloat(value, 'G', 10, 64), ".", "#")
+		case bool:
+			return strconv.FormatBool(value)
+		case nil:
+			return "nil"
+		default:
+			return fmt.Sprintf("%v", value)
+		}
 	}
 }
 
@@ -240,12 +284,12 @@ func (controller *GameController) getGameStatPath(gameStat *models.TeamGameStat)
 	return path
 }
 
-func (controller *GameController) getHomeStatPath(gameStat *models.TeamGameStat) string {
-	return filepath.Join(controller.GameDirectory, models.DEFAULT_HOME_PREFIX+models.VALUE_DELIMITER+gameStat.Category)
+func (controller *GameController) getHomeStatPath(category string, value string) string {
+	return filepath.Join(controller.GameDirectory, models.DEFAULT_HOME_PREFIX+models.VALUE_DELIMITER+category+"."+value)
 }
 
-func (controller *GameController) getAwayStatPath(gameStat *models.TeamGameStat) string {
-	return filepath.Join(controller.GameDirectory, models.DEFAULT_AWAY_PREFIX+models.VALUE_DELIMITER+gameStat.Category)
+func (controller *GameController) getAwayStatPath(category string, value string) string {
+	return filepath.Join(controller.GameDirectory, models.DEFAULT_AWAY_PREFIX+models.VALUE_DELIMITER+category+"."+value)
 }
 
 func (controller *GameController) updateGameData() {
@@ -268,8 +312,8 @@ func (controller *GameController) ProduceTeamGameStats() {
 		go func(gameStat models.TeamGameStat) {
 			defer gameStatWorkGroup.Done()
 			quickio.TouchFile(controller.getGameStatPath(&gameStat))
-			quickio.TouchFile(controller.getHomeStatPath(&gameStat))
-			quickio.TouchFile(controller.getAwayStatPath(&gameStat))
+			quickio.TouchFile(controller.getHomeStatPath(gameStat.Category, controller.convertAnyStatToGameStatString(&gameStat, true)))
+			quickio.TouchFile(controller.getAwayStatPath(gameStat.Category, controller.convertAnyStatToGameStatString(&gameStat, false)))
 		}(teamGameStatObjects[i])
 	}
 	gameStatWorkGroup.Wait()
@@ -301,6 +345,7 @@ func (controller *GameController) ProduceGameData() {
 		}(controllers[i])
 	}
 	workGroup.Wait()
+	controller.ProduceTeamGameStats()
 	gameStatePath := controller.GetGamestatePath()
 	quickio.WriteFile(gameStatePath, controller.GetGamestateString())
 	controller.dataConsumed = false
