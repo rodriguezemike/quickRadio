@@ -131,15 +131,59 @@ func (controller *GameController) getDefaultValueFromObjectName(objectName strin
 	}
 }
 
-func (controller *GameController) GetTextFromObjectNameFilepath(objectName string) string {
+func (controller *GameController) GetTextFromObjectNameFilepath(objectName string, defaultString string) string {
 	files, _ := os.ReadDir(controller.GameDirectory)
 	for _, f := range files {
 		if strings.HasPrefix(f.Name(), objectName) {
 			return strings.ReplaceAll(strings.ReplaceAll(strings.Split(f.Name(), ".")[1], "-", "/"), "#", ".")
 		}
 	}
-	return controller.getDefaultValueFromObjectName(objectName)
+	return defaultString
 }
+
+func (controller *GameController) GetGameStatFloatsFromFilepath(categoryName string) (float64, float64, float64, bool) {
+	//Should be a file that exists in game directory that has the infor in the file name ending with gamecategorySlider
+	//Abstract this further to save a file I/O operation.
+	files, _ := os.ReadDir(controller.GameDirectory)
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), "."+categoryName) {
+			values := strings.Split(strings.Split(f.Name(), ".")[0], models.VALUE_DELIMITER)
+			//Shouldnt Crash? Maybe for testing but this hould have some sort default if all the values are not there.
+			//If we crash we need to have something to dump all of memories and exit gracefully avoiding mem leaks.
+			log.Println("GameController::GetGameStatFloatsFromFilepath ", values)
+			homeValue, err := strconv.ParseFloat(values[0], 64)
+			radioErrors.ErrorLog(err)
+			awayValue, err := strconv.ParseFloat(values[0], 64)
+			radioErrors.ErrorLog(err)
+			if homeValue-awayValue == 0 {
+				homeValue = homeValue / 2
+				awayValue = awayValue / 2
+			}
+			if len(values) > 1 {
+				maxValue, err := strconv.ParseFloat(values[2], 64)
+				radioErrors.ErrorLog(err)
+				homeHandle, err := strconv.ParseBool(values[3])
+				radioErrors.ErrorLog(err)
+				log.Println("GameController::GetGameStatFloatsFromFilepath::homeValue, awayValue, maxValue, homeHandle ", homeValue, awayValue, maxValue, homeHandle)
+				return homeValue, awayValue, maxValue, homeHandle
+			} else {
+				maxValue := 1.0
+				homeHandle := true
+				log.Println("GameController::GetGameStatFloatsFromFilepath::homeValue, awayValue, maxValue, homeHandle ", homeValue, awayValue, maxValue, homeHandle)
+				return homeValue, awayValue, maxValue, homeHandle
+			}
+
+		}
+	}
+	if strings.Contains(strings.ToLower(categoryName), models.DEFAULT_HOME_PREFIX) {
+		return models.DEFAULT_WINNING_STAT_INT, models.DEFAULT_LOSTING_STAT, models.DEFAULT_TOTAL_STAT_INT, true
+	} else if strings.Contains(strings.ToLower(categoryName), models.DEFAULT_AWAY_PREFIX) {
+		return models.DEFAULT_WINNING_STAT_INT / 2, models.DEFAULT_LOSTING_STAT / 2, models.DEFAULT_TOTAL_STAT_INT, true
+	} else {
+		return models.DEFAULT_LOSTING_STAT, models.DEFAULT_WINNING_STAT_INT, models.DEFAULT_TOTAL_STAT_INT, false
+	}
+}
+
 func (controller *GameController) GetGameStatFromFilepath(categoryName string) (int, int, int, bool) {
 	//Should be a file that exists in game directory that has the infor in the file name ending with gamecategorySlider
 	//Abstract this further to save a file I/O operation.
@@ -180,6 +224,40 @@ func (controller *GameController) GetGameStatFromFilepath(categoryName string) (
 		return models.DEFAULT_WINNING_STAT_INT / 2, models.DEFAULT_LOSTING_STAT / 2, models.DEFAULT_TOTAL_STAT_INT, true
 	} else {
 		return models.DEFAULT_LOSTING_STAT, models.DEFAULT_WINNING_STAT_INT, models.DEFAULT_TOTAL_STAT_INT, false
+	}
+}
+
+func (controller *GameController) ConvertAnyStatToGameStatString(gameStat *models.TeamGameStat, home bool) string {
+	if home {
+		switch value := gameStat.HomeValue.(type) {
+		case string:
+			return value
+		case int:
+			return strconv.Itoa(value)
+		case float64:
+			return strconv.FormatFloat(value, 'G', 10, 64)
+		case bool:
+			return strconv.FormatBool(value)
+		case nil:
+			return "nil"
+		default:
+			return fmt.Sprintf("%v", value)
+		}
+	} else {
+		switch value := gameStat.AwayValue.(type) {
+		case string:
+			return value
+		case int:
+			return strconv.Itoa(value)
+		case float64:
+			return strconv.FormatFloat(value, 'G', 10, 64)
+		case bool:
+			return strconv.FormatBool(value)
+		case nil:
+			return "nil"
+		default:
+			return fmt.Sprintf("%v", value)
+		}
 	}
 }
 
@@ -306,7 +384,6 @@ func (controller *GameController) updateGameData() {
 func (controller *GameController) ProduceTeamGameStats() {
 	var gameStatWorkGroup sync.WaitGroup
 	teamGameStatObjects := controller.GetTeamGameStatsObjects()
-	log.Println("TeameVerses Gamedata Object - Team Game Stats Objects", teamGameStatObjects)
 	for i := range teamGameStatObjects {
 		gameStatWorkGroup.Add(1)
 		go func(gameStat models.TeamGameStat) {

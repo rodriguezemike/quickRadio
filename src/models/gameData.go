@@ -1,5 +1,7 @@
 package models
 
+import "reflect"
+
 type Sweater struct {
 	TeamAbbrev     string
 	PrimaryColor   string
@@ -104,22 +106,43 @@ func CreateDefaultTiedStat() *TeamGameStat {
 }
 
 type TeamSeasonData struct {
-	PpPctg                    float32 `json:"ppPctg"`
-	PkPctg                    float32 `json:"pkPctg"`
-	FaceoffWinningPctg        float32 `json:"faceoffWinningPctg"`
-	GoalsForPerGamePlayed     float32 `json:"goalsAgainstPerGamePlayed"`
+	PpPctg                    float64 `json:"ppPctg"`
+	PkPctg                    float64 `json:"pkPctg"`
+	FaceoffWinningPctg        float64 `json:"faceoffWinningPctg"`
+	GoalsForPerGamePlayed     float64 `json:"goalsForPerGamePlayed"`
+	GoalsAgainstPerGamePlayed float64 `json:"goalsAgainstPerGamePlayed"`
 	PpPctgRank                int     `json:"ppPctgRank"`
 	PkPctgRank                int     `json:"pkPctgRank"`
 	FaceoffWinningPctgRank    int     `json:"faceoffWinningPctgRank"`
 	GoalsForPerGamePlayedRank int     `json:"goalsForPerGamePlayedRank"`
-	GoalsAgainstAverageRank   int     `json:"goalsAgainstAverageRank"`
+	GoalsAgainstAverageRank   int     `json:"goalsAgainstPerGamePlayedRank"`
 }
 
 type TeamSeasonStats struct {
 	ContextLabel  string         `json:"contextLabel"`
-	ContextSeason string         `json:"contextSeason"`
+	ContextSeason int            `json:"contextSeason"`
 	AwayTeam      TeamSeasonData `json:"awayTeam"`
 	HomeTeam      TeamSeasonData `json:"homeTeam"`
+}
+
+func ConvertTeamSeasonStatsToTeamGameStats(seasonStats TeamSeasonStats) []TeamGameStat {
+	var stats []TeamGameStat
+	tHome := reflect.TypeOf(seasonStats.HomeTeam)
+	vHome := reflect.ValueOf(seasonStats.HomeTeam)
+	vAway := reflect.ValueOf(seasonStats.AwayTeam)
+
+	for i := 0; i < tHome.NumField(); i++ {
+		fieldHome := tHome.Field(i)
+		valueHome := vHome.Field(i)
+		valueAway := vAway.Field(i)
+
+		stat := TeamGameStat{}
+		stat.Category = fieldHome.Name
+		stat.HomeValue = valueHome
+		stat.AwayValue = valueAway
+		stats = append(stats, stat)
+	}
+	return stats
 }
 
 type GameVersesData struct {
