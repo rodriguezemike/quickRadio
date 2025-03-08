@@ -202,13 +202,13 @@ func CreateSliderStylesheet(homeSweater models.Sweater, awaySweater models.Sweat
 		return fmt.Sprintf(stylesheet,
 			homeSweater.PrimaryColor, homeSweater.SecondaryColor,
 			homeSweater.PrimaryColor,
-			awaySweater.PrimaryColor,
+			homeSweater.PrimaryColor,
 		)
 	} else {
 		return fmt.Sprintf(stylesheet,
 			awaySweater.PrimaryColor, awaySweater.SecondaryColor,
 			awaySweater.PrimaryColor,
-			homeSweater.PrimaryColor,
+			awaySweater.PrimaryColor,
 		)
 	}
 

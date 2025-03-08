@@ -159,7 +159,7 @@ func (controller *GameController) GetGameStatFloatsFromFilepath(categoryName str
 				homeValue = homeValue / 2
 				awayValue = awayValue / 2
 			}
-			if len(values) > 1 {
+			if len(values) > 2 {
 				maxValue, err := strconv.ParseFloat(values[2], 64)
 				radioErrors.ErrorLog(err)
 				homeHandle, err := strconv.ParseBool(values[3])
@@ -202,7 +202,7 @@ func (controller *GameController) GetGameStatFromFilepath(categoryName string) (
 				homeValue = homeValue / 2
 				awayValue = awayValue / 2
 			}
-			if len(values) > 1 {
+			if len(values) > 3 {
 				maxValue, err := strconv.Atoi(values[2])
 				radioErrors.ErrorLog(err)
 				homeHandle, err := strconv.ParseBool(values[3])

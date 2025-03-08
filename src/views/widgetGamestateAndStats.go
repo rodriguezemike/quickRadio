@@ -269,6 +269,7 @@ func (widget *GamestateAndStatsWidget) createPregameStatsLayout() {
 			widget.pregameStatsLayout.DisconnectTimerEvent()
 		}
 	})
+	widget.pregameStatsLayout.StartTimer(widget.LabelTimer, core.Qt__CoarseTimer)
 }
 
 func (widget *GamestateAndStatsWidget) createLiveGamestatsLayout() {
@@ -294,7 +295,7 @@ func (widget *GamestateAndStatsWidget) createGamestateAndStatsWidget() {
 	//Create Child layouts and Widgets
 	widget.pregameStatsWidget = widgets.NewQGroupBox(widget.parentWidget)
 	widget.liveGameStatsWidget = widgets.NewQGroupBox(widget.parentWidget)
-	if widget.gameController.IsFuture() {
+	if widget.gameController.IsFuture() || widget.gameController.IsPregame() {
 		widget.createPregameStatsLayout()
 		widget.pregameStatsWidget.SetLayout(widget.pregameStatsLayout)
 		widget.pregameStatsWidget.SetVisible(true)
