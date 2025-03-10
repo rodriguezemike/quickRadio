@@ -84,7 +84,7 @@ func (view *GameView) createGameView() {
 	view.UILayout.AddWidget(view.GamestateAndStatsWidget.UIWidget, 0, core.Qt__AlignTop)
 	view.UILayout.AddWidget(view.AwayTeamWidget.UIWidget, 0, core.Qt__AlignTop)
 	//Set Size and Stylesheet - Work off a scaling factor - base = 100 (base*1.77)*ScalingFactor and base*scalingFactor ::Scaling Factor is 2. :: 1.77 is Desired Aspect Ratio.
-	view.UIWidget.SetMinimumSize(core.NewQSize2(900, 800))
+	view.UIWidget.SetMinimumSize(core.NewQSize2(1080, 800))
 	view.UIWidget.SetMaximumSize(core.NewQSize2(1920, 1080))
 	view.UIWidget.SetLayout(view.UILayout)
 	view.UIWidget.SetStyleSheet(CreateGameStylesheet())

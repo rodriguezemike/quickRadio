@@ -38,3 +38,26 @@ const DEFAULT_TIED_PREFIX = "tied"
 
 //Verses Consts
 const DEFAULT_VERSES_STRING = " VS "
+
+//Stats Consts
+const PERCENTAGE_CONST = "%"
+
+//Pregame Category label mapping.
+var (
+	PREGAME_LABEL_STATS_MAP map[string]string
+)
+
+func init() {
+	PREGAME_LABEL_STATS_MAP = map[string]string{
+		"PpPctg":                    "Power Play %",
+		"PkPctg":                    "Penality Kill %",
+		"FaceoffWinningPctg":        "Face-off %",
+		"GoalsForPerGamePlayed":     "Goals Scored Average Per Game",
+		"GoalsAgainstPerGamePlayed": "Goals Against Average Per Game",
+		"PpPctgRank":                "Power Play Rank",
+		"PkPctgRank":                "Penality Kill Rank",
+		"FaceoffWinningPctgRank":    "Face-off Win Rank",
+		"GoalsForPerGamePlayedRank": "Goals Scored Per Game Rank",
+		"GoalsAgainstAverageRank":   "Goals Against Per Game Rank",
+	}
+}
