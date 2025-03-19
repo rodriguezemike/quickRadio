@@ -148,8 +148,6 @@ func GetGameLandingLinksFromHTML(html string, gamecenterBase string, gamecenterL
 }
 
 func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding string, gameRegexs []string, teamAbbrev string) (string, error) {
-	log.Println()
-	log.Println("func getGameLandingLink START")
 	var gamecenterLink string
 	for _, game := range gameRegexs {
 		newGame := strings.Replace(game, "TEAMABBREV", strings.ToLower(teamAbbrev), -1)
@@ -160,7 +158,6 @@ func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 		for _, possibleGame := range allGames {
 			if strings.Contains(possibleGame, currentDate) {
 				gamecenterLink = strings.Trim(possibleGame, "\"")
-				log.Println("gamecenterLink : ", gamecenterLink)
 				break
 			}
 		}
@@ -183,9 +180,7 @@ func GetGameDataObject(gameLandingLink string) models.GameData {
 
 func GetGameVersesData(gameLandingLink string) models.GameVersesData {
 	var versesData = &models.GameVersesData{}
-	log.Println(gameLandingLink)
 	gameLandingLink = strings.Replace(gameLandingLink, "landing", "right-rail", 1)
-	log.Println(gameLandingLink)
 	byteValue, bodyCloser := GetDataFromResponse(gameLandingLink)
 	err := json.Unmarshal(byteValue, versesData)
 	radioErrors.ErrorLog(err)

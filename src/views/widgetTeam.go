@@ -2,7 +2,6 @@ package views
 
 import (
 	"fmt"
-	"log"
 	"quickRadio/controllers"
 	"quickRadio/models"
 	"quickRadio/quickio"
@@ -112,7 +111,6 @@ func (widget *TeamWidget) createStaticDataLabel(name string, data string, fontSi
 	label.SetAlignment(core.Qt__AlignTop)
 	label.SetProperty("label-type", core.NewQVariant12("static"))
 	label.SetStyleSheet(CreateStaticDataLabelStylesheet(fontSize))
-	log.Println("Static Label stylesheet", label.StyleSheet())
 	return label
 }
 
@@ -138,7 +136,6 @@ func (widget *TeamWidget) createDynamicDataLabel(name string, data string, gamec
 	})
 	widget.updateMap[label.ObjectName()] = false
 	label.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
-	log.Println("Dynamic Label stylesheet", label.StyleSheet())
 	return label
 }
 
@@ -230,7 +227,6 @@ func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLi
 			}
 		}
 	})
-	log.Println(button.StyleSheet())
 	return button
 }
 
@@ -362,7 +358,6 @@ func (widget *TeamWidget) createTeamWidget() {
 	teamGroupbox.SetMaximumSize(core.NewQSize2(500, 1080))
 	teamGroupbox.SetLayout(teamLayout)
 	teamGroupbox.SetStyleSheet(CreateTeamStylesheet())
-	log.Println("Team Widget Stylesheet ", teamGroupbox.StyleSheet())
 }
 
 func (widget *TeamWidget) DisableButtons() {

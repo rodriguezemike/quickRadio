@@ -111,31 +111,24 @@ func (controller *GameController) GetActiveGamestateFromFile() string {
 	return string(data)
 }
 
-func (controller *GameController) getDefaultValueFromObjectName(objectName string) string {
-	if strings.Contains(strings.ToLower(objectName), models.DEFAULT_HOME_PREFIX) {
-		if strings.Contains(strings.Split(strings.ToLower(objectName), models.VALUE_DELIMITER)[1], models.DEFAULT_HOME_PREFIX) {
-			return models.DEFAULT_WINNING_STAT
-		} else {
-			return models.DEFAULT_LOSING_STAT
-		}
-	} else if strings.Contains(strings.ToLower(objectName), models.DEFAULT_TIED_PREFIX) {
-		return models.DEFAULT_WINNING_STAT
-	} else if strings.Contains(strings.ToLower(objectName), models.DEFAULT_AWAY_PREFIX) {
-		if strings.Contains(strings.Split(strings.ToLower(objectName), models.VALUE_DELIMITER)[1], models.DEFAULT_AWAY_PREFIX) {
-			return models.DEFAULT_WINNING_STAT
-		} else {
-			return models.DEFAULT_LOSING_STAT
-		}
-	} else {
-		return models.DEFAULT_LOSING_STAT
-	}
+func (controller *GameController) GetFloatFraction(fraction string) string {
+	numerator, _ := strconv.ParseFloat(strings.Split(fraction, "/")[0], 64)
+	denominator, _ := strconv.ParseFloat(strings.Split(fraction, "/")[1], 64)
+	floatFraction := strconv.FormatFloat(numerator/denominator, 'f', 2, 64)
+	return floatFraction
 }
 
 func (controller *GameController) GetTextFromObjectNameFilepath(objectName string, defaultString string) string {
 	files, _ := os.ReadDir(controller.GameDirectory)
 	for _, f := range files {
 		if strings.HasPrefix(f.Name(), objectName) {
-			return strings.ReplaceAll(strings.ReplaceAll(strings.Split(f.Name(), ".")[1], "-", "/"), "#", ".")
+			text := strings.ReplaceAll(strings.ReplaceAll(strings.Split(f.Name(), ".")[1], "-", "/"), "#", ".")
+			if strings.Contains(text, ".") && !strings.Contains(text, "%") {
+				stat, _ := strconv.ParseFloat(text, 64)
+				stat = stat * 100.0
+				text = strconv.FormatFloat(stat, 'f', 2, 64) + "%"
+			}
+			return text
 		}
 	}
 	return defaultString
@@ -146,14 +139,14 @@ func (controller *GameController) GetGameStatFloatsFromFilepath(categoryName str
 	//Abstract this further to save a file I/O operation.
 	files, _ := os.ReadDir(controller.GameDirectory)
 	for _, f := range files {
-		if strings.HasSuffix(f.Name(), "."+categoryName) {
+		//Rewrite this.
+		if strings.HasPrefix(f.Name(), "."+categoryName) {
 			values := strings.Split(strings.Split(f.Name(), ".")[0], models.VALUE_DELIMITER)
 			//Shouldnt Crash? Maybe for testing but this hould have some sort default if all the values are not there.
 			//If we crash we need to have something to dump all of memories and exit gracefully avoiding mem leaks.
-			log.Println("GameController::GetGameStatFloatsFromFilepath ", values)
-			homeValue, err := strconv.ParseFloat(values[0], 64)
+			homeValue, err := strconv.ParseFloat(values[1], 64)
 			radioErrors.ErrorLog(err)
-			awayValue, err := strconv.ParseFloat(values[0], 64)
+			awayValue, err := strconv.ParseFloat(values[1], 64)
 			radioErrors.ErrorLog(err)
 			if homeValue-awayValue == 0 {
 				homeValue = homeValue / 2
@@ -312,6 +305,7 @@ func (controller *GameController) convertAnyStatToGameStatFilename(gameStat *mod
 			  string_1-3_2-4_7_true.ppFraction
 			Save the floats for conversion and slider quantization for later
 		*/
+		log.Println("gameController::convertAnyStatToGameStatFilename::CASE STRING ::", homeValue)
 		return homeValue
 	case int:
 		awayValue := gameStat.AwayValue.(int)
@@ -325,28 +319,34 @@ func (controller *GameController) convertAnyStatToGameStatFilename(gameStat *mod
 			strconv.Itoa(awayValue) + models.VALUE_DELIMITER +
 			maxValue + models.VALUE_DELIMITER +
 			homeHandle + "." + gameStat.Category
+		log.Println("gameController::convertAnyStatToGameStatFilename::CASE INT ::", filename)
 		return filename
-	case float64:
+	case float32, float64:
+		homeValueFloat := gameStat.HomeValue.(float64)
 		awayValue := gameStat.AwayValue.(float64)
-		if homeValue > awayValue {
+		if homeValueFloat > awayValue {
 			homeHandle = strconv.FormatBool(true)
 		} else {
 			homeHandle = strconv.FormatBool(false)
 		}
-		homeValueString := strconv.FormatFloat(homeValue, 'G', 10, 64)
+		homeValueString := strconv.FormatFloat(homeValueFloat, 'G', 10, 64)
 		awayValueString := strconv.FormatFloat(awayValue, 'G', 10, 64)
-		maxValueString := strconv.FormatFloat(homeValue+homeValue, 'G', 10, 64)
+		maxValueString := strconv.FormatFloat(homeValueFloat+awayValue, 'G', 10, 64)
 		filename := homeValueString + models.VALUE_DELIMITER +
 			awayValueString + models.VALUE_DELIMITER +
 			maxValueString + models.VALUE_DELIMITER +
 			homeHandle + "." + gameStat.Category
+		log.Println("gameController::convertAnyStatToGameStatFilename::CASE FLOAT64 or FLOAT32 ::", filename)
 		return filename
 
 	case bool:
+		log.Println("gameController::convertAnyStatToGameStatFilename::CASE BOOL ::", gameStat.Category)
 		return strconv.FormatBool(homeValue)
 	case nil:
+		log.Println("gameController::convertAnyStatToGameStatFilename::CASE nil ::", gameStat.Category)
 		return "nil"
 	default:
+		log.Println("gameController::convertAnyStatToGameStatFilename::CASE DEFAULT ::", gameStat.Category)
 		return fmt.Sprintf("%v", homeValue)
 	}
 
@@ -360,6 +360,26 @@ func (controller *GameController) getGameStatPath(gameStat *models.TeamGameStat)
 	filename := controller.convertAnyStatToGameStatFilename(gameStat)
 	path := filepath.Join(controller.GameDirectory, filename)
 	return path
+}
+
+func (controller *GameController) getDefaultValueFromObjectName(objectName string) string {
+	if strings.Contains(strings.ToLower(objectName), models.DEFAULT_HOME_PREFIX) {
+		if strings.Contains(strings.Split(strings.ToLower(objectName), models.VALUE_DELIMITER)[1], models.DEFAULT_HOME_PREFIX) {
+			return models.DEFAULT_WINNING_STAT
+		} else {
+			return models.DEFAULT_LOSING_STAT
+		}
+	} else if strings.Contains(strings.ToLower(objectName), models.DEFAULT_TIED_PREFIX) {
+		return models.DEFAULT_WINNING_STAT
+	} else if strings.Contains(strings.ToLower(objectName), models.DEFAULT_AWAY_PREFIX) {
+		if strings.Contains(strings.Split(strings.ToLower(objectName), models.VALUE_DELIMITER)[1], models.DEFAULT_AWAY_PREFIX) {
+			return models.DEFAULT_WINNING_STAT
+		} else {
+			return models.DEFAULT_LOSING_STAT
+		}
+	} else {
+		return models.DEFAULT_LOSING_STAT
+	}
 }
 
 func (controller *GameController) getHomeStatPath(category string, value string) string {

@@ -61,3 +61,22 @@ func init() {
 		"GoalsAgainstAverageRank":   "Goals Against Per Game Rank",
 	}
 }
+
+//Live Game Category label mapping.
+var (
+	LIVE_GAME_LABEL_STATS_MAP map[string]string
+)
+
+func init() {
+	LIVE_GAME_LABEL_STATS_MAP = map[string]string{
+		"sog":                "Shots On Goal",
+		"faceoffWinningPctg": "Face-off %",
+		"powerPlay":          "Power Play",
+		"powerPlayPctg":      "Power Play %",
+		"pim":                "Penality Minutes",
+		"hits":               "Hits",
+		"blockedShots":       "Blocked Shots",
+		"giveaways":          "Giveaways",
+		"takeaways":          "Takeaways",
+	}
+}
