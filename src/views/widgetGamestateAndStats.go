@@ -152,13 +152,16 @@ func (widget *GamestateAndStatsWidget) createIntStatSlider(categoryName string, 
 			val, ok := widget.updateMap[slider.ObjectName()]
 			if !val || !ok {
 				homeStat, awayStat, maxStat, homeHandle = widget.gameController.GetGameStatFromFilepath(categoryName)
-				//log.Println("createIntStatSlider", "Category Name", categoryName, "Home stat", homeStat, "away stat", awayStat, "Max Stat", maxStat, "homeHandle", homeHandle)
+				log.Println("GamestateAndStatsWidget::createIntStatSlider::UpdateIntSlider::", "Category Name", categoryName, "Home stat", homeStat, "away stat", awayStat, "Max Stat", maxStat, "homeHandle", homeHandle)
 				widget.setSliderValues(maxStat, homeStat, awayStat, homeHandle, slider)
-				if homeStat > awayStat {
-					slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, true))
-				} else {
-					slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, false))
-				}
+				slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, homeHandle))
+				/*
+					if homeStat > awayStat {
+						slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, true))
+					} else {
+						slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, false))
+					}
+				*/
 				slider.Repaint()
 				widget.updateMap[slider.ObjectName()] = true
 			}

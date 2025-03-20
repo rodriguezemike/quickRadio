@@ -177,6 +177,7 @@ func (controller *GameController) GetGameStatFloatsFromFilepath(categoryName str
 	}
 }
 
+// We need to clean up all code around sliders and file i/o for them.
 func (controller *GameController) GetGameStatFromFilepath(categoryName string) (int, int, int, bool) {
 	//Should be a file that exists in game directory that has the infor in the file name ending with gamecategorySlider
 	//Abstract this further to save a file I/O operation.
@@ -186,26 +187,26 @@ func (controller *GameController) GetGameStatFromFilepath(categoryName string) (
 			values := strings.Split(strings.Split(f.Name(), ".")[0], models.VALUE_DELIMITER)
 			//Shouldnt Crash? Maybe for testing but this hould have some sort default if all the values are not there.
 			//If we crash we need to have something to dump all of memories and exit gracefully avoiding mem leaks.
-			log.Println("GameController::GetGameStatFromFilepath ", values)
-			homeValue, err := strconv.Atoi(values[0])
-			radioErrors.ErrorLog(err)
-			awayValue, err := strconv.Atoi(values[0])
-			radioErrors.ErrorLog(err)
-			if homeValue-awayValue == 0 {
-				homeValue = homeValue / 2
-				awayValue = awayValue / 2
-			}
+			log.Println("GameController::GetGameStatFromFilepath::CategoryName And Values, len(values) ", categoryName, values, len(values))
 			if len(values) > 3 {
+				homeValue, err := strconv.Atoi(values[0])
+				radioErrors.ErrorLog(err)
+				awayValue, err := strconv.Atoi(values[1])
+				radioErrors.ErrorLog(err)
 				maxValue, err := strconv.Atoi(values[2])
 				radioErrors.ErrorLog(err)
 				homeHandle, err := strconv.ParseBool(values[3])
 				radioErrors.ErrorLog(err)
-				log.Println("GameController::GetGameStatFromFilepath::homeValue, awayValue, maxValue, homeHandle ", homeValue, awayValue, maxValue, homeHandle)
+				log.Println("GameController::GetGameStatFromFilepath::Returning from len > 3 || categoryName, homeValue, awayValue, maxValue, homeHandle ", categoryName, homeValue, awayValue, maxValue, homeHandle)
 				return homeValue, awayValue, maxValue, homeHandle
 			} else {
+				homeValue, err := strconv.Atoi(values[0])
+				radioErrors.ErrorLog(err)
+				awayValue, err := strconv.Atoi(values[0])
+				radioErrors.ErrorLog(err)
 				maxValue := 1
 				homeHandle := true
-				log.Println("GameController::GetGameStatFromFilepath::homeValue, awayValue, maxValue, homeHandle ", homeValue, awayValue, maxValue, homeHandle)
+				log.Println("GameController::GetGameStatFromFilepath::IN BUGGED LOGIC BRANCH- From fraction. or naked decimal(Replace with # like for labels)::categoryName, homeValue, awayValue, maxValue, homeHandle ", categoryName, homeValue, awayValue, maxValue, homeHandle)
 				return homeValue, awayValue, maxValue, homeHandle
 			}
 
@@ -338,7 +339,6 @@ func (controller *GameController) convertAnyStatToGameStatFilename(gameStat *mod
 			homeHandle + "." + gameStat.Category
 		log.Println("gameController::convertAnyStatToGameStatFilename::CASE FLOAT64 or FLOAT32 ::", filename)
 		return filename
-
 	case bool:
 		log.Println("gameController::convertAnyStatToGameStatFilename::CASE BOOL ::", gameStat.Category)
 		return strconv.FormatBool(homeValue)

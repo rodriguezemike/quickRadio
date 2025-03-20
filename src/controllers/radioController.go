@@ -120,6 +120,7 @@ func (controller *RadioController) stopRadio() {
 }
 
 func (controller *RadioController) StopRadio() {
+	speaker.Clear()
 	controller.radioCancelFunc()
 }
 
