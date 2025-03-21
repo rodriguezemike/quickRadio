@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"quickRadio/models"
@@ -128,6 +129,7 @@ func (controller *GameController) GetTextFromObjectNameFilepath(objectName strin
 				stat = stat * 100.0
 				text = strconv.FormatFloat(stat, 'f', 2, 64) + "%"
 			}
+			log.Println("GameController::GetTextFromObjectNameFilepath::RETURN TEXT::", text)
 			return text
 		}
 	}
@@ -140,32 +142,23 @@ func (controller *GameController) GetGameStatFloatsFromFilepath(categoryName str
 	files, _ := os.ReadDir(controller.GameDirectory)
 	for _, f := range files {
 		//Rewrite this.
-		if strings.HasPrefix(f.Name(), "."+categoryName) {
+		if strings.HasSuffix(f.Name(), "."+categoryName) {
 			values := strings.Split(strings.Split(f.Name(), ".")[0], models.VALUE_DELIMITER)
 			//Shouldnt Crash? Maybe for testing but this hould have some sort default if all the values are not there.
 			//If we crash we need to have something to dump all of memories and exit gracefully avoiding mem leaks.
-			homeValue, err := strconv.ParseFloat(values[1], 64)
-			radioErrors.ErrorLog(err)
-			awayValue, err := strconv.ParseFloat(values[1], 64)
-			radioErrors.ErrorLog(err)
-			if homeValue-awayValue == 0 {
-				homeValue = homeValue / 2
-				awayValue = awayValue / 2
-			}
+			//2025/03/20 21:40:45 gameController::convertAnyStatToGameStatFilename::CASE FLOAT64 or FLOAT32 :: 37_64_101_false.faceoffWinningPctg
 			if len(values) > 2 {
+				homeValue, err := strconv.ParseFloat(values[0], 64)
+				radioErrors.ErrorLog(err)
+				awayValue, err := strconv.ParseFloat(values[1], 64)
+				radioErrors.ErrorLog(err)
 				maxValue, err := strconv.ParseFloat(values[2], 64)
 				radioErrors.ErrorLog(err)
 				homeHandle, err := strconv.ParseBool(values[3])
 				radioErrors.ErrorLog(err)
-				log.Println("GameController::GetGameStatFloatsFromFilepath::homeValue, awayValue, maxValue, homeHandle ", homeValue, awayValue, maxValue, homeHandle)
-				return homeValue, awayValue, maxValue, homeHandle
-			} else {
-				maxValue := 1.0
-				homeHandle := true
-				log.Println("GameController::GetGameStatFloatsFromFilepath::homeValue, awayValue, maxValue, homeHandle ", homeValue, awayValue, maxValue, homeHandle)
+				log.Println("GameController::GetGameStatFloatsFromFilepath:: LEN > 2 :: categoryName, homeValue, awayValue, maxValue, homeHandle ", categoryName, homeValue, awayValue, maxValue, homeHandle)
 				return homeValue, awayValue, maxValue, homeHandle
 			}
-
 		}
 	}
 	if strings.Contains(strings.ToLower(categoryName), models.DEFAULT_HOME_PREFIX) {
@@ -199,17 +192,7 @@ func (controller *GameController) GetGameStatFromFilepath(categoryName string) (
 				radioErrors.ErrorLog(err)
 				log.Println("GameController::GetGameStatFromFilepath::Returning from len > 3 || categoryName, homeValue, awayValue, maxValue, homeHandle ", categoryName, homeValue, awayValue, maxValue, homeHandle)
 				return homeValue, awayValue, maxValue, homeHandle
-			} else {
-				homeValue, err := strconv.Atoi(values[0])
-				radioErrors.ErrorLog(err)
-				awayValue, err := strconv.Atoi(values[0])
-				radioErrors.ErrorLog(err)
-				maxValue := 1
-				homeHandle := true
-				log.Println("GameController::GetGameStatFromFilepath::IN BUGGED LOGIC BRANCH- From fraction. or naked decimal(Replace with # like for labels)::categoryName, homeValue, awayValue, maxValue, homeHandle ", categoryName, homeValue, awayValue, maxValue, homeHandle)
-				return homeValue, awayValue, maxValue, homeHandle
 			}
-
 		}
 	}
 	if strings.Contains(strings.ToLower(categoryName), models.DEFAULT_HOME_PREFIX) {
@@ -289,28 +272,39 @@ func (controller *GameController) convertAnyStatToGameStatString(gameStat *model
 	}
 }
 
+// Plz. PLZ. PPLLLLZZZZ REFACTOR. PPLLLLLLLLLLLZZZZ!!! TY! d(-_-)b Q('_'Q) (^)> <(^) (")> <(") PLLLLZZ
 func (controller *GameController) convertAnyStatToGameStatFilename(gameStat *models.TeamGameStat) string {
 	var homeHandle string
 	switch homeValue := gameStat.HomeValue.(type) {
 	case string:
-		//Here were gonna get things like powerplay fractions
-		//Were gonna wana parse that into floats and then replace the / with a - and then set it
-		//Back on the UI side.
-		/*
-			filename := anyHomeValue + models.VALUE_DELIMITER +
-				anyAwayValue + models.VALUE_DELIMITER +
-				maxValue + models.VALUE_DELIMITER +
-				homeHandle + "." +
-				gameStat.Category
-			filename pattern must be held. Maybe even having a type in the name so
-			  string_1-3_2-4_7_true.ppFraction
-			Save the floats for conversion and slider quantization for later
-		*/
-		log.Println("gameController::convertAnyStatToGameStatFilename::CASE STRING ::", homeValue)
-		return homeValue
+		homeValueFractionFloat, err := strconv.ParseFloat(controller.GetFloatFraction(homeValue), 64)
+		radioErrors.ErrorLog(err)
+		homeValueFractionFloat = math.Ceil(homeValueFractionFloat * 100)
+		awayValueFractionFloat, err := strconv.ParseFloat(controller.GetFloatFraction(gameStat.AwayValue.(string)), 64)
+		radioErrors.ErrorLog(err)
+		awayValueFractionFloat = math.Ceil(awayValueFractionFloat * 100)
+		maxValue := homeValueFractionFloat + awayValueFractionFloat
+		if homeValueFractionFloat == 0.00 && awayValueFractionFloat == 0.00 && maxValue == 0.00 {
+			homeValueFractionFloat = 50.00
+			maxValue = 100.00
+		}
+		homeValueString := strconv.Itoa(int(homeValueFractionFloat))
+		awayValueString := strconv.Itoa(int(awayValueFractionFloat))
+		maxValueString := strconv.Itoa(int(maxValue))
+		if homeValueFractionFloat >= awayValueFractionFloat {
+			homeHandle = strconv.FormatBool(true)
+		} else {
+			homeHandle = strconv.FormatBool(false)
+		}
+		filename := homeValueString + models.VALUE_DELIMITER +
+			awayValueString + models.VALUE_DELIMITER +
+			maxValueString + models.VALUE_DELIMITER +
+			homeHandle + "." + gameStat.Category
+		log.Println("gameController::convertAnyStatToGameStatFilename::CASE STRING ::", filename)
+		return filename
 	case int:
 		awayValue := gameStat.AwayValue.(int)
-		if homeValue > awayValue {
+		if homeValue >= awayValue {
 			homeHandle = strconv.FormatBool(true)
 		} else {
 			homeHandle = strconv.FormatBool(false)
@@ -324,15 +318,24 @@ func (controller *GameController) convertAnyStatToGameStatFilename(gameStat *mod
 		return filename
 	case float32, float64:
 		homeValueFloat := gameStat.HomeValue.(float64)
-		awayValue := gameStat.AwayValue.(float64)
-		if homeValueFloat > awayValue {
+		awayValueFloat := gameStat.AwayValue.(float64)
+		if homeValueFloat > 0.0 && homeValueFloat < 1.0 {
+			homeValueFloat = math.Ceil(homeValueFloat * 100)
+			awayValueFloat = math.Ceil(awayValueFloat * 100)
+		}
+		maxValueFloat := homeValueFloat + awayValueFloat
+		if homeValueFloat == 0.00 && awayValueFloat == 0.00 && maxValueFloat == 0.00 {
+			homeValueFloat = 50.00
+			maxValueFloat = 100.00
+		}
+		if homeValueFloat >= awayValueFloat {
 			homeHandle = strconv.FormatBool(true)
 		} else {
 			homeHandle = strconv.FormatBool(false)
 		}
 		homeValueString := strconv.FormatFloat(homeValueFloat, 'G', 10, 64)
-		awayValueString := strconv.FormatFloat(awayValue, 'G', 10, 64)
-		maxValueString := strconv.FormatFloat(homeValueFloat+awayValue, 'G', 10, 64)
+		awayValueString := strconv.FormatFloat(awayValueFloat, 'G', 10, 64)
+		maxValueString := strconv.FormatFloat(maxValueFloat, 'G', 10, 64)
 		filename := homeValueString + models.VALUE_DELIMITER +
 			awayValueString + models.VALUE_DELIMITER +
 			maxValueString + models.VALUE_DELIMITER +
@@ -391,10 +394,14 @@ func (controller *GameController) getAwayStatPath(category string, value string)
 }
 
 func (controller *GameController) updateGameData() {
+	//When we do this, we need to lock it with a mutex until the func over.
+	//We are having a race condition with the UI picing up the new file.
+	//Lock the folder down. and Wait to run the update
 	gdo := quickio.GetGameDataObject(controller.Landinglink)
 	gvd := quickio.GetGameVersesData(controller.Landinglink)
-	controller.gameDataObject = nil
-	controller.gameVersesDataObject = nil
+	//This should be released.
+	//controller.gameDataObject = nil
+	//controller.gameVersesDataObject = nil
 	controller.gameDataObject = &gdo
 	controller.gameVersesDataObject = &gvd
 	go controller.AwayTeamController.UpdateTeamController(&gdo, &gvd)

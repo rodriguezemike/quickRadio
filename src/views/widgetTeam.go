@@ -29,7 +29,8 @@ type TeamWidget struct {
 	radioController        *controllers.RadioController
 	radioLock              *sync.Mutex
 	isPlaying              bool
-	updateMap              map[string]bool
+	updateMap              map[string]bool //Update to Sync map, use locks for now
+	updateMapLock          *sync.RWMutex
 }
 
 func GetTeamPixmap(teamAbbrev string) *gui.QPixmap {
@@ -56,17 +57,22 @@ func (widget *TeamWidget) SetStaticLabelVisibility(vis bool) {
 }
 
 func (widget *TeamWidget) ClearUpdateMap() {
+	widget.updateMapLock.Lock()
 	for key := range widget.updateMap {
 		widget.updateMap[key] = false
 	}
+	widget.updateMapLock.Unlock()
 }
 
 func (widget *TeamWidget) IsUpdated() bool {
+	widget.updateMapLock.RLock()
 	for _, v := range widget.updateMap {
 		if !v {
+			widget.updateMapLock.RUnlock()
 			return false
 		}
 	}
+	widget.updateMapLock.RUnlock()
 	return true
 }
 
@@ -382,6 +388,7 @@ func CreateNewTeamWidget(labelTimer int, teamController *controllers.TeamControl
 	widget.radioLock = radioLock
 	widget.updateMap = map[string]bool{}
 	widget.parentWidget = parentWidget
+	widget.updateMapLock = &sync.RWMutex{}
 	widget.radioController = controllers.NewRadioController(widget.teamController.Team.RadioLink, widget.teamController.Team.Abbrev)
 	widget.createTeamWidget()
 	return &widget

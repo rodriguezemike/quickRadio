@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"quickRadio/models"
@@ -21,9 +22,13 @@ type TeamController struct {
 }
 
 func (controller *TeamController) UpdateTeamController(gdo *models.GameData, gvd *models.GameVersesData) {
-	controller.gameDataObject = nil
-	controller.gameVersesData = nil
-	controller.Team = nil
+	log.Println("teamcontroller::TeamController::UpdateTeamController")
+	//Need to wrap in mutex and release these or trust the GC. Were running into timing race conditions between producer and consumer.
+	//Updates should be atomic and should have the order of lock - produce - unlock consume and updates should wait in a queue if backed up
+	//Right now we could hit a situation where GDO is updated but GVD is not.
+	//controller.gameDataObject = nil
+	//controller.gameVersesData = nil
+	//controller.Team = nil
 	controller.gameDataObject = gdo
 	controller.gameVersesData = gvd
 	if controller.home {

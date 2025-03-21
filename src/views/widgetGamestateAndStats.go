@@ -7,6 +7,7 @@ import (
 	"quickRadio/models"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/widgets"
@@ -23,21 +24,27 @@ type GamestateAndStatsWidget struct {
 	parentWidget        *widgets.QGroupBox
 	gameController      *controllers.GameController
 	IsFuture            bool
-	updateMap           map[string]bool
+	updateMap           map[string]bool //update to sync.Map use locks for now
+	updateMapLock       *sync.RWMutex
 }
 
 func (widget *GamestateAndStatsWidget) ClearUpdateMap() {
+	widget.updateMapLock.Lock()
 	for key := range widget.updateMap {
 		widget.updateMap[key] = false
 	}
+	widget.updateMapLock.Unlock()
 }
 
 func (widget *GamestateAndStatsWidget) IsUpdated() bool {
+	widget.updateMapLock.RLock()
 	for _, v := range widget.updateMap {
 		if !v {
+			widget.updateMapLock.RUnlock()
 			return false
 		}
 	}
+	widget.updateMapLock.RUnlock()
 	return true
 }
 
@@ -66,6 +73,7 @@ func (widget *GamestateAndStatsWidget) createDynamicDataLabel(name string, data 
 			if strings.Contains(label.ObjectName(), "GAMESTATE") {
 				label.SetText(widget.gameController.GetGamestateString())
 			} else {
+				//Crashing when gamecontroller is updating. Check mutex
 				label.SetText(widget.gameController.GetTextFromObjectNameFilepath(label.ObjectName(), label.Text()))
 			}
 			label.Repaint()
@@ -107,6 +115,7 @@ func (widget *GamestateAndStatsWidget) setSliderValuesFloat(statMaxDatum float64
 	slider.SetTickPosition(widgets.QSlider__NoTicks)
 }
 
+// Deprecated?
 func (widget *GamestateAndStatsWidget) createFloatStatSlider(categoryName string, homeStatDatum string, awayStatDatum string, homeHandle bool, dynamic bool) *widgets.QSlider {
 	slider := widgets.NewQSlider2(core.Qt__Horizontal, widget.UIWidget)
 	slider.SetObjectName(widget.setDynamicUIObjectName("slider", categoryName, models.NAME_DELIMITER))
@@ -122,13 +131,10 @@ func (widget *GamestateAndStatsWidget) createFloatStatSlider(categoryName string
 		slider.ConnectTimerEvent(func(event *core.QTimerEvent) {
 			val, ok := widget.updateMap[slider.ObjectName()]
 			if !val || !ok {
-				homeStat, awayStat, maxStat, homeHandle = widget.gameController.GetGameStatFloatsFromFilepath(categoryName)
-				homeStat = homeStat * 100.0
-				awayStat = awayStat * 100.0
-				maxStat = homeStat + awayStat
-				log.Println("createFloatStatSlider", "Category Name", categoryName, "Home stat", homeStat, "away stat", awayStat, "Max Stat", maxStat, "homeHandle", homeHandle)
-				widget.setSliderValuesFloat(maxStat, homeStat, awayStat, homeHandle, slider)
-				slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, true))
+				homeStatInt, awayStatInt, maxStatInt, homeHandleInt := widget.gameController.GetGameStatFromFilepath(categoryName)
+				log.Println("GamestateAndStatsWidget::createFloatStatSlider::UpdateFloatSlider::", "Category Name", categoryName, "Home stat", homeStat, "away stat", awayStat, "Max Stat", maxStat, "homeHandle", homeHandle)
+				widget.setSliderValues(maxStatInt, homeStatInt, awayStatInt, homeHandleInt, slider)
+				slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, homeHandle))
 				slider.Repaint()
 				widget.updateMap[slider.ObjectName()] = true
 			}
@@ -152,16 +158,8 @@ func (widget *GamestateAndStatsWidget) createIntStatSlider(categoryName string, 
 			val, ok := widget.updateMap[slider.ObjectName()]
 			if !val || !ok {
 				homeStat, awayStat, maxStat, homeHandle = widget.gameController.GetGameStatFromFilepath(categoryName)
-				log.Println("GamestateAndStatsWidget::createIntStatSlider::UpdateIntSlider::", "Category Name", categoryName, "Home stat", homeStat, "away stat", awayStat, "Max Stat", maxStat, "homeHandle", homeHandle)
 				widget.setSliderValues(maxStat, homeStat, awayStat, homeHandle, slider)
 				slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, homeHandle))
-				/*
-					if homeStat > awayStat {
-						slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, true))
-					} else {
-						slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, false))
-					}
-				*/
 				slider.Repaint()
 				widget.updateMap[slider.ObjectName()] = true
 			}
@@ -215,8 +213,7 @@ func (widget *GamestateAndStatsWidget) createPregameTeamGameStatLayout(homeStatD
 		gameStatLabelLayout.AddWidget(homeStatLabel, 0, core.Qt__AlignLeft)
 		gameStatLabelLayout.AddWidget(widget.createStaticDataLabel("category", categoryName, widget.UIWidget, fontSize), 0, core.Qt__AlignCenter)
 		gameStatLabelLayout.AddWidget(awayStatLabel, 0, core.Qt__AlignCenter)
-		//create float slider
-		if homeStat > awayStat {
+		if homeStat >= awayStat {
 			slider = widget.createIntStatSlider(categoryName, "1", "0", true, false)
 		} else {
 			slider = widget.createIntStatSlider(categoryName, "0", "1", false, false)
@@ -233,14 +230,14 @@ func (widget *GamestateAndStatsWidget) createPregameTeamGameStatLayout(homeStatD
 		//Away stat dynamic label
 		gameStatLabelLayout.AddWidget(awayStatLabel, 0, core.Qt__AlignCenter)
 		if strings.Contains(categoryName, "Rank") {
-			if homeStat > awayStat {
+			if homeStat >= awayStat {
 				slider = widget.createIntStatSlider(categoryName, "0", "1", false, false)
 			} else {
 				slider = widget.createIntStatSlider(categoryName, "1", "0", true, false)
 
 			}
 		} else {
-			if homeStat > awayStat {
+			if homeStat >= awayStat {
 				slider = widget.createIntStatSlider(categoryName, homeStatDatum, awayStatDatum, true, false)
 			} else {
 				slider = widget.createIntStatSlider(categoryName, homeStatDatum, awayStatDatum, false, false)
@@ -252,14 +249,6 @@ func (widget *GamestateAndStatsWidget) createPregameTeamGameStatLayout(homeStatD
 	gameStatLayout.AddLayout(gameStatLabelLayout, 0)
 	gameStatLayout.AddWidget(slider, 0, core.Qt__AlignCenter)
 	return gameStatLayout
-}
-
-// /Use the one in gameController
-func (widget *GamestateAndStatsWidget) getFloatFraction(fraction string) string {
-	numerator, _ := strconv.ParseFloat(strings.Split(fraction, "/")[0], 64)
-	denominator, _ := strconv.ParseFloat(strings.Split(fraction, "/")[1], 64)
-	floatFraction := strconv.FormatFloat(numerator/denominator, 'f', 2, 64)
-	return floatFraction
 }
 
 // Refactor plz. And use pointers. We dont need all these pass by copies.
@@ -367,7 +356,6 @@ func (widget *GamestateAndStatsWidget) createPregameStatsLayout() {
 
 func (widget *GamestateAndStatsWidget) createLiveGamestatsLayout() {
 	var teamGameObjects []models.TeamGameStat
-	log.Println("CREATING LIVE GAME STATS")
 	widget.liveGameStatsLayout = widgets.NewQVBoxLayout()
 	teamGameObjects = widget.gameController.GetTeamGameStatsObjects()
 	for _, gameStatObject := range teamGameObjects {
@@ -426,6 +414,7 @@ func CreateNewGamestateAndStatsWidget(labelTimer int, controller *controllers.Ga
 	widget.LabelTimer = labelTimer
 	widget.gameController = controller
 	widget.parentWidget = gameWidget
+	widget.updateMapLock = &sync.RWMutex{}
 	widget.createGamestateAndStatsWidget()
 	return &widget
 }
