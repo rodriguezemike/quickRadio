@@ -57,11 +57,11 @@ func (widget *TeamWidget) SetStaticLabelVisibility(vis bool) {
 }
 
 func (widget *TeamWidget) ClearUpdateMap() {
-	widget.updateMapLock.Lock()
 	for key := range widget.updateMap {
+		widget.updateMapLock.Lock()
 		widget.updateMap[key] = false
+		widget.updateMapLock.Unlock()
 	}
-	widget.updateMapLock.Unlock()
 }
 
 func (widget *TeamWidget) IsUpdated() bool {

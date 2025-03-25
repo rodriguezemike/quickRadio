@@ -115,8 +115,12 @@ func (controller *GameController) GetActiveGamestateFromFile() string {
 func (controller *GameController) GetFloatFraction(fraction string) string {
 	numerator, _ := strconv.ParseFloat(strings.Split(fraction, "/")[0], 64)
 	denominator, _ := strconv.ParseFloat(strings.Split(fraction, "/")[1], 64)
-	floatFraction := strconv.FormatFloat(numerator/denominator, 'f', 2, 64)
-	return floatFraction
+	if denominator != 0 {
+		return strconv.FormatFloat(numerator/denominator, 'f', 2, 64)
+
+	} else {
+		return strconv.FormatFloat(0.0, 'f', 2, 64)
+	}
 }
 
 func (controller *GameController) GetTextFromObjectNameFilepath(objectName string, defaultString string) string {
