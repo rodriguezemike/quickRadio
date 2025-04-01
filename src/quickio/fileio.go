@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -62,11 +63,14 @@ func CreateDirectory(directoryPath string) {
 }
 
 func EmptyDirectory(directoryPath string) {
+	log.Println("quickio::EmptyDirectory::directoryPath::", directoryPath)
 	files, _ := os.ReadDir(directoryPath)
 	for _, f := range files {
 		info, _ := f.Info()
 		if !info.IsDir() {
-			os.Remove(filepath.Join(directoryPath, info.Name()))
+			log.Println("quickio::EmptyDirectory::FilePath::", filepath.Join(directoryPath, info.Name()))
+			err := os.Remove(filepath.Join(directoryPath, info.Name()))
+			radioErrors.ErrorLog(err)
 		}
 	}
 }

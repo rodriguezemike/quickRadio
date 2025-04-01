@@ -128,7 +128,9 @@ func (widget *TeamWidget) createDynamicDataLabel(name string, data string, gamec
 	label.SetStyleSheet(CreateDynamicDataLabelStylesheet(fontSize))
 	label.SetWordWrap(true)
 	label.ConnectTimerEvent(func(event *core.QTimerEvent) {
+		widget.updateMapLock.RLock()
 		val, ok := widget.updateMap[label.ObjectName()]
+		widget.updateMapLock.RUnlock()
 		if !ok || !val {
 			_, dataLabel := widget.getTeamDataFromUIObjectName(label.ObjectName(), "_")
 			if defaultString == nil {
@@ -137,10 +139,14 @@ func (widget *TeamWidget) createDynamicDataLabel(name string, data string, gamec
 				label.SetText(widget.teamController.GetUIDataFromFilename(dataLabel, *defaultString))
 			}
 			label.Repaint()
+			widget.updateMapLock.Lock()
 			widget.updateMap[label.ObjectName()] = true
+			widget.updateMapLock.Unlock()
 		}
 	})
+	widget.updateMapLock.Lock()
 	widget.updateMap[label.ObjectName()] = false
+	widget.updateMapLock.Unlock()
 	label.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
 	return label
 }

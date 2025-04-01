@@ -25,9 +25,14 @@ import (
 func GetDataFromResponse(url string) ([]byte, io.ReadCloser) {
 	resp, err := http.Get(url)
 	radioErrors.ErrorLog(err)
-	byteValue, err := io.ReadAll(resp.Body)
-	radioErrors.ErrorLog(err)
-	return byteValue, resp.Body
+	if err != nil {
+		radioErrors.ErrorLog(err)
+		return nil, nil
+	} else {
+		byteValue, err := io.ReadAll(resp.Body)
+		radioErrors.ErrorLog(err)
+		return byteValue, resp.Body
+	}
 
 }
 
