@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
@@ -23,9 +22,13 @@ type TeamController struct {
 }
 
 func (controller *TeamController) UpdateTeamController(gdo *models.GameData, gvd *models.GameVersesData) {
-	controller.gameDataObject = nil
-	controller.gameVersesData = nil
-	controller.Team = nil
+	log.Println("teamcontroller::TeamController::UpdateTeamController")
+	//Need to wrap in mutex and release these or trust the GC. Were running into timing race conditions between producer and consumer.
+	//Updates should be atomic and should have the order of lock - produce - unlock consume and updates should wait in a queue if backed up
+	//Right now we could hit a situation where GDO is updated but GVD is not.
+	//controller.gameDataObject = nil
+	//controller.gameVersesData = nil
+	//controller.Team = nil
 	controller.gameDataObject = gdo
 	controller.gameVersesData = gvd
 	if controller.home {
@@ -42,20 +45,31 @@ func (controller *TeamController) EmptyDirectory() {
 }
 
 func (controller *TeamController) GetScorePath() string {
-	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_SCORE."+strconv.Itoa(controller.Team.Score))
+	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_"+"SCORE."+strconv.Itoa(controller.Team.Score))
 }
 
 func (controller *TeamController) GetSOGPath() string {
-	log.Println("SOG PATH ->", controller.teamDirectory, controller.Team.Abbrev+"_SOG."+strconv.Itoa(controller.Team.Sog))
 	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_SOG."+strconv.Itoa(controller.Team.Sog))
+}
+
+func (controller *TeamController) GetSweaterNumberPath(index int, player models.PlayerOnIce) string {
+	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_"+"SWEATERNUMBER"+"_"+strconv.Itoa(index)+"."+strconv.Itoa(player.SweaterNumber))
+}
+
+func (controller *TeamController) GetPlayerNamePath(index int, player models.PlayerOnIce) string {
+	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_"+"PLAYERNAME"+"_"+strconv.Itoa(index)+"."+player.Name.Default)
+}
+
+func (controller *TeamController) GetPositioncodePath(index int, player models.PlayerOnIce) string {
+	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_"+"POSITIONCODE"+"_"+strconv.Itoa(index)+"."+player.PositionCode)
+}
+
+func (controller *TeamController) GetSOIPath(index int, player models.PlayerOnIce) string {
+	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_"+"SOI"+"_"+strconv.Itoa(index)+"."+strconv.Itoa(player.TotalSOI))
 }
 
 func (controller *TeamController) GetStatsPath() string {
 	return filepath.Join(controller.teamDirectory, "STATS.json")
-}
-
-func (controller *TeamController) GetTeamOnIcePath() string {
-	return filepath.Join(controller.teamDirectory, controller.Team.Abbrev+"_TEAMONICE.json")
 }
 
 func (controller *TeamController) GetUIDataFromFilename(dataLabel string, defaultReturnValue string) string {
@@ -63,15 +77,16 @@ func (controller *TeamController) GetUIDataFromFilename(dataLabel string, defaul
 	for _, f := range files {
 		info, _ := f.Info()
 		if strings.Contains(info.Name(), controller.Team.Abbrev) && strings.Contains(info.Name(), dataLabel) {
-			return strings.Split(info.Name(), ".")[1]
+			return strings.Join(strings.Split(info.Name(), ".")[1:], ".")
 		}
 	}
 	return defaultReturnValue
 }
 
-func (controller *TeamController) getTeamOnIceJson() []byte {
-	onIceJson, _ := json.MarshalIndent(controller.Team, "", " ")
-	return onIceJson
+func (controller *TeamController) GetAllPlayersOnIce() []models.PlayerOnIce {
+	var players []models.PlayerOnIce
+	players = append(append(append(players, controller.TeamOnIce.Forwards...), controller.TeamOnIce.Defensemen...), controller.TeamOnIce.Goalies...)
+	return players
 }
 
 func CreateNewDefaultTeamController() *TeamController {

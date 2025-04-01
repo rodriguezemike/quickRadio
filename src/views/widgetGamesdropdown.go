@@ -26,12 +26,11 @@ func (widget *GamesDropdownWidget) createGamesDropdownWidget() {
 	widget.dropdown.SetFixedWidth(widget.Width)
 	widget.dropdown.AddItems(widget.gameNames)
 	widget.dropdown.ConnectCurrentIndexChanged(func(index int) {
-		go widget.games[index].gameController.ProduceGameData()
-		widget.games[index].ClearUpdateMaps()
 		widget.parentWidget.SetCurrentIndex(index)
 	})
 	widget.UILayout.AddWidget(widget.dropdown, 0, core.Qt__AlignTop)
 	widget.UIWidget.SetLayout(widget.UILayout)
+	widget.UIWidget.SetMaximumWidth(1920)
 }
 
 func CreateNewGamesDropdownWidget(width int, games []*GameView, parentWidget *widgets.QStackedWidget) *GamesDropdownWidget {

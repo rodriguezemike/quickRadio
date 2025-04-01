@@ -1,5 +1,7 @@
 package models
 
+import "reflect"
+
 type Sweater struct {
 	TeamAbbrev     string
 	PrimaryColor   string
@@ -47,7 +49,7 @@ type PlayerOnIce struct {
 	TotalSOI      int    `json:"totalSOI"`
 }
 
-func CreateDefaultPlayersOnIce() PlayerOnIce {
+func CreateDefaultPlayerOnIce() PlayerOnIce {
 	data := PlayerOnIce{}
 	data.Name.Default = DEFAULT_PLAYER_NAME
 	data.SweaterNumber = DEFAULT_SWEATER_NUMBER
@@ -65,10 +67,11 @@ type TeamOnIce struct {
 
 func CreateDefaultTeamOnIce() *TeamOnIce {
 	teamOnIce := TeamOnIce{}
-	teamOnIce.Forwards = append(teamOnIce.Forwards, CreateDefaultPlayersOnIce(),
-		CreateDefaultPlayersOnIce(), CreateDefaultPlayersOnIce())
-	teamOnIce.Defensemen = append(teamOnIce.Defensemen, CreateDefaultPlayersOnIce(), CreateDefaultPlayersOnIce())
-	teamOnIce.Goalies = append(teamOnIce.Goalies, CreateDefaultPlayersOnIce())
+	teamOnIce.Forwards = append(teamOnIce.Forwards, CreateDefaultPlayerOnIce(),
+		CreateDefaultPlayerOnIce(), CreateDefaultPlayerOnIce(), CreateDefaultPlayerOnIce())
+	teamOnIce.Defensemen = append(teamOnIce.Defensemen, CreateDefaultPlayerOnIce(), CreateDefaultPlayerOnIce())
+	teamOnIce.Goalies = append(teamOnIce.Goalies, CreateDefaultPlayerOnIce())
+	teamOnIce.PenaltyBox = append(teamOnIce.PenaltyBox, CreateDefaultPlayerOnIce(), CreateDefaultPlayerOnIce(), CreateDefaultPlayerOnIce())
 	return &teamOnIce
 }
 
@@ -103,22 +106,43 @@ func CreateDefaultTiedStat() *TeamGameStat {
 }
 
 type TeamSeasonData struct {
-	PpPctg                    float32 `json:"ppPctg"`
-	PkPctg                    float32 `json:"pkPctg"`
-	FaceoffWinningPctg        float32 `json:"faceoffWinningPctg"`
-	GoalsForPerGamePlayed     float32 `json:"goalsAgainstPerGamePlayed"`
+	PpPctg                    float64 `json:"ppPctg"`
+	PkPctg                    float64 `json:"pkPctg"`
+	FaceoffWinningPctg        float64 `json:"faceoffWinningPctg"`
+	GoalsForPerGamePlayed     float64 `json:"goalsForPerGamePlayed"`
+	GoalsAgainstPerGamePlayed float64 `json:"goalsAgainstPerGamePlayed"`
 	PpPctgRank                int     `json:"ppPctgRank"`
 	PkPctgRank                int     `json:"pkPctgRank"`
 	FaceoffWinningPctgRank    int     `json:"faceoffWinningPctgRank"`
 	GoalsForPerGamePlayedRank int     `json:"goalsForPerGamePlayedRank"`
-	GoalsAgainstAverageRank   int     `json:"goalsAgainstAverageRank"`
+	GoalsAgainstAverageRank   int     `json:"goalsAgainstPerGamePlayedRank"`
 }
 
 type TeamSeasonStats struct {
 	ContextLabel  string         `json:"contextLabel"`
-	ContextSeason string         `json:"contextSeason"`
+	ContextSeason int            `json:"contextSeason"`
 	AwayTeam      TeamSeasonData `json:"awayTeam"`
 	HomeTeam      TeamSeasonData `json:"homeTeam"`
+}
+
+func ConvertTeamSeasonStatsToTeamGameStats(seasonStats TeamSeasonStats) []TeamGameStat {
+	var stats []TeamGameStat
+	tHome := reflect.TypeOf(seasonStats.HomeTeam)
+	vHome := reflect.ValueOf(seasonStats.HomeTeam)
+	vAway := reflect.ValueOf(seasonStats.AwayTeam)
+
+	for i := 0; i < tHome.NumField(); i++ {
+		fieldHome := tHome.Field(i)
+		valueHome := vHome.Field(i)
+		valueAway := vAway.Field(i)
+
+		stat := TeamGameStat{}
+		stat.Category = fieldHome.Name
+		stat.HomeValue = valueHome
+		stat.AwayValue = valueAway
+		stats = append(stats, stat)
+	}
+	return stats
 }
 
 type GameVersesData struct {
