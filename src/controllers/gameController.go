@@ -32,7 +32,7 @@ func (controller *GameController) EmptyDirectory() {
 }
 
 func (controller *GameController) IsLive() bool {
-	return controller.gameDataObject.GameState == "LIVE" || controller.gameDataObject.GameState == "CRIT"
+	return controller.gameDataObject.GameState == "LIVE" || controller.gameDataObject.GameState == "CRIT" || controller.gameDataObject.GameState == "FINAL"
 }
 
 func (controller *GameController) IsFuture() bool {
@@ -44,7 +44,7 @@ func (controller *GameController) IsPregame() bool {
 }
 
 func (controller *GameController) IsDone() bool {
-	return controller.gameDataObject.GameState == "FINAL" || controller.gameDataObject.GameState == "OFF"
+	return controller.gameDataObject.GameState == "OFF"
 }
 
 func (controller *GameController) IsInIntermission() bool {
