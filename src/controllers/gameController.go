@@ -32,7 +32,11 @@ func (controller *GameController) EmptyDirectory() {
 }
 
 func (controller *GameController) IsLive() bool {
-	return controller.gameDataObject.GameState == "LIVE" || controller.gameDataObject.GameState == "CRIT" || controller.gameDataObject.GameState == "FINAL"
+	return controller.gameDataObject.GameState == "LIVE" || controller.gameDataObject.GameState == "CRIT"
+}
+
+func (controller *GameController) IsFinal() bool {
+	return controller.gameDataObject.GameState == "FINAL"
 }
 
 func (controller *GameController) IsFuture() bool {
@@ -172,6 +176,16 @@ func (controller *GameController) GetGameStatFloatsFromFilepath(categoryName str
 	} else {
 		return models.DEFAULT_LOSTING_STAT, models.DEFAULT_WINNING_STAT_INT, models.DEFAULT_TOTAL_STAT_INT, false
 	}
+}
+
+func (controller *GameController) GameStatPathExists(categoryName string) bool {
+	files, _ := os.ReadDir(controller.GameDirectory)
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), "."+categoryName) {
+			return true
+		}
+	}
+	return false
 }
 
 // We need to clean up all code around sliders and file i/o for them.

@@ -130,7 +130,7 @@ func (widget *GamestateAndStatsWidget) createFloatStatSlider(categoryName string
 	if dynamic {
 		slider.ConnectTimerEvent(func(event *core.QTimerEvent) {
 			val, ok := widget.updateMap[slider.ObjectName()]
-			if !val || !ok {
+			if (!val || !ok) && widget.gameController.GameStatPathExists(categoryName) {
 				homeStatInt, awayStatInt, maxStatInt, homeHandleInt := widget.gameController.GetGameStatFromFilepath(categoryName)
 				log.Println("GamestateAndStatsWidget::createFloatStatSlider::UpdateFloatSlider::", "Category Name", categoryName, "Home stat", homeStat, "away stat", awayStat, "Max Stat", maxStat, "homeHandle", homeHandle)
 				widget.setSliderValues(maxStatInt, homeStatInt, awayStatInt, homeHandleInt, slider)
@@ -156,7 +156,7 @@ func (widget *GamestateAndStatsWidget) createIntStatSlider(categoryName string, 
 	if dynamic {
 		slider.ConnectTimerEvent(func(event *core.QTimerEvent) {
 			val, ok := widget.updateMap[slider.ObjectName()]
-			if !val || !ok {
+			if (!val || !ok) && widget.gameController.GameStatPathExists(categoryName) {
 				homeStat, awayStat, maxStat, homeHandle = widget.gameController.GetGameStatFromFilepath(categoryName)
 				widget.setSliderValues(maxStat, homeStat, awayStat, homeHandle, slider)
 				slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, homeHandle))
@@ -343,21 +343,26 @@ func (widget *GamestateAndStatsWidget) createPregameStatsLayout() {
 	}
 	widget.pregameStatsLayout.ConnectTimerEvent(func(event *core.QTimerEvent) {
 		if widget.IsFuture && widget.gameController.IsLive() {
-			widget.IsFuture = false
-			widget.createLiveGamestatsLayout()
-			widget.liveGameStatsWidget.SetLayout(widget.liveGameStatsLayout)
-			widget.pregameStatsWidget.SetVisible(false)
-			widget.liveGameStatsWidget.SetVisible(true)
-			widget.pregameStatsLayout.DisconnectTimerEvent()
+			isCreated := widget.createLiveGamestatsLayout()
+			if isCreated {
+				widget.IsFuture = false
+				widget.liveGameStatsWidget.SetLayout(widget.liveGameStatsLayout)
+				widget.pregameStatsWidget.SetVisible(false)
+				widget.liveGameStatsWidget.SetVisible(true)
+				widget.pregameStatsLayout.DisconnectTimerEvent()
+			}
 		}
 	})
 	widget.pregameStatsLayout.StartTimer(widget.LabelTimer, core.Qt__CoarseTimer)
 }
 
-func (widget *GamestateAndStatsWidget) createLiveGamestatsLayout() {
+func (widget *GamestateAndStatsWidget) createLiveGamestatsLayout() bool {
 	var teamGameObjects []models.TeamGameStat
 	widget.liveGameStatsLayout = widgets.NewQVBoxLayout()
 	teamGameObjects = widget.gameController.GetTeamGameStatsObjects()
+	if len(teamGameObjects) == 0 {
+		return false
+	}
 	for _, gameStatObject := range teamGameObjects {
 		val, ok := models.LIVE_GAME_LABEL_STATS_MAP[gameStatObject.Category]
 		var categoryLabelName *string
@@ -371,6 +376,7 @@ func (widget *GamestateAndStatsWidget) createLiveGamestatsLayout() {
 		homeValueString := widget.gameController.ConvertAnyStatToGameStatString(&gameStatObject, true)
 		widget.liveGameStatsLayout.AddLayout(widget.createLiveTeamGameStatLayout(homeValueString, gameStatObject.Category, *categoryLabelName, awayValueString), 0)
 	}
+	return true
 }
 
 func (widget *GamestateAndStatsWidget) createGamestateAndStatsWidget() {

@@ -65,7 +65,7 @@ func (view *GameView) createGameView() {
 			view.ClearUpdateMaps()
 			view.gameController.ConsumeGameData()
 		}
-		if view.gameController.IsLive() && !view.gameController.IsInIntermission() {
+		if view.gameController.IsLive() && !(view.gameController.IsInIntermission() || view.gameController.IsFinal()) {
 			if !view.HomeTeamWidget.AreStaticLabelsVisible() {
 				view.HomeTeamWidget.SetStaticLabelVisibility(true)
 				view.AwayTeamWidget.SetStaticLabelVisibility(true)
