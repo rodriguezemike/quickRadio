@@ -38,6 +38,9 @@ func GetDataFromResponse(url string) ([]byte, io.ReadCloser) {
 
 func GetQualityStreamSlug(radioLink string, audioQuality string) string {
 	byteValue, bodyCloser := GetDataFromResponse(radioLink)
+	if byteValue == nil {
+		return ""
+	}
 	audioQualitySlug, err := ExtractQualityStreamSlug(string(byteValue), audioQuality)
 	radioErrors.ErrorLog(err)
 	bodyCloser.Close()
@@ -174,29 +177,38 @@ func GetGameLandingLink(html string, gamecenterBase string, gamecenterLanding st
 	return gameLandingLink, nil
 }
 
-func GetGameDataObject(gameLandingLink string) models.GameData {
+func GetGameDataObject(gameLandingLink string) *models.GameData {
 	var gameData = &models.GameData{}
 	byteValue, bodyCloser := GetDataFromResponse(gameLandingLink)
+	if byteValue == nil {
+		return nil
+	}
 	err := json.Unmarshal(byteValue, gameData)
 	radioErrors.ErrorLog(err)
 	bodyCloser.Close()
-	return *gameData
+	return gameData
 }
 
-func GetGameVersesData(gameLandingLink string) models.GameVersesData {
+func GetGameVersesData(gameLandingLink string) *models.GameVersesData {
 	var versesData = &models.GameVersesData{}
 	gameLandingLink = strings.Replace(gameLandingLink, "landing", "right-rail", 1)
 	byteValue, bodyCloser := GetDataFromResponse(gameLandingLink)
+	if byteValue == nil {
+		return nil
+	}
 	err := json.Unmarshal(byteValue, versesData)
 	radioErrors.ErrorLog(err)
 	bodyCloser.Close()
-	return *versesData
+	return versesData
 }
 
 func GetGameDataObjectFromLandingLinks(landingLinks []string) []models.GameData {
 	var gameDataObjects []models.GameData
 	for _, landingLink := range landingLinks {
-		gameDataObjects = append(gameDataObjects, GetGameDataObject(landingLink))
+		gdo := GetGameDataObject(landingLink)
+		if gdo != nil {
+			gameDataObjects = append(gameDataObjects, *gdo)
+		}
 	}
 	return gameDataObjects
 }
@@ -207,17 +219,19 @@ func GoGetGameDataObjectsFromLandingLinks(landingLinks []string) []models.GameDa
 	var workGroup sync.WaitGroup
 	log.Println("IO::GoGetGameDataObjectsFromLandingLinks")
 	log.Println("IO::GoGetGameDataObjectsFromLandingLinks::landingLinks", landingLinks)
-	for i := 0; i < len(landingLinks); i++ {
+	for i := range landingLinks {
 		workGroup.Add(1)
 		go func(path string) {
 			defer workGroup.Done()
 			var gameData = &models.GameData{}
 			log.Println("IO::GoGetGameDataObjectsFromLandingLinks::anonFunc::path", path)
 			byteValue, bodyCloser := GetDataFromResponse(path)
-			err := json.Unmarshal(byteValue, gameData)
-			radioErrors.ErrorLog(err)
-			gameDataObjects = append(gameDataObjects, *gameData)
-			bodyCloser.Close()
+			if byteValue != nil {
+				err := json.Unmarshal(byteValue, gameData)
+				radioErrors.ErrorLog(err)
+				gameDataObjects = append(gameDataObjects, *gameData)
+				bodyCloser.Close()
+			}
 		}(landingLinks[i])
 		workGroup.Wait()
 	}
@@ -229,17 +243,19 @@ func GoGetGameVersesDataFromLandingLinks(landingLinks []string) []models.GameVer
 	//If we have to, we will sort by GameId.
 	var gameVersesDataObjects []models.GameVersesData
 	var workGroup sync.WaitGroup
-	for i := 0; i < len(landingLinks); i++ {
+	for i := range landingLinks {
 		workGroup.Add(1)
 		go func(path string) {
 			defer workGroup.Done()
 			var versesData = &models.GameVersesData{}
 			path = strings.Replace(path, "landing", "right-rail", 1)
 			byteValue, bodyCloser := GetDataFromResponse(path)
-			err := json.Unmarshal(byteValue, versesData)
-			radioErrors.ErrorLog(err)
-			gameVersesDataObjects = append(gameVersesDataObjects, *versesData)
-			bodyCloser.Close()
+			if byteValue != nil {
+				err := json.Unmarshal(byteValue, versesData)
+				radioErrors.ErrorLog(err)
+				gameVersesDataObjects = append(gameVersesDataObjects, *versesData)
+				bodyCloser.Close()
+			}
 		}(landingLinks[i])
 		workGroup.Wait()
 	}

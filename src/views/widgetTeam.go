@@ -184,16 +184,7 @@ func (widget *TeamWidget) createRadioQualityButtons() (*widgets.QPushButton, *wi
 	return buttonLow, buttonHigh
 }
 
-func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLink string, radioQualityButtonLow *widgets.QPushButton, radioQualityButtonHigh *widgets.QPushButton, radioQualityLabel *widgets.QLabel) *widgets.QPushButton {
-	teamIcon := widget.getTeamIcon(teamAbbrev)
-	button := widgets.NewQPushButton(widget.UIWidget)
-	button.SetToolTip(fmt.Sprintf("Play %s Radio", teamAbbrev))
-	button.SetProperty("button-type", core.NewQVariant12("stream"))
-	button.SetStyleSheet(CreateInactiveRadioStreamButtonStylesheet(widget.teamController.Sweater))
-	button.SetObjectName(widget.setTeamDataUIObjectName("RADIO", "_"))
-	button.SetIcon(teamIcon)
-	button.SetIconSize(button.FrameSize())
-	button.SetCheckable(true)
+func (widget *TeamWidget) ConnectRadioStreamingButtonToggleEvent(teamAbbrev string, radioLink string, radioQualityLabel *widgets.QLabel, radioQualityButtonHigh *widgets.QPushButton, radioQualityButtonLow *widgets.QPushButton, button *widgets.QPushButton) {
 	button.ConnectToggled(func(onCheck bool) {
 		if widget.radioLock.TryLock() {
 			var radioSampleRate string
@@ -239,6 +230,36 @@ func (widget *TeamWidget) createTeamRadioStreamButton(teamAbbrev string, radioLi
 			}
 		}
 	})
+
+}
+
+func (widget *TeamWidget) createTeamRadioStreamButton(radioQualityButtonLow *widgets.QPushButton, radioQualityButtonHigh *widgets.QPushButton, radioQualityLabel *widgets.QLabel) *widgets.QPushButton {
+	teamIcon := widget.getTeamIcon(widget.teamController.Team.Abbrev)
+	button := widgets.NewQPushButton(widget.UIWidget)
+	button.SetToolTip(fmt.Sprintf("Play %s Radio", widget.teamController.Team.Abbrev))
+	button.SetProperty("button-type", core.NewQVariant12("stream"))
+	button.SetStyleSheet(CreateInactiveRadioStreamButtonStylesheet(widget.teamController.Sweater))
+	button.SetObjectName(widget.setTeamDataUIObjectName("RADIO", "_"))
+	button.SetIcon(teamIcon)
+	button.SetIconSize(button.MinimumSize())
+	button.SetCheckable(true)
+	if widget.teamController.Team.RadioLink == "" {
+		button.SetEnabled(false)
+		radioQualityButtonHigh.SetEnabled(false)
+		radioQualityButtonLow.SetEnabled(false)
+		button.ConnectTimerEvent(func(event *core.QTimerEvent) {
+			if widget.teamController.Team != nil && widget.teamController.Team.RadioLink != "" {
+				widget.ConnectRadioStreamingButtonToggleEvent(widget.teamController.Team.Abbrev, widget.teamController.Team.RadioLink, radioQualityLabel, radioQualityButtonHigh, radioQualityButtonLow, button)
+				button.SetEnabled(true)
+				radioQualityButtonHigh.SetEnabled(true)
+				radioQualityButtonLow.SetEnabled(true)
+				button.DisconnectTimerEvent()
+			}
+			button.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
+		})
+	} else {
+		widget.ConnectRadioStreamingButtonToggleEvent(widget.teamController.Team.Abbrev, widget.teamController.Team.RadioLink, radioQualityLabel, radioQualityButtonHigh, radioQualityButtonLow, button)
+	}
 	return button
 }
 
@@ -272,7 +293,7 @@ func (widget *TeamWidget) createRadioLayout() *widgets.QVBoxLayout {
 	radioLayout.AddWidget(internetQualityLabel, 0, core.Qt__AlignLeft)
 	radioLayout.AddLayout(radioQualityButtonsLayout, 0)
 	//create radiostrteam button
-	radioStreamButton := widget.createTeamRadioStreamButton(widget.teamController.Team.Abbrev, widget.teamController.Team.RadioLink, radioQualityButtonLow, radioQualityButtonHigh, internetQualityLabel)
+	radioStreamButton := widget.createTeamRadioStreamButton(radioQualityButtonLow, radioQualityButtonHigh, internetQualityLabel)
 	radioLayout.AddWidget(radioStreamButton, 0, core.Qt__AlignCenter)
 	widget.highQualityAudioButton = radioQualityButtonHigh
 	widget.lowQualityAudioButton = radioQualityButtonLow

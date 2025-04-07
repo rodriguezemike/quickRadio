@@ -417,13 +417,10 @@ func (controller *GameController) updateGameData() {
 	//Lock the folder down. and Wait to run the update
 	gdo := quickio.GetGameDataObject(controller.Landinglink)
 	gvd := quickio.GetGameVersesData(controller.Landinglink)
-	//This should be released.
-	//controller.gameDataObject = nil
-	//controller.gameVersesDataObject = nil
-	controller.gameDataObject = &gdo
-	controller.gameVersesDataObject = &gvd
-	go controller.AwayTeamController.UpdateTeamController(&gdo, &gvd)
-	go controller.HomeTeamController.UpdateTeamController(&gdo, &gvd)
+	controller.gameDataObject = gdo
+	controller.gameVersesDataObject = gvd
+	go controller.AwayTeamController.UpdateTeamController(gdo, gvd)
+	go controller.HomeTeamController.UpdateTeamController(gdo, gvd)
 }
 
 func (controller *GameController) ProduceTeamGameStats() {
@@ -506,10 +503,10 @@ func CreateNewGameController(landingLink string) *GameController {
 	sweaters := quickio.GetSweaters()
 	controller.Landinglink = landingLink
 	controller.GameDirectory = filepath.Join(quickio.GetQuickTmpFolder(), strconv.Itoa(gdo.Id))
-	controller.HomeTeamController = CreateNewTeamController(sweaters, landingLink, &gdo, &gvd, true, controller.GameDirectory)
-	controller.AwayTeamController = CreateNewTeamController(sweaters, landingLink, &gdo, &gvd, false, controller.GameDirectory)
-	controller.gameDataObject = &gdo
-	controller.gameVersesDataObject = &gvd
+	controller.HomeTeamController = CreateNewTeamController(sweaters, landingLink, gdo, gvd, true, controller.GameDirectory)
+	controller.AwayTeamController = CreateNewTeamController(sweaters, landingLink, gdo, gvd, false, controller.GameDirectory)
+	controller.gameDataObject = gdo
+	controller.gameVersesDataObject = gvd
 	controller.dataConsumed = false
 	return &controller
 }
