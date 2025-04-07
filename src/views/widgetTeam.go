@@ -65,14 +65,14 @@ func (widget *TeamWidget) ClearUpdateMap() {
 }
 
 func (widget *TeamWidget) IsUpdated() bool {
-	widget.updateMapLock.RLock()
+	widget.updateMapLock.Lock()
 	for _, v := range widget.updateMap {
 		if !v {
-			widget.updateMapLock.RUnlock()
+			widget.updateMapLock.Unlock()
 			return false
 		}
 	}
-	widget.updateMapLock.RUnlock()
+	widget.updateMapLock.Unlock()
 	return true
 }
 

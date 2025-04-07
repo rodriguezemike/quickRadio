@@ -1,0 +1,309 @@
+{
+  "seasonSeries": [
+    {
+      "id": 2024020868,
+      "season": 20242025,
+      "gameType": 2,
+      "gameDate": "2025-02-06",
+      "startTimeUTC": "2025-02-07T02:00:00Z",
+      "easternUTCOffset": "-05:00",
+      "venueUTCOffset": "-07:00",
+      "gameState": "OFF",
+      "gameScheduleState": "OK",
+      "awayTeam": {
+        "id": 21,
+        "abbrev": "COL",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/COL_light.svg",
+        "score": 4
+      },
+      "homeTeam": {
+        "id": 20,
+        "abbrev": "CGY",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/CGY_light.svg",
+        "score": 2
+      },
+      "gameCenterLink": "/gamecenter/cgy-vs-col/2025/02/06/2024020868"
+    },
+    {
+      "id": 2024021052,
+      "season": 20242025,
+      "gameType": 2,
+      "gameDate": "2025-03-14",
+      "startTimeUTC": "2025-03-15T01:00:00Z",
+      "easternUTCOffset": "-04:00",
+      "venueUTCOffset": "-06:00",
+      "gameState": "OFF",
+      "gameScheduleState": "OK",
+      "awayTeam": {
+        "id": 21,
+        "abbrev": "COL",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/COL_light.svg",
+        "score": 4
+      },
+      "homeTeam": {
+        "id": 20,
+        "abbrev": "CGY",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/CGY_light.svg",
+        "score": 2
+      },
+      "gameCenterLink": "/gamecenter/cgy-vs-col/2025/03/14/2024021052"
+    },
+    {
+      "id": 2024021180,
+      "season": 20242025,
+      "gameType": 2,
+      "gameDate": "2025-03-31",
+      "startTimeUTC": "2025-04-01T00:30:00Z",
+      "easternUTCOffset": "-04:00",
+      "venueUTCOffset": "-06:00",
+      "gameState": "LIVE",
+      "gameScheduleState": "OK",
+      "awayTeam": {
+        "id": 20,
+        "abbrev": "CGY",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/CGY_light.svg",
+        "score": 0
+      },
+      "homeTeam": {
+        "id": 21,
+        "abbrev": "COL",
+        "logo": "https://assets.nhle.com/logos/nhl/svg/COL_light.svg",
+        "score": 2
+      },
+      "gameCenterLink": "/gamecenter/col-vs-cgy/2025/03/31/2024021180",
+      "periodDescriptor": {
+        "number": 2,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "gameOutcome": {
+        "lastPeriodType": "REG"
+      },
+      "clock": {
+        "timeRemaining": "05:22",
+        "secondsRemaining": 322,
+        "running": false,
+        "inIntermission": true
+      },
+      "situation": {
+        "homeTeam": {
+          "abbrev": "COL",
+          "situationDescriptions": [
+            "PP"
+          ],
+          "strength": 5
+        },
+        "awayTeam": {
+          "abbrev": "CGY",
+          "strength": 4
+        },
+        "situationCode": "1451",
+        "timeRemaining": "02:00",
+        "secondsRemaining": 120
+      }
+    }
+  ],
+  "seasonSeriesWins": {
+    "awayTeamWins": 0,
+    "homeTeamWins": 2
+  },
+  "gameInfo": {
+    "referees": [
+      {
+        "default": "Graham Skilliter"
+      },
+      {
+        "default": "Cody Beach"
+      }
+    ],
+    "linesmen": [
+      {
+        "default": "Scott Cherrey"
+      },
+      {
+        "default": "Andrew Smith"
+      }
+    ],
+    "awayTeam": {
+      "headCoach": {
+        "default": "Ryan Huska"
+      },
+      "scratches": [
+        {
+          "id": 8478211,
+          "firstName": {
+            "default": "Dryden"
+          },
+          "lastName": {
+            "default": "Hunt"
+          }
+        },
+        {
+          "id": 8482074,
+          "firstName": {
+            "default": "Connor"
+          },
+          "lastName": {
+            "default": "Zary"
+          }
+        },
+        {
+          "id": 8482624,
+          "firstName": {
+            "default": "Daniil"
+          },
+          "lastName": {
+            "default": "Miromanov"
+          }
+        }
+      ]
+    },
+    "homeTeam": {
+      "headCoach": {
+        "default": "Jared Bednar"
+      },
+      "scratches": [
+        {
+          "id": 8476312,
+          "firstName": {
+            "default": "Josh"
+          },
+          "lastName": {
+            "default": "Manson"
+          }
+        },
+        {
+          "id": 8477425,
+          "firstName": {
+            "default": "Miles"
+          },
+          "lastName": {
+            "default": "Wood"
+          }
+        },
+        {
+          "id": 8479387,
+          "firstName": {
+            "default": "Keaton"
+          },
+          "lastName": {
+            "default": "Middleton"
+          }
+        },
+        {
+          "id": 8481641,
+          "firstName": {
+            "default": "Joel"
+          },
+          "lastName": {
+            "default": "Kiviranta"
+          }
+        }
+      ]
+    }
+  },
+  "linescore": {
+    "byPeriod": [
+      {
+        "periodDescriptor": {
+          "number": 1,
+          "periodType": "REG",
+          "maxRegulationPeriods": 3
+        },
+        "away": 0,
+        "home": 1
+      },
+      {
+        "periodDescriptor": {
+          "number": 2,
+          "periodType": "REG",
+          "maxRegulationPeriods": 3
+        },
+        "away": 0,
+        "home": 1
+      }
+    ],
+    "totals": {
+      "away": 0,
+      "home": 2
+    }
+  },
+  "shotsByPeriod": [
+    {
+      "periodDescriptor": {
+        "number": 1,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "away": 6,
+      "home": 10
+    },
+    {
+      "periodDescriptor": {
+        "number": 2,
+        "periodType": "REG",
+        "maxRegulationPeriods": 3
+      },
+      "away": 6,
+      "home": 11
+    }
+  ],
+  "teamGameStats": [
+    {
+      "category": "sog",
+      "awayValue": 12,
+      "homeValue": 21
+    },
+    {
+      "category": "faceoffWinningPctg",
+      "awayValue": 0.394737,
+      "homeValue": 0.605263
+    },
+    {
+      "category": "powerPlay",
+      "awayValue": "0/0",
+      "homeValue": "0/1"
+    },
+    {
+      "category": "powerPlayPctg",
+      "awayValue": 0,
+      "homeValue": 0
+    },
+    {
+      "category": "pim",
+      "awayValue": 4,
+      "homeValue": 0
+    },
+    {
+      "category": "hits",
+      "awayValue": 32,
+      "homeValue": 17
+    },
+    {
+      "category": "blockedShots",
+      "awayValue": 16,
+      "homeValue": 9
+    },
+    {
+      "category": "giveaways",
+      "awayValue": 15,
+      "homeValue": 6
+    },
+    {
+      "category": "takeaways",
+      "awayValue": 2,
+      "homeValue": 4
+    }
+  ],
+  "gameReports": {
+    "gameSummary": "https://www.nhl.com/scores/htmlreports/20242025/GS021180.HTM",
+    "eventSummary": "https://www.nhl.com/scores/htmlreports/20242025/ES021180.HTM",
+    "playByPlay": "https://www.nhl.com/scores/htmlreports/20242025/PL021180.HTM",
+    "faceoffSummary": "https://www.nhl.com/scores/htmlreports/20242025/FS021180.HTM",
+    "faceoffComparison": "https://www.nhl.com/scores/htmlreports/20242025/FC021180.HTM",
+    "rosters": "https://www.nhl.com/scores/htmlreports/20242025/RO021180.HTM",
+    "shotSummary": "https://www.nhl.com/scores/htmlreports/20242025/SS021180.HTM",
+    "toiAway": "https://www.nhl.com/scores/htmlreports/20242025/TV021180.HTM",
+    "toiHome": "https://www.nhl.com/scores/htmlreports/20242025/TH021180.HTM"
+  }
+}

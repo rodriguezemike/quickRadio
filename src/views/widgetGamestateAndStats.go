@@ -37,14 +37,14 @@ func (widget *GamestateAndStatsWidget) ClearUpdateMap() {
 }
 
 func (widget *GamestateAndStatsWidget) IsUpdated() bool {
-	widget.updateMapLock.RLock()
+	widget.updateMapLock.Lock()
 	for _, v := range widget.updateMap {
 		if !v {
-			widget.updateMapLock.RUnlock()
+			widget.updateMapLock.Unlock()
 			return false
 		}
 	}
-	widget.updateMapLock.RUnlock()
+	widget.updateMapLock.Unlock()
 	return true
 }
 
@@ -77,7 +77,9 @@ func (widget *GamestateAndStatsWidget) createDynamicDataLabel(name string, data 
 				label.SetText(widget.gameController.GetTextFromObjectNameFilepath(label.ObjectName(), label.Text()))
 			}
 			label.Repaint()
+			widget.updateMapLock.Lock()
 			widget.updateMap[label.ObjectName()] = true
+			widget.updateMapLock.Unlock()
 		}
 	})
 	label.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
@@ -129,14 +131,18 @@ func (widget *GamestateAndStatsWidget) createFloatStatSlider(categoryName string
 	slider.SetEnabled(false)
 	if dynamic {
 		slider.ConnectTimerEvent(func(event *core.QTimerEvent) {
+			widget.updateMapLock.RLock()
 			val, ok := widget.updateMap[slider.ObjectName()]
+			widget.updateMapLock.RUnlock()
 			if (!val || !ok) && widget.gameController.GameStatPathExists(categoryName) {
 				homeStatInt, awayStatInt, maxStatInt, homeHandleInt := widget.gameController.GetGameStatFromFilepath(categoryName)
 				log.Println("GamestateAndStatsWidget::createFloatStatSlider::UpdateFloatSlider::", "Category Name", categoryName, "Home stat", homeStat, "away stat", awayStat, "Max Stat", maxStat, "homeHandle", homeHandle)
 				widget.setSliderValues(maxStatInt, homeStatInt, awayStatInt, homeHandleInt, slider)
 				slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, homeHandle))
 				slider.Repaint()
+				widget.updateMapLock.Lock()
 				widget.updateMap[slider.ObjectName()] = true
+				widget.updateMapLock.Unlock()
 			}
 		})
 		slider.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
@@ -155,13 +161,17 @@ func (widget *GamestateAndStatsWidget) createIntStatSlider(categoryName string, 
 	slider.SetEnabled(false)
 	if dynamic {
 		slider.ConnectTimerEvent(func(event *core.QTimerEvent) {
+			widget.updateMapLock.RLock()
 			val, ok := widget.updateMap[slider.ObjectName()]
+			widget.updateMapLock.RUnlock()
 			if (!val || !ok) && widget.gameController.GameStatPathExists(categoryName) {
 				homeStat, awayStat, maxStat, homeHandle = widget.gameController.GetGameStatFromFilepath(categoryName)
 				widget.setSliderValues(maxStat, homeStat, awayStat, homeHandle, slider)
 				slider.SetStyleSheet(CreateSliderStylesheet(*widget.gameController.HomeTeamController.Sweater, *widget.gameController.AwayTeamController.Sweater, homeHandle))
 				slider.Repaint()
+				widget.updateMapLock.Lock()
 				widget.updateMap[slider.ObjectName()] = true
+				widget.updateMapLock.Unlock()
 			}
 		})
 		slider.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
