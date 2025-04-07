@@ -29,7 +29,7 @@ func (view *GameManagerView) GoUpdateGames(ctx context.Context) {
 			var gamesToUpdate []*GameView
 			var workGroup sync.WaitGroup
 			for _, game := range view.games {
-				if game.gameController.IsLive() || game.gameController.IsFuture() || game.gameController.IsPregame() {
+				if game.gameController.IsLive() || game.gameController.IsFuture() || game.gameController.IsPregame() || game.gameController.IsFinal() {
 					gamesToUpdate = append(gamesToUpdate, game)
 				}
 			}

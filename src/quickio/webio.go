@@ -231,6 +231,8 @@ func GoGetGameDataObjectsFromLandingLinks(landingLinks []string) []models.GameDa
 				radioErrors.ErrorLog(err)
 				gameDataObjects = append(gameDataObjects, *gameData)
 				bodyCloser.Close()
+			} else {
+				gameDataObjects = append(gameDataObjects, *gameData)
 			}
 		}(landingLinks[i])
 		workGroup.Wait()
@@ -255,6 +257,8 @@ func GoGetGameVersesDataFromLandingLinks(landingLinks []string) []models.GameVer
 				radioErrors.ErrorLog(err)
 				gameVersesDataObjects = append(gameVersesDataObjects, *versesData)
 				bodyCloser.Close()
+			} else {
+				gameVersesDataObjects = append(gameVersesDataObjects, *versesData)
 			}
 		}(landingLinks[i])
 		workGroup.Wait()
