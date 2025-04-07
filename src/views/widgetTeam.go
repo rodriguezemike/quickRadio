@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"log"
 	"quickRadio/controllers"
 	"quickRadio/models"
 	"quickRadio/quickio"
@@ -248,15 +249,17 @@ func (widget *TeamWidget) createTeamRadioStreamButton(radioQualityButtonLow *wid
 		radioQualityButtonHigh.SetEnabled(false)
 		radioQualityButtonLow.SetEnabled(false)
 		button.ConnectTimerEvent(func(event *core.QTimerEvent) {
-			if widget.teamController.Team != nil && widget.teamController.Team.RadioLink != "" {
+			log.Println("widgetTeam::createTeamRadioStreamButton::We dont have a RadioLink, were chcking for one. Team ->", widget.teamController.Team, "RadioLink ->", widget.teamController.Team.RadioLink)
+			if widget.teamController.Team != nil && strings.HasPrefix(widget.teamController.Team.RadioLink, "https://") {
+				log.Println("widgetTeam::createTeamRadioStreamButton::We have a radio link. ->", widget.teamController.Team.RadioLink)
 				widget.ConnectRadioStreamingButtonToggleEvent(widget.teamController.Team.Abbrev, widget.teamController.Team.RadioLink, radioQualityLabel, radioQualityButtonHigh, radioQualityButtonLow, button)
 				button.SetEnabled(true)
 				radioQualityButtonHigh.SetEnabled(true)
 				radioQualityButtonLow.SetEnabled(true)
 				button.DisconnectTimerEvent()
 			}
-			button.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
 		})
+		button.StartTimer(widget.LabelTimer, core.Qt__CoarseTimer)
 	} else {
 		widget.ConnectRadioStreamingButtonToggleEvent(widget.teamController.Team.Abbrev, widget.teamController.Team.RadioLink, radioQualityLabel, radioQualityButtonHigh, radioQualityButtonLow, button)
 	}
