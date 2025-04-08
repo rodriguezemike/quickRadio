@@ -2,7 +2,7 @@
 
 QuickRadio streams live **NHL radio games** using **FFmpeg** for transcoding and **Beep** for audio playback. The app is built using a **multithreaded producer-consumer model**, where each game runs on its own dedicated thread. The **Model-View-Controller (MVC)** architecture ensures separation of concerns and a clean, modular structure. The responsive, data-driven UI dynamically updates in real-time, displaying live game stats, player information (on ice and penalty box), and providing seamless audio streaming through an efficient audio queue.
 
-![Screenshot 2025-04-02 183523](https://github.com/user-attachments/assets/10a8c91a-854d-43e1-8bd8-a7b308bf960f)
+![Screenshot 2025-04-07 194608](https://github.com/user-attachments/assets/34afea88-2943-4245-86b4-a5fb5d6ea929)
 
 ## Features
 - **Live NHL Radio Streaming:** Stream live NHL radio broadcasts with audio transcoded via **FFmpeg** for format compatibility.
