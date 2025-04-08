@@ -249,10 +249,11 @@ func (widget *TeamWidget) createTeamRadioStreamButton(radioQualityButtonLow *wid
 		radioQualityButtonHigh.SetEnabled(false)
 		radioQualityButtonLow.SetEnabled(false)
 		button.ConnectTimerEvent(func(event *core.QTimerEvent) {
+			teamData, ok := widget.teamController.GetTeamData()
 			log.Println("widgetTeam::createTeamRadioStreamButton::We dont have a RadioLink, were chcking for one. Team ->", widget.teamController.Team, "RadioLink ->", widget.teamController.Team.RadioLink)
-			if widget.teamController.Team != nil && strings.HasPrefix(widget.teamController.Team.RadioLink, "https://") {
-				log.Println("widgetTeam::createTeamRadioStreamButton::We have a radio link. ->", widget.teamController.Team.RadioLink)
-				widget.ConnectRadioStreamingButtonToggleEvent(widget.teamController.Team.Abbrev, widget.teamController.Team.RadioLink, radioQualityLabel, radioQualityButtonHigh, radioQualityButtonLow, button)
+			if ok && strings.HasPrefix(teamData.RadioLink, "https://") {
+				log.Println("widgetTeam::createTeamRadioStreamButton::We have a radio link. -> ", widget.teamController.Team.RadioLink)
+				widget.ConnectRadioStreamingButtonToggleEvent(teamData.Abbrev, teamData.RadioLink, radioQualityLabel, radioQualityButtonHigh, radioQualityButtonLow, button)
 				button.SetEnabled(true)
 				radioQualityButtonHigh.SetEnabled(true)
 				radioQualityButtonLow.SetEnabled(true)

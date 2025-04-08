@@ -34,6 +34,20 @@ func (controller *TeamController) UpdateTeamController(gdo *models.GameData, gvd
 	}
 }
 
+func (controller *TeamController) GetTeamData() (*models.TeamData, bool) {
+	if controller.Team != nil {
+		teamData := models.TeamData{}
+		teamData.RadioLink = controller.Team.RadioLink
+		teamData.Abbrev = controller.Team.Abbrev
+		teamData.Id = controller.Team.Id
+		teamData.Logo = controller.Team.Logo
+		teamData.DarkLogo = controller.Team.DarkLogo
+		return &teamData, true
+	} else {
+		return nil, false
+	}
+}
+
 func (controller *TeamController) EmptyDirectory() {
 	quickio.EmptyDirectory(controller.teamDirectory)
 }
