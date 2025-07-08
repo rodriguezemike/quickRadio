@@ -42,6 +42,10 @@ const DEFAULT_VERSES_STRING = " VS "
 //Stats Consts
 const PERCENTAGE_CONST = "%"
 
+//Powerplay Consts
+const POWERPLAY_INDICATOR = "PP"
+const POWERPLAY_PREFIX = "powerplay"
+
 //Pregame Category label mapping.
 var (
 	PREGAME_LABEL_STATS_MAP map[string]string

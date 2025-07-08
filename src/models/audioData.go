@@ -10,6 +10,7 @@ import "github.com/gopxl/beep"
 //etc.
 type AudioStreamQueue struct {
 	streamers []beep.Streamer
+	volume    float64
 }
 
 func (streamQueue *AudioStreamQueue) Err() error {
@@ -22,6 +23,20 @@ func (streamQueue *AudioStreamQueue) Add(streamers ...beep.Streamer) {
 
 func (streamQueue *AudioStreamQueue) PopStream() {
 	streamQueue.streamers = streamQueue.streamers[1:]
+}
+
+func (streamQueue *AudioStreamQueue) SetVolume(volume float64) {
+	if volume < 0.0 {
+		volume = 0.0
+	}
+	if volume > 2.0 { // Allow amplification up to 200%
+		volume = 2.0
+	}
+	streamQueue.volume = volume
+}
+
+func (streamQueue *AudioStreamQueue) GetVolume() float64 {
+	return streamQueue.volume
 }
 
 func (streamQueue *AudioStreamQueue) Stream(samples [][2]float64) (n int, ok bool) {
@@ -38,8 +53,21 @@ func (streamQueue *AudioStreamQueue) Stream(samples [][2]float64) (n int, ok boo
 		if !ok {
 			streamQueue.PopStream()
 		}
-		streamed += n
 
+		// Apply volume adjustment to the streamed samples
+		for i := streamed; i < streamed+n; i++ {
+			samples[i][0] *= streamQueue.volume
+			samples[i][1] *= streamQueue.volume
+		}
+
+		streamed += n
 	}
 	return len(samples), true
+}
+
+func NewAudioStreamQueue() *AudioStreamQueue {
+	return &AudioStreamQueue{
+		streamers: make([]beep.Streamer, 0),
+		volume:    1.0, // Default volume at 100%
+	}
 }

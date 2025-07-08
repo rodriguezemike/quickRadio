@@ -28,6 +28,8 @@ func (view *GameView) PlayRadioMode(widget *TeamWidget) {
 	} else {
 		view.HomeTeamWidget.DisableButtons()
 	}
+	// Notify parent if exists about now playing status
+	view.updateNowPlayingStatus()
 }
 
 func (view *GameView) StopRadioMode(widget *TeamWidget) {
@@ -36,6 +38,21 @@ func (view *GameView) StopRadioMode(widget *TeamWidget) {
 	} else {
 		view.HomeTeamWidget.EnableButtons()
 	}
+	// Notify parent if exists about now playing status
+	view.updateNowPlayingStatus()
+}
+
+func (view *GameView) updateNowPlayingStatus() {
+	// This will be used by the parent GameManagerView to update the "Now playing" label
+	// The GameManagerView will handle this via polling using the getter methods below
+}
+
+func (view *GameView) IsRadioPlaying() bool {
+	return view.AwayTeamWidget.isPlaying || view.HomeTeamWidget.isPlaying
+}
+
+func (view *GameView) GetPlayingTeams() (string, string) {
+	return view.gameController.HomeTeamController.Team.Abbrev, view.gameController.AwayTeamController.Team.Abbrev
 }
 
 func (view *GameView) ClearUpdateMaps() {

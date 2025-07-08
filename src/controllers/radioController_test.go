@@ -61,5 +61,53 @@ func TestNewRadioControllerTypes(t *testing.T) {
 		t.Fatalf(`reflect.ValueOf(controller.goroutineMap).Kind().String() != "ptr" | reflect.ValueOf(controller.goroutineMap).Kind()) = %s`, reflect.ValueOf(controller.goroutineMap).Kind())
 	}
 	quickio.EmptyTmpFolder()
+}
 
+func TestRadioControllerVolumeControl(t *testing.T) {
+	controller := GetTestRadioController()
+
+	// Test default volume
+	defaultVolume := controller.GetVolume()
+	if defaultVolume != 1.0 {
+		t.Fatalf("Expected default volume 1.0, got %f", defaultVolume)
+	}
+
+	// Test setting volume
+	controller.SetVolume(0.7)
+	volume := controller.GetVolume()
+	if volume != 0.7 {
+		t.Fatalf("Expected volume 0.7, got %f", volume)
+	}
+
+	// Test volume bounds
+	controller.SetVolume(-0.5)
+	volume = controller.GetVolume()
+	if volume != 0.0 {
+		t.Fatalf("Expected volume clamped to 0.0, got %f", volume)
+	}
+
+	controller.SetVolume(3.0)
+	volume = controller.GetVolume()
+	if volume != 2.0 {
+		t.Fatalf("Expected volume clamped to 2.0, got %f", volume)
+	}
+
+	quickio.EmptyTmpFolder()
+}
+
+func TestRadioControllerVolumeWithNilStreamQueue(t *testing.T) {
+	controller := GetTestRadioController()
+	controller.streamQueue = nil
+
+	// Should handle nil gracefully
+	volume := controller.GetVolume()
+	if volume != 1.0 {
+		t.Fatalf("Expected default volume 1.0 when streamQueue is nil, got %f", volume)
+	}
+
+	// Should not panic when setting volume with nil streamQueue
+	controller.SetVolume(0.5)
+	// If we get here without panicking, the test passes
+
+	quickio.EmptyTmpFolder()
 }

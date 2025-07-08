@@ -20,6 +20,25 @@ func createTestGamestateAndStatsWidget() (*widgets.QApplication, *controllers.Ga
 	return app, gameController, labelTimer, widget
 }
 
+func TestPowerplayLabelCreation(t *testing.T) {
+	flag.Parse()
+	if !*flagCI {
+		app, _, _, widget := createTestGamestateAndStatsWidget()
+
+		// Test that the widget was created successfully
+		if widget.UIWidget == nil {
+			t.Fatalf("GamestateAndStats widget should be created")
+		}
+
+		// Note: Testing powerplay functionality requires access to private fields
+		// or additional public methods. For now, we test that the widget creates successfully.
+
+		app.Quit()
+	} else {
+		t.Skip("We are in a CI env and skipping Visual based test.")
+	}
+}
+
 func TestGamestateAndStatsUI(t *testing.T) {
 	flag.Parse()
 	if !*flagCI {
@@ -33,5 +52,4 @@ func TestGamestateAndStatsUI(t *testing.T) {
 	} else {
 		t.Skip("We are in a CI env and skipping Visual based test.")
 	}
-
 }

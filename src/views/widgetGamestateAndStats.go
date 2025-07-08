@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"quickRadio/controllers"
@@ -21,6 +22,7 @@ type GamestateAndStatsWidget struct {
 	liveGameStatsLayout *widgets.QVBoxLayout
 	pregameStatsWidget  *widgets.QGroupBox
 	liveGameStatsWidget *widgets.QGroupBox
+	powerplayLabel      *widgets.QLabel
 	parentWidget        *widgets.QGroupBox
 	gameController      *controllers.GameController
 	IsFuture            bool
@@ -86,9 +88,42 @@ func (widget *GamestateAndStatsWidget) createDynamicDataLabel(name string, data 
 	return label
 }
 
+func (widget *GamestateAndStatsWidget) createPowerplayLabel() *widgets.QLabel {
+	label := widgets.NewQLabel2("", widget.UIWidget, core.Qt__Widget)
+	label.SetObjectName("powerplayLabel")
+	label.SetAlignment(core.Qt__AlignCenter)
+	label.SetProperty("label-type", core.NewQVariant12("powerplay"))
+	//Use centralized stylesheet with gradient for the powerplay
+	label.SetStyleSheet(CreatePowerplayLabelStylesheet())
+	label.SetVisible(false)
+
+	// Timer to update powerplay status
+	label.ConnectTimerEvent(func(event *core.QTimerEvent) {
+		if widget.gameController.IsPowerplayActive() {
+			powerplayTeam := widget.gameController.GetPowerplayTeam()
+			if powerplayTeam != "" {
+				label.SetText(fmt.Sprintf("POWER PLAY - %s ", powerplayTeam))
+				label.SetVisible(true)
+			}
+		} else {
+			label.SetVisible(false)
+		}
+		label.Repaint()
+	})
+	label.StartTimer(widget.LabelTimer, core.Qt__PreciseTimer)
+
+	return label
+}
+
 func (widget *GamestateAndStatsWidget) createGamestateLayout() *widgets.QHBoxLayout {
 	fontSize := 32
 	gamestateLayout := widgets.NewQHBoxLayout()
+
+	// Add powerplay indicator
+	widget.powerplayLabel = widget.createPowerplayLabel()
+	gamestateLayout.AddWidget(widget.powerplayLabel, 0, core.Qt__AlignCenter)
+
+	// Add gamestate label
 	gamestateLayout.AddWidget(widget.createDynamicDataLabel("GAMESTATE", widget.gameController.GetGamestateString(), widget.gameController.Landinglink, widget.UIWidget, fontSize), 0, core.Qt__AlignCenter)
 	return gamestateLayout
 }

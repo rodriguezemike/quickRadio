@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"quickRadio/models"
 	"quickRadio/quickio"
 	"reflect"
 	"strings"
@@ -140,4 +141,69 @@ func TestNewGameContollerTypes(t *testing.T) {
 	if reflect.ValueOf(controller.activeGameDirectory).Kind().String() != "string" {
 		t.Fatalf(`reflect.ValueOf(controller.activeGameDirectory).Kind().String() != "string" | reflect.ValueOf(controller.activeGameDirectory).Kind()) = %s`, reflect.ValueOf(controller.activeGameDirectory).Kind())
 	}
+}
+
+func TestPowerplayDetection(t *testing.T) {
+	controller := CreateNewDefaultGameController()
+
+	// Test default game data (no powerplay)
+	if controller.IsPowerplayActive() {
+		t.Fatalf("Default game data should not have powerplay active")
+	}
+
+	// Test with powerplay data
+	controller.gameDataObject.Situation.HomeTeam.SituationDescriptions = []string{models.POWERPLAY_INDICATOR}
+	controller.gameDataObject.Situation.HomeTeam.Abbrev = "LAK"
+	controller.gameDataObject.Situation.AwayTeam.Abbrev = "VGK"
+
+	if !controller.IsPowerplayActive() {
+		t.Fatalf("Should detect powerplay when home team has PP")
+	}
+
+	powerplayTeam := controller.GetPowerplayTeam()
+	if powerplayTeam != "LAK" {
+		t.Fatalf("Expected powerplay team 'LAK', got '%s'", powerplayTeam)
+	}
+
+	// Test away team powerplay
+	controller.gameDataObject.Situation.HomeTeam.SituationDescriptions = []string{}
+	controller.gameDataObject.Situation.AwayTeam.SituationDescriptions = []string{models.POWERPLAY_INDICATOR}
+
+	if !controller.IsPowerplayActive() {
+		t.Fatalf("Should detect powerplay when away team has PP")
+	}
+
+	powerplayTeam = controller.GetPowerplayTeam()
+	if powerplayTeam != "VGK" {
+		t.Fatalf("Expected powerplay team 'VGK', got '%s'", powerplayTeam)
+	}
+
+	// Test no powerplay
+	controller.gameDataObject.Situation.AwayTeam.SituationDescriptions = []string{}
+
+	if controller.IsPowerplayActive() {
+		t.Fatalf("Should not detect powerplay when no team has PP")
+	}
+
+	powerplayTeam = controller.GetPowerplayTeam()
+	if powerplayTeam != "" {
+		t.Fatalf("Expected empty powerplay team, got '%s'", powerplayTeam)
+	}
+
+	quickio.EmptyTmpFolder()
+}
+
+func TestPowerplayPathGeneration(t *testing.T) {
+	controller := CreateNewDefaultGameController()
+	controller.gameDataObject.Situation.HomeTeam.SituationDescriptions = []string{models.POWERPLAY_INDICATOR}
+	controller.gameDataObject.Situation.HomeTeam.Abbrev = "LAK"
+
+	powerplayPath := controller.GetPowerplayPath()
+	expectedPath := filepath.Join(controller.GameDirectory, models.POWERPLAY_PREFIX+".LAK")
+
+	if powerplayPath != expectedPath {
+		t.Fatalf("Expected powerplay path '%s', got '%s'", expectedPath, powerplayPath)
+	}
+
+	quickio.EmptyTmpFolder()
 }

@@ -163,6 +163,19 @@ func (controller *RadioController) KillFun() {
 	quickio.EmptyRadioDirectory(controller.RadioDirectory)
 }
 
+func (controller *RadioController) SetVolume(volume float64) {
+	if controller.streamQueue != nil {
+		controller.streamQueue.SetVolume(volume)
+	}
+}
+
+func (controller *RadioController) GetVolume() float64 {
+	if controller.streamQueue != nil {
+		return controller.streamQueue.GetVolume()
+	}
+	return 1.0
+}
+
 func NewRadioController(radioLink string, teamAbbrev string) *RadioController {
 	log.Println("radioController::NewRadioController")
 	var controller RadioController
@@ -173,6 +186,6 @@ func NewRadioController(radioLink string, teamAbbrev string) *RadioController {
 	controller.ctx = context.Background()
 	controller.speakerInitialized = false
 	controller.goroutineMap = &sync.Map{}
-	controller.streamQueue = &models.AudioStreamQueue{}
+	controller.streamQueue = models.NewAudioStreamQueue()
 	return &controller
 }

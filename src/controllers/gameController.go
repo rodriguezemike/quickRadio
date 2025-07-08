@@ -55,6 +55,48 @@ func (controller *GameController) IsInIntermission() bool {
 	return controller.gameDataObject.GameState == "LIVE" && controller.gameDataObject.Clock.InIntermission
 }
 
+func (controller *GameController) IsPowerplayActive() bool {
+	if controller.gameDataObject == nil {
+		return false
+	}
+	// Check home team for powerplay
+	for _, description := range controller.gameDataObject.Situation.HomeTeam.SituationDescriptions {
+		if description == models.POWERPLAY_INDICATOR {
+			return true
+		}
+	}
+	// Check away team for powerplay
+	for _, description := range controller.gameDataObject.Situation.AwayTeam.SituationDescriptions {
+		if description == models.POWERPLAY_INDICATOR {
+			return true
+		}
+	}
+	return false
+}
+
+func (controller *GameController) GetPowerplayTeam() string {
+	if controller.gameDataObject == nil {
+		return ""
+	}
+	// Check home team for powerplay
+	for _, description := range controller.gameDataObject.Situation.HomeTeam.SituationDescriptions {
+		if description == models.POWERPLAY_INDICATOR {
+			return controller.gameDataObject.Situation.HomeTeam.Abbrev
+		}
+	}
+	// Check away team for powerplay
+	for _, description := range controller.gameDataObject.Situation.AwayTeam.SituationDescriptions {
+		if description == models.POWERPLAY_INDICATOR {
+			return controller.gameDataObject.Situation.AwayTeam.Abbrev
+		}
+	}
+	return ""
+}
+
+func (controller *GameController) GetPowerplayPath() string {
+	return filepath.Join(controller.GameDirectory, models.POWERPLAY_PREFIX+"."+controller.GetPowerplayTeam())
+}
+
 func (controller *GameController) GetGamestateString() string {
 	if controller.gameDataObject.GameState == "LIVE" || controller.gameDataObject.GameState == "CRIT" {
 		if !controller.gameDataObject.Clock.InIntermission {
@@ -467,6 +509,11 @@ func (controller *GameController) ProduceGameData() {
 	controller.ProduceTeamGameStats()
 	gameStatePath := controller.GetGamestatePath()
 	quickio.WriteFile(gameStatePath, controller.GetGamestateString())
+	// Produce powerplay data
+	if controller.IsPowerplayActive() {
+		powerplayPath := controller.GetPowerplayPath()
+		quickio.TouchFile(powerplayPath)
+	}
 	controller.dataConsumed = false
 }
 
