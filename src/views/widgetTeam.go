@@ -252,7 +252,8 @@ func (widget *TeamWidget) createTeamRadioStreamButton(radioQualityButtonLow *wid
 			teamData, ok := widget.teamController.GetTeamData()
 			log.Println("widgetTeam::createTeamRadioStreamButton::We dont have a RadioLink, were chcking for one. Team ->", widget.teamController.Team, "RadioLink ->", widget.teamController.Team.RadioLink)
 			if ok && strings.HasPrefix(teamData.RadioLink, "https://") {
-				log.Println("widgetTeam::createTeamRadioStreamButton::We have a radio link. -> ", widget.teamController.Team.RadioLink)
+				//Need to sort out why were passing in a proper radio link going from no game to pregame.
+				log.Println("widgetTeam::createTeamRadioStreamButton::We have a radio link. -> ", teamData.RadioLink)
 				widget.ConnectRadioStreamingButtonToggleEvent(teamData.Abbrev, teamData.RadioLink, radioQualityLabel, radioQualityButtonHigh, radioQualityButtonLow, button)
 				button.SetEnabled(true)
 				radioQualityButtonHigh.SetEnabled(true)

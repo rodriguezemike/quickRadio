@@ -1,3 +1,46 @@
+// ToDo : Add user-agent Mozilla/5.0 (Windows NT 10.0; Win64; x64) to my request and attempt to pull down radio again
+// req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36")
+// we will need a public func to do our request
+/*
+package main
+
+import (
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+)
+
+// fetchWithUserAgent sends a GET request with a realistic desktop browser User-Agent
+func fetchWithUserAgent(url string) (string, error) {
+	// 1. Create the request
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// 2. Inject the modern Chrome User-Agent header
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36")
+
+	// 3. Execute the request using the default HTTP client
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("network error (check for wsarecv): %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 4. Read and return the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read body: %w", err)
+	}
+
+	return string(body), nil
+}
+
+*/
+
 package quickio
 
 import (
@@ -23,7 +66,14 @@ import (
 )
 
 func GetDataFromResponse(url string) ([]byte, io.ReadCloser) {
-	resp, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		radioErrors.ErrorFail(err)
+		return nil, nil
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36")
+	client := http.Client{}
+	resp, err := client.Do(req)
 	radioErrors.ErrorLog(err)
 	if err != nil {
 		radioErrors.ErrorLog(err)

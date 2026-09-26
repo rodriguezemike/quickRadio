@@ -123,14 +123,8 @@ func TestGameManagerViewUI(t *testing.T) {
 		window.SetCentralWidget(gameManagerView.UIWidget)
 		window.Resize2(1200, 800)
 		window.Show()
-
-		// Run briefly for visual inspection
-		go func() {
-			time.Sleep(2 * time.Second)
-			app.Quit()
-		}()
-
 		app.Exec()
+		app.Quit()
 	} else {
 		t.Skip("We are in a CI env and skipping Visual based test.")
 	}
